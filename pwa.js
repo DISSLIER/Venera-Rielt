@@ -1,5 +1,5 @@
 let deferredInstallPrompt = null;
-const APP_SPLASH_SHOWN_KEY = 'venera_app_splash_shown';
+const APP_SPLASH_SESSION_KEY = 'venera_app_splash_session_shown';
 
 function getInstallMenuLink() {
   return document.getElementById('mobile-install-app-link');
@@ -22,15 +22,15 @@ function shouldShowSplash() {
   }
 
   try {
-    return localStorage.getItem(APP_SPLASH_SHOWN_KEY) !== '1';
+    return sessionStorage.getItem(APP_SPLASH_SESSION_KEY) !== '1';
   } catch (_) {
-    return false;
+    return true;
   }
 }
 
 function markSplashAsShown() {
   try {
-    localStorage.setItem(APP_SPLASH_SHOWN_KEY, '1');
+    sessionStorage.setItem(APP_SPLASH_SESSION_KEY, '1');
   } catch (_) {
     // ignore storage errors
   }

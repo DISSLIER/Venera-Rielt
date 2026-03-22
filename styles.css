@@ -61,23 +61,29 @@
             animation: splashLogoFloat 2.8s ease-in-out infinite;
         }
 
+        .app-splash-logo-wrap::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('image/components/SplashLogo.jpg');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            filter: blur(10px) sepia(1) saturate(6) hue-rotate(350deg) brightness(1.25);
+            opacity: 0.9;
+            mix-blend-mode: screen;
+            transform: scale(1.03);
+            z-index: 1;
+            animation: splashLogoGlow 1.9s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
         .app-splash-logo {
             width: 100%;
             height: auto;
-            border-radius: 14px;
-            box-shadow: 0 0 26px rgba(255, 215, 0, 0.58), 0 0 55px rgba(255, 215, 0, 0.24);
             position: relative;
             z-index: 2;
-        }
-
-        .app-splash-logo-glow {
-            position: absolute;
-            inset: -12px;
-            border-radius: 20px;
-            background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, rgba(255, 215, 0, 0) 72%);
-            filter: blur(14px);
-            z-index: 1;
-            animation: splashLogoGlow 1.9s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 8px rgba(255, 210, 90, 0.55)) drop-shadow(0 0 18px rgba(255, 190, 45, 0.36));
         }
 
         .app-splash.fade-out {
@@ -86,12 +92,12 @@
 
         @keyframes splashLogoGlow {
             from {
-                opacity: 0.58;
-                transform: scale(0.98);
+                opacity: 0.62;
+                transform: scale(1.01);
             }
             to {
                 opacity: 1;
-                transform: scale(1.04);
+                transform: scale(1.07);
             }
         }
 
