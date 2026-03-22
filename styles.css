@@ -1,0 +1,679 @@
+﻿/*
+Главный файл стилей сайта.
+Что чем управляется:
+1) :root: цвета и переменные темы.
+2) Базовые блоки: body, glass-effect, кнопки, анимации.
+3) Карточки объектов и риелторов.
+4) Overlay, карусель, карта и адаптивность.
+*/
+
+/* Базовые переменные темы */
+:root {
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #FFFFFF;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Базовый вид всей страницы */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+        }
+        
+        /* Стеклянный эффект для карточек, панелей и модалок */
+        .glass-effect {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .gold-text {
+            color: var(--gold);
+        }
+        
+        .logo-container {
+            position: relative;
+        }
+        
+        .logo-image {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo-glow {
+            position: absolute;
+            width: 128px;
+            height: 128px;
+            background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0) 70%);
+            filter: blur(15px);
+            z-index: 1;
+            animation: pulseGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulseGlow {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+        
+        .gold-border {
+            border-color: var(--gold);
+        }
+        
+        .gold-bg {
+            background-color: var(--gold);
+        }
+        
+        .neon-glow {
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.7;
+        }
+        
+        /* Карточки объектов по умолчанию скрываются до логики пагинации */
+        .property-card, 
+        #agents .glass-effect.hidden {
+            display: none;
+        }
+        .property-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .property-card h3 {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        
+        .property-card .flex.items-center span {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            display: inline;
+            max-width: none;
+        }
+        .property-card.visible {
+            display: block;
+        }
+        
+        .agent-photo {
+            transition: all 0.3s ease;
+        }
+        
+        .agent-photo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .search-box {
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:hover {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        .btn-gold {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        /* Универсальная анимация плавного появления */
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .property-details {
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        
+        .carousel-item {
+            display: none;
+        }
+        
+        .carousel-item.active {
+            display: block;
+        }
+
+        .property-carousel-image {
+            cursor: zoom-in;
+            min-height: 320px;
+            max-height: 420px;
+        }
+
+        .property-carousel-counter {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 3;
+            background: rgba(0, 0, 0, 0.52);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 6px 10px;
+        }
+
+        .property-carousel-thumbs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .property-carousel-thumbs:empty {
+            display: none;
+        }
+
+        .property-thumb {
+            flex: 0 0 72px;
+            width: 72px;
+            height: 72px;
+            padding: 0;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            overflow: hidden;
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .property-thumb:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 215, 0, 0.65);
+        }
+
+        .property-thumb.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.15);
+        }
+
+        .property-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.94);
+            z-index: 4000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .image-lightbox.hidden {
+            display: none;
+        }
+
+        .image-lightbox-content {
+            max-width: min(96vw, 1400px);
+            max-height: 92vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+        }
+
+        .image-lightbox-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.55);
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-lightbox-close:hover {
+            background: rgba(255, 215, 0, 0.18);
+        }
+
+        .image-lightbox-counter {
+            position: absolute;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .image-lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            cursor: pointer;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-lightbox-nav:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .image-lightbox-prev {
+            left: 16px;
+        }
+
+        .image-lightbox-next {
+            right: 16px;
+        }
+        
+        .map-container {
+            height: 500px;
+            width: 100%;
+            position: relative;
+        }
+
+        .map-expand-btn {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-expand-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .map-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: none;
+        }
+
+        .overlay.active {
+            z-index: 2001;
+        }
+
+        .map-overlay.active {
+            display: block;
+        }
+
+        .map-overlay-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .map-overlay-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 2001;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .map-overlay-close:hover {
+            background: rgba(0,0,0,0.9);
+        }
+        
+        .map-popup-container .leaflet-popup-content {
+            margin: 12px;
+        }
+        
+        /* Hide Leaflet attribution and Ukraine flag */
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+        
+        .map-popup {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .map-popup-mini {
+            font-family: 'Montserrat', sans-serif;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-popup-mini h4 {
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .leaflet-popup-content {
+            margin: 0 !important;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            padding: 0 !important;
+            border-radius: 0.5rem !important;
+        }
+        
+        @media (max-width: 768px) {
+            .map-popup-mini {
+                width: 200px !important;
+            }
+
+            .property-carousel-image {
+                min-height: 240px;
+                max-height: 300px;
+            }
+
+            .property-thumb {
+                flex-basis: 60px;
+                width: 60px;
+                height: 60px;
+            }
+
+            .image-lightbox-nav {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+
+            .image-lightbox-prev {
+                left: 10px;
+            }
+
+            .image-lightbox-next {
+                right: 10px;
+            }
+
+            .image-lightbox-counter {
+                bottom: 14px;
+            }
+        }
+        
+        .map-placeholder {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .social-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            transform: scale(1.2);
+            color: var(--gold);
+        }
+        
+        .price-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 2;
+        }
+
+        /* Custom map markers */
+        .custom-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .premium-icon {
+            background-color: #FFD700;
+            color: #000;
+        }
+
+        .secondary-icon {
+            background-color: #4CAF50;
+        }
+
+        .newbuilding-icon {
+            background-color: #2196F3;
+        }
+
+        .commercial-icon {
+            background-color: #9C27B0;
+        }
+
+        .rental-icon {
+            background-color: #FF5722;
+        }
+        .garage-icon {
+            background-color: #795548;
+        }
+        .parking-icon {
+            background-color: #607D8B;
+        }
+        .storage-icon {
+            background-color: #8D6E63;
+        }
+        .house-icon {
+            background-color: #4CAF50;
+        }
+        .land-icon {
+            background-color: #8BC34A;
+        }
+
+        .type-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 2;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .premium-tag {
+            background-color: #FFD700;
+            color: #000;
+        }
+
+        .secondary-tag {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .newbuilding-tag {
+            background-color: #2196F3;
+            color: #fff;
+        }
+
+        .commercial-tag {
+            background-color: #9C27B0;
+            color: #fff;
+        }
+
+        .rental-tag {
+            background-color: #FF5722;
+            color: #fff;
+        }
+        .garage-tag {
+            background-color: #795548;
+            color: #fff;
+        }
+        .parking-tag {
+            background-color: #607D8B;
+            color: #fff;
+        }
+        .storage-tag {
+            background-color: #8D6E63;
+            color: #fff;
+        }
+        .house-tag {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+        .land-tag {
+            background-color: #8BC34A;
+            color: #fff;
+        }
+        
+        .agent-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            z-index: 2;
+        }
+        
+        .testimonial-carousel {
+            position: relative;
+        }
+        
+        .testimonial-item {
+            display: none;
+        }
+        
+        .testimonial-item.active {
+            display: block;
+            animation: fadeIn 1s;
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--gold);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero-content {
+                padding-top: 100px;
+            }
+            
+            .search-box {
+                margin-top: 80px;
+            }
+            
+            .search-box .grid-cols-2 > .grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .map-container {
+                height: 300px;
+            }
+        }
+

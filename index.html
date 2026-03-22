@@ -1,0 +1,850 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+        Главный HTML-файл сайта.
+        Что чем управляется:
+        1) Здесь структура секций и модальных окон.
+        2) styles.css отвечает за внешний вид.
+        3) script.js отвечает за интерактивность.
+        4) properties.config.js хранит объекты.
+        5) agents.config.js хранит риелторов.
+    -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venera Rielt | Premium Real Estate Moldova</title>
+    <!-- Внешние библиотеки интерфейса, карт и отправки формы -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2/dist/email.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Иконки приложения (FavIcon и AppIcon) -->
+    <link rel="icon" type="image/jpeg" href="image/components/FavIcon.jpg">
+    <link rel="apple-touch-icon" href="image/components/AppIcon.png">
+    <!-- Локальные стили проекта -->
+        <link rel="stylesheet" href="styles.css">
+</head>
+<body class="antialiased">
+    <!-- Header -->
+    <header class="fixed w-full z-50 glass-effect">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="#" id="logo-link" class="text-2xl font-bold gold-text hover:text-yellow-300 transition">Venera Rielt</a>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" id="home-link" class="nav-link text-white hover:text-gold-500 transition">Главная</a>
+                    <a href="#properties" class="nav-link text-white hover:text-gold-500 transition">Объекты</a>
+                    <a href="#agents" class="nav-link text-white hover:text-gold-500 transition">Специалисты</a>
+                    <a href="#about" class="nav-link text-white hover:text-gold-500 transition">О компании</a>
+                    <a href="#contact" class="nav-link text-white hover:text-gold-500 transition">Контакты</a>
+                </nav>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-white focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass-effect w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#" id="mobile-home-link" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Главная</a>
+                <a href="#properties" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Объекты</a>
+                <a href="#agents" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Специалисты</a>
+                <a href="#about" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">О компании</a>
+                <a href="#contact" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Контакты</a>
+                <a href="#" id="admin-panel-link" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Админ-панель</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section with Video Background -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <video autoplay muted loop class="hero-video">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-modern-residential-district-with-tall-buildings-15800-large.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+        
+        <div class="hero-content container mx-auto px-4 text-center relative z-10 fade-in pt-32">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 text-white">
+                <span class="block">PREMIUM</span>
+                <span class="block my-2">REAL ESTATE</span>
+                <span class="block gold-text">MOLDOVA</span>
+            </h1>
+            <p class="text-xl md:text-2xl mb-10 text-gray-300">Найдите свой идеальный дом среди наших предложений</p>
+            
+            <!-- Search Box -->
+            <div class="glass-effect rounded-xl p-4 md:p-6 max-w-4xl mx-auto search-box mt-20 md:mt-0">
+                <form id="search-form">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <div>
+                        <label class="block text-left text-white mb-1 text-sm md:text-base">Город</label>
+                        <select id="city" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                            <option value="Все">Все города</option>
+                            <option>Кишинёв</option>
+                            <option>Бельцы</option>
+                            <option>Тирасполь</option>
+                            <option>Бендеры</option>
+                            <option>Рыбница</option>
+                            <option>Кагул</option>
+                            <option>Унгень</option>
+                            <option>Сороки</option>
+                            <option>Оргеев</option>
+                            <option>Комрат</option>
+                            <option>Чадыр-Лунга</option>
+                            <option>Страшены</option>
+                            <option>Дрокия</option>
+                            <option>Единцы</option>
+                            <option>Флорешты</option>
+                            <option>Резина</option>
+                            <option>Глодяны</option>
+                            <option>Кантемир</option>
+                            <option>Леова</option>
+                            <option>Ниспорены</option>
+                            <option>Окница</option>
+                            <option>Вадул-луй-Водэ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-left text-white mb-1 text-sm md:text-base">Район</label>
+                        <select id="district" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                            <option value="Все">Все районы</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-left text-white mb-1 text-sm md:text-base">Тип предложения</label>
+                        <select id="property-type" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                            <option value="Все">Все типы</option>
+                            <option>Премиум</option>
+                            <option>Вторичка</option>
+                            <option>Новострой</option>
+                            <option>Аренда</option>
+                            <option>Коммерческая</option>
+                            <option>Гараж</option>
+                            <option>Парковка</option>
+                            <option>Кладовка</option>
+                            <option>Дом</option>
+                            <option>Участок</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-left text-white mb-1 text-sm md:text-base">Цена от (€)</label>
+                            <input id="min-price" type="number" placeholder="Минимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                        </div>
+                        <div>
+                            <label class="block text-left text-white mb-1 text-sm md:text-base">Цена до (€)</label>
+                            <input id="max-price" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-left text-white mb-1 text-sm md:text-base">Площадь от (м²)</label>
+                            <input id="min-area" type="number" placeholder="Минимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                        </div>
+                        <div>
+                            <label class="block text-left text-white mb-1 text-sm md:text-base">Площадь до (м²)</label>
+                            <input id="max-area" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="mt-6 w-full bg-[#FFD700] text-black font-bold py-3 md:py-4 px-8 rounded-xl hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300 text-base md:text-lg">
+                    Поиск <i class="fas fa-search ml-2"></i>
+                </button>
+                </form>
+            </div>
+            
+            <div class="mt-5 flex justify-center">
+                <a href="#properties" class="text-white animate-bounce">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Properties Section: каталог объектов, наполняется из properties.config.js -->
+    <section id="properties" class="py-20 bg-gradient-to-b from-black to-gray-900 slide-up">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 gold-text">Наши объекты</h2>
+                <div class="w-20 h-1 gold-bg mx-auto mb-6"></div>
+                <p class="text-gray-400 max-w-2xl mx-auto">Откройте для себя подборку лучших предложений по всей Молдове
+                </p>
+            </div>
+            
+            <div id="properties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+            
+            <div class="text-center mt-12">
+                <button id="load-more-btn" class="gold-bg text-black font-bold py-3 px-8 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
+                    Показать ещё <i class="fas fa-chevron-down ml-2"></i>
+                </button>
+                <button id="close-btn" class="hidden btn-close text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-800 transition duration-300">
+                    Закрыть <i class="fas fa-chevron-up ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Property Map Section -->
+    <section class="py-20 bg-black slide-up">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 gold-text">Наши объекты на карте</h2>
+                <div class="w-20 h-1 gold-bg mx-auto mb-6"></div>
+                <p class="text-gray-400 max-w-2xl mx-auto">Исследуйте расположение нашей недвижимости на интерактивной карте</p>
+            </div>
+            
+            <div class="map-container glass-effect rounded-xl overflow-hidden">
+                <div id="main-map" style="height: 100%;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Agents Section: блок специалистов, наполняется из agents.config.js -->
+    <section id="agents" class="py-20 bg-gradient-to-b from-gray-900 to-black slide-up">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 gold-text">Наши специалисты</h2>
+                <div class="w-20 h-1 gold-bg mx-auto mb-6"></div>
+                <p class="text-gray-400 max-w-2xl mx-auto">Профессиональные риелторы с многолетним опытом работы на рынке недвижимости</p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" id="agents-container">
+                <!-- Agents will be populated from JavaScript -->
+            </div>
+            
+            <div class="text-center mt-12">
+                <button id="load-more-agents-btn" class="gold-bg text-black font-bold py-3 px-8 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
+                    Показать ещё <i class="fas fa-chevron-down ml-2"></i>
+                </button>
+                <button id="close-agents-btn" class="hidden text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-800 transition duration-300">
+                    Закрыть <i class="fas fa-chevron-up ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Company Section -->
+    <section id="about" class="py-20 bg-black slide-up">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 gold-text">О компании</h2>
+                <div class="w-20 h-1 gold-bg mx-auto mb-6"></div>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+                <div class="lg:w-1/2 order-2 lg:order-1">
+                    <div class="glass-effect rounded-xl p-8">
+                        <h3 class="text-2xl font-semibold mb-6 gold-text">Venera Rielt</h3>
+                        <p class="text-gray-400 mb-4">Мы — лидер на рынке элитной недвижимости Молдовы с 2010 года. Наша компания специализируется на премиальном сегменте жилой и коммерческой недвижимости.</p>
+                        <p class="text-gray-400 mb-4">Наш подход сочетает в себе глубокое знание местного рынка, международные стандарты работы и индивидуальный подход к каждому клиенту.</p>
+                        <p class="text-gray-400 mb-6">За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div class="glass-effect rounded-lg p-4">
+                                <div class="text-3xl font-bold gold-text mb-2">12+</div>
+                                <div class="text-sm text-gray-400">Лет опыта</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <div class="text-3xl font-bold gold-text mb-2">500+</div>
+                                <div class="text-sm text-gray-400">Довольных клиентов</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <div class="text-3xl font-bold gold-text mb-2">45</div>
+                                <div class="text-sm text-gray-400">Объектов в продаже</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <div class="text-3xl font-bold gold-text mb-2">100%</div>
+                                <div class="text-sm text-gray-400">Гарантия надёжности</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:w-1/2 order-1 lg:order-2">
+                    <div class="testimonial-carousel glass-effect rounded-xl overflow-hidden">
+                        <!-- Testimonial 1 -->
+                        <div class="testimonial-item active">
+                            <img src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                        </div>
+                        
+                        <!-- Testimonial 2 -->
+                        <div class="testimonial-item">
+                            <img src="https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                        </div>
+                        
+                        <!-- Testimonial 3 -->
+                        <div class="testimonial-item">
+                            <img src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                        </div>
+                        
+                        <!-- Navigation arrows -->
+                        <button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-gradient-to-b from-black to-gray-900 slide-up">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 gold-text">Связаться с нами</h2>
+                <div class="w-20 h-1 gold-bg mx-auto mb-6"></div>
+                <p class="text-gray-400 max-w-2xl mx-auto">Оставьте свои контакты, и наш специалист свяжется с вами в ближайшее время</p>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-12 justify-center">
+                <div class="lg:w-1/3">
+                    <div class="glass-effect rounded-xl p-8">
+                        <h3 class="text-2xl font-semibold mb-6 gold-text">Контактная информация</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="gold-text mr-4 mt-1">
+                                    <i class="fas fa-map-marker-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Адрес</h4>
+                                    <p class="text-gray-400">Молдова, Кишинёв, ул. Пушкина 42, офис 15</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="gold-text mr-4 mt-1">
+                                    <i class="fas fa-phone-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Телефон</h4>
+                                    <p class="text-gray-400">+373 22 123 456</p>
+                                    <p class="text-gray-400">+373 60 123 456 (Viber, WhatsApp)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="gold-text mr-4 mt-1">
+                                    <i class="fas fa-envelope text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Email</h4>
+                                    <p class="text-gray-400">info@venera-rielt.md</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="gold-text mr-4 mt-1">
+                                    <i class="fas fa-clock text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Часы работы</h4>
+                                    <p class="text-gray-400">Пн-Пт: 9:00 - 18:00</p>
+                                    <p class="text-gray-400">Сб: 10:00 - 15:00</p>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <h4 class="font-semibold mb-4 gold-text">Мы в социальных сетях</h4>
+                                <div class="flex space-x-4">
+                                    <a href="#" class="social-icon text-gray-400 hover:text-blue-600"><i class="fab fa-facebook-f text-xl"></i></a>
+                                    <a href="#" class="social-icon text-gray-400 hover:text-pink-600"><i class="fab fa-instagram text-xl"></i></a>
+                                    <a href="#" class="social-icon text-gray-400 hover:text-red-600"><i class="fab fa-youtube text-xl"></i></a>
+                                    <a href="https://www.tiktok.com/@venera.rielt?_t=ZN-8z4bdlOBmNy&_r=1" class="social-icon text-gray-400 hover:text-white"><i class="fab fa-tiktok text-xl"></i></a>
+                                    <a href="#" class="social-icon text-gray-400 hover:text-blue-500"><i class="fab fa-telegram text-xl"></i></a>
+                                    <a href="#" class="social-icon text-gray-400 hover:text-green-500"><i class="fab fa-whatsapp text-xl"></i></a>
+                                    <a href="#" class="social-icon text-gray-400 hover:text-purple-500"><i class="fab fa-viber text-xl"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:w-1/3">
+                    <div class="glass-effect rounded-xl p-8">
+                        <h3 class="text-2xl font-semibold mb-6 gold-text">Форма обратной связи</h3>
+                        
+                        <form id="contact-form">
+                            <div class="mb-6">
+                                <label for="name" class="block text-gray-400 mb-2">Ваше имя</label>
+                                <input type="text" id="name" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Введите ваше имя">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="phone" class="block text-gray-400 mb-2">Телефон</label>
+                                <input type="tel" id="phone" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="+373 XX XXX XXX">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="email" class="block text-gray-400 mb-2">Email</label>
+                                <input type="email" id="email" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Введите ваш email">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="message" class="block text-gray-400 mb-2">Сообщение</label>
+                                <textarea id="message" rows="4" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Опишите ваш запрос"></textarea>
+                            </div>
+                            
+                            <button type="submit" id="contact-submit-btn" class="w-full gold-bg text-black font-bold py-3 px-6 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
+                                Отправить <i class="fas fa-paper-plane ml-2"></i>
+                            </button>
+                            <p id="contact-form-status" class="mt-4 text-sm text-center hidden"></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col items-center">
+                <div class="text-center w-full mb-4">
+                    <h2 class="text-3xl font-bold gold-text">Venera Rielt</h2>
+                    <div class="logo-container relative inline-block mx-auto cursor-pointer" onclick="openAdminPanelWithAuth()">
+                        <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="h-32 mx-auto mb-2 logo-image">
+                        <div class="logo-glow absolute inset-0 rounded-full mx-auto"></div>
+                    </div>
+                    <p class="text-gray-400 mt-2">REAL ESTATE MOLDOVA</p>
+                </div>
+                
+                <div class="mb-4">
+                    <nav class="flex flex-wrap justify-center gap-4 md:gap-8">
+                        <a href="#" id="footer-home-link" class="text-gray-400 hover:text-white transition">Главная</a>
+                        <a href="#properties" class="text-gray-400 hover:text-white transition">Объекты</a>
+                        <a href="#agents" class="text-gray-400 hover:text-white transition">Специалисты</a>
+                        <a href="#about" class="text-gray-400 hover:text-white transition">О компании</a>
+                        <a href="#contact" class="text-gray-400 hover:text-white transition">Контакты</a>
+                    </nav>
+                </div>
+                
+                <div class="flex space-x-4 mb-4">
+                    <a href="#" class="social-icon text-gray-400 hover:text-blue-600"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-pink-600"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-red-600"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-white"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-blue-500"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-green-500"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="social-icon text-gray-400 hover:text-purple-500"><i class="fab fa-viber"></i></a>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>© 2025 Venera Rielt. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Admin Auth Modal: защита доступа к панели управления -->
+    <div id="admin-auth-modal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex items-center justify-center">
+        <div class="glass-effect rounded-xl p-8 w-full max-w-sm mx-4">
+            <h3 class="text-xl font-bold gold-text mb-2 text-center">Администрирование</h3>
+            <p class="text-gray-400 text-sm text-center mb-6">Venera Rielt &mdash; Панель управления</p>
+            <div class="mb-4">
+                <label class="block text-gray-400 mb-2">Пароль</label>
+                <input type="password" id="admin-password-input"
+                    class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none"
+                    placeholder="Введите пароль">
+                <p id="admin-auth-error" class="text-red-400 text-sm mt-2 hidden">Неверный пароль. Попробуйте снова.</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="admin-auth-cancel" class="flex-1 py-2 text-white bg-gray-700 rounded-lg hover:bg-gray-600 transition">Отмена</button>
+                <button id="admin-auth-submit" class="flex-1 py-2 gold-bg text-black font-bold rounded-lg hover:bg-yellow-600 transition">Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel: модальное окно управления объектами и риелторами -->
+    <div id="admin-panel" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden overflow-auto">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold gold-text">Админ-панель</h2>
+                <button id="close-admin-panel" class="text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Properties Management -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="text-2xl font-semibold mb-4 gold-text">Объекты недвижимости</h3>
+                    <div class="mb-4">
+                        <input type="text" id="admin-property-search" 
+                               class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" 
+                               placeholder="Поиск по объектам (название, город, район, адрес)">
+                    </div>
+                    <div id="properties-list" class="mb-6 max-h-96 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Properties will be populated here -->
+                    </div>
+                    <button id="add-property" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        Добавить объект
+                    </button>
+                </div>
+                
+                <!-- Agents Management -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="text-2xl font-semibold mb-4 gold-text">Риелторы</h3>
+                    <div id="agents-list" class="mb-6 max-h-96 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Agents will be populated here -->
+                    </div>
+                    <button id="add-agent" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        Добавить риелтора
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Property Edit Modal -->
+    <div id="property-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center">
+        <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold gold-text" id="property-modal-title">Редактировать объект</h3>
+                <button id="close-property-modal" class="text-white text-2xl">&times;</button>
+            </div>
+            <form id="property-edit-form">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">ID</label>
+                    <input type="text" id="property-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" readonly>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-400 mb-2">Название</label>
+                        <input type="text" id="property-title" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Главное фото (URL)</label>
+                        <input type="text" id="property-main-photo" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Дополнительные фото (URL, через запятую)</label>
+                        <textarea id="property-photos" rows="3" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="https://example.com/photo1.jpg, https://example.com/photo2.jpg"></textarea>
+                        <p class="text-gray-500 text-sm mt-1">mainPhoto это главное фото. Сюда вставляйте остальные фото через запятую, а в properties.config.js они будут записаны как массив photos.</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Город</label>
+                        <input type="text" id="property-city" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Район</label>
+                        <input type="text" id="property-district" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Тип</label>
+                        <select id="property-type" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                            <option value="premium">Премиум</option>
+                            <option value="secondary">Вторичка</option>
+                            <option value="newbuilding">Новострой</option>
+                            <option value="rental">Аренда</option>
+                            <option value="commercial">Коммерческая</option>
+                            <option value="garage">Гараж</option>
+                            <option value="parking">Парковка</option>
+                            <option value="storage">Кладовка</option>
+                            <option value="house">Дом</option>
+                            <option value="land">Участок</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 mb-2">Цена (€)</label>
+                        <input type="number" id="property-price" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Площадь (м²)</label>
+                        <input type="number" id="property-area" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Комнаты</label>
+                        <input type="number" id="property-rooms" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Этаж</label>
+                        <input type="number" id="property-floors" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Участок (соток)</label>
+                        <input type="number" id="property-land" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Парковочные места</label>
+                        <input type="number" id="property-parking" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Состояние</label>
+                        <select id="property-condition" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="Евроремонт">Евроремонт</option>
+                            <option value="Хорошее">Хорошее</option>
+                            <option value="Среднее">Среднее</option>
+                            <option value="Требует ремонта">Требует ремонта</option>
+                            <option value="Серый вариант">Серый вариант</option>
+                            <option value="Белый вариант">Белый вариант</option>
+                            <option value="В стадии строительства">В стадии строительства</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Санузел</label>
+                        <input type="text" id="property-bathroom" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: Раздельный, 2 санузла">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Балкон</label>
+                        <input type="text" id="property-balcony" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: 2 балкона, лоджия">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Полный адрес</label>
+                        <input type="text" id="property-full-address" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Описание</label>
+                        <textarea id="property-description" rows="3" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Координаты (широта, долгота)</label>
+                        <input type="text" id="property-coords" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Риелтор</label>
+                        <select id="property-rieltor-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div id="property-edit-status" class="p-3 rounded-lg mb-4 hidden" role="alert"></div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-property-edit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                        Отмена
+                    </button>
+                    <button type="submit" id="property-save-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Agent Edit Modal: форма редактирования и генерации конфига риелтора -->
+    <div id="agent-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center">
+        <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold gold-text" id="agent-modal-title">Редактировать риелтора</h3>
+                <button id="close-agent-modal" class="text-white text-2xl">&times;</button>
+            </div>
+            <form id="agent-edit-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">ID риелтора</label>
+                        <input type="number" id="agent-rieltor-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <p class="text-gray-500 text-sm mt-1">Этот ID будет использоваться для связи объектов недвижимости с риелтором</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Имя</label>
+                        <input type="text" id="agent-name" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Должность</label>
+                        <input type="text" id="agent-position" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Телефон</label>
+                        <input type="text" id="agent-phone" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Email</label>
+                        <input type="email" id="agent-email" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">WhatsApp</label>
+                        <input type="text" id="agent-whatsapp" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Номер с кодом страны">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Telegram</label>
+                        <input type="text" id="agent-telegram" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Никнейм или номер">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Viber</label>
+                        <input type="text" id="agent-viber" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Номер с кодом страны">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2">Фото (URL)</label>
+                        <input type="text" id="agent-photo" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    </div>
+                    <div class="md:col-span-2 hidden">
+                        <label class="block text-gray-400 mb-2">ID</label>
+                        <input type="text" id="agent-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" readonly>
+                    </div>
+                </div>
+                <div id="agent-edit-status" class="p-3 rounded-lg mb-4 hidden" role="alert"></div>
+
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-agent-edit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                        Отмена
+                    </button>
+                    <button type="submit" id="agent-save-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Map Overlay -->
+    <div id="map-overlay" class="map-overlay">
+        <button id="map-overlay-close" class="map-overlay-close">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="map-overlay-container" class="map-overlay-container"></div>
+    </div>
+
+    <!-- Property Details Overlay -->
+    <div id="property-overlay" class="overlay">
+        <div class="property-details glass-effect rounded-xl max-w-4xl w-full relative">
+            <button class="close-overlay absolute top-4 right-4 text-white text-2xl z-50 hover:text-gold-500">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                <div class="relative">
+                    <!-- Carousel: слайды для объекта собираются динамически из mainPhoto и photos -->
+                    <div class="property-carousel relative">
+                        <div id="property-carousel-counter" class="property-carousel-counter">1 / 1</div>
+                        <div class="carousel-item active">
+                            <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Property" class="property-carousel-image w-full h-full object-cover rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none">
+                        </div>
+                        
+                        <!-- Carousel controls -->
+                        <button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="property-carousel-thumbs" class="property-carousel-thumbs p-4 pt-3"></div>
+                    
+                    <!-- Map -->
+                    <div class="p-4">
+                        <h4 class="font-semibold mb-2 gold-text">Расположение</h4>
+                        <div id="property-map" class="h-48 rounded-lg" style="background-color: #1a1a1a;"></div>
+                    </div>
+                </div>
+                
+                <div class="p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-2xl font-bold">Вилла в Буюканах</h3>
+                        <div class="gold-bg text-black font-bold px-4 py-2 rounded-full">
+                            €450,000
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center text-gray-400 mb-6">
+                        <i class="fas fa-map-marker-alt mr-2 gold-text"></i>
+                        <span id="property-full-address"></span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Площадь</div>
+                            <div class="font-semibold text-gray-400">250 м²</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Комнат</div>
+                            <div class="font-semibold text-gray-400">5</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Этаж</div>
+                            <div class="font-semibold text-gray-400">2</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Состояние</div>
+                            <div class="font-semibold text-gray-400">Евроремонт</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Санузел</div>
+                            <div class="font-semibold text-gray-400">Раздельный</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">Балкон</div>
+                            <div class="font-semibold text-gray-400">2 лоджии</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2 gold-text">Описание</h4>
+                        <p class="text-gray-400">
+                            Элитная вилла в престижном районе Буюканы. Просторные светлые помещения, высокие потолки, панорамные окна. 
+                            Современная отделка премиальными материалами. Кухня-гостиная с выходом на террасу и в сад. 
+                            Мастер-спальня с гардеробной и собственной ванной комнатой. Дополнительно: камин, система "умный дом", 
+                            видеонаблюдение, автономное отопление. Ухоженный сад с зоной отдыха и летней кухней.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2 gold-text">Риелтор</h4>
+                        <div class="flex items-center">
+                            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Agent" class="w-12 h-12 rounded-full border-2 border-white object-cover mr-4">
+                            <div>
+                                <div class="font-semibold">Анна Петренко</div>
+                                <div class="text-sm text-gray-400">Старший риелтор</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="flex-1 gold-bg text-black font-bold py-3 px-6 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
+                            <i class="fas fa-phone-alt mr-2"></i> Позвонить
+                        </button>
+                        <div class="flex-1 flex justify-center space-x-4 items-center bg-transparent border border-gold-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gold-500 hover:text-black transition duration-300">
+                            <a href="#" class="social-icon text-gray-400 hover:text-green-500"><i class="fab fa-whatsapp text-xl"></i></a>
+                            <a href="#" class="social-icon text-gray-400 hover:text-blue-500"><i class="fab fa-telegram text-xl"></i></a>
+                            <a href="#" class="social-icon text-gray-400 hover:text-purple-500"><i class="fab fa-viber text-xl"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox: полноэкранный просмотр фото объекта -->
+    <div id="image-lightbox" class="image-lightbox hidden">
+        <button id="image-lightbox-prev" class="image-lightbox-nav image-lightbox-prev" aria-label="Предыдущее фото">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button id="image-lightbox-next" class="image-lightbox-nav image-lightbox-next" aria-label="Следующее фото">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        <button id="image-lightbox-close" class="image-lightbox-close" aria-label="Закрыть просмотр фото">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="image-lightbox-counter" class="image-lightbox-counter">1 / 1</div>
+        <img id="image-lightbox-content" src="" alt="Property image fullscreen" class="image-lightbox-content">
+    </div>
+
+
+
+        <!-- Порядок важен: сначала конфиги, затем основной JS -->
+        <script src="agents.config.js"></script>
+        <script src="properties.config.js"></script>
+        <!-- Firebase (Realtime DB) для общей синхронизации между пользователями -->
+        <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+        <script src="script.js"></script>
+        <script src="admin.js"></script>
+    </body>
+</html>
+
