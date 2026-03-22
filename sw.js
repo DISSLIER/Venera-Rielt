@@ -1,4 +1,4 @@
-const CACHE_NAME = 'venera-rielt-v1';
+const CACHE_NAME = 'venera-rielt-v2';
 
 const PRECACHE_URLS = [
   '/',
@@ -32,6 +32,23 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  const isManifestRequest = requestUrl.pathname.endsWith('/manifest.webmanifest');
+  const isIconRequest = requestUrl.pathname.includes('/image/components/appicon-');
+
+  if (isManifestRequest || isIconRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 

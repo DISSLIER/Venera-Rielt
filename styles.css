@@ -24,6 +24,32 @@
             color: var(--white);
             overflow-x: hidden;
         }
+
+        .app-launch-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.35s ease;
+        }
+
+        .app-launch-splash.hidden {
+            display: none;
+        }
+
+        .app-launch-splash.fade-out {
+            opacity: 0;
+        }
+
+        .app-launch-splash-icon {
+            width: clamp(180px, 34vw, 280px);
+            height: clamp(180px, 34vw, 280px);
+            object-fit: contain;
+        }
         
         /* Стеклянный эффект для карточек, панелей и модалок */
         .glass-effect {
