@@ -33,6 +33,17 @@
         <link rel="stylesheet" href="styles.css">
 </head>
 <body class="antialiased">
+    <div id="app-splash" class="app-splash hidden" aria-hidden="true">
+        <video id="app-splash-video" class="app-splash-video" autoplay muted playsinline preload="auto">
+            <source src="image/components/splash.mp4" type="video/mp4">
+        </video>
+        <div class="app-splash-overlay"></div>
+        <div class="app-splash-logo-wrap">
+            <img src="image/components/SplashLogo.jpg" alt="Venera Rielt Splash Logo" class="app-splash-logo">
+            <div class="app-splash-logo-glow"></div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="fixed w-full z-50 glass-effect">
         <div class="container mx-auto px-4 py-4">

@@ -1,4 +1,5 @@
 let deferredInstallPrompt = null;
+const APP_SPLASH_SHOWN_KEY = 'venera_app_splash_shown';
 
 function getInstallMenuLink() {
   return document.getElementById('mobile-install-app-link');
@@ -6,6 +7,76 @@ function getInstallMenuLink() {
 
 function isAppAlreadyInstalled() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function getAppSplashElements() {
+  return {
+    container: document.getElementById('app-splash'),
+    video: document.getElementById('app-splash-video')
+  };
+}
+
+function shouldShowSplash() {
+  if (!isAppAlreadyInstalled()) {
+    return false;
+  }
+
+  try {
+    return localStorage.getItem(APP_SPLASH_SHOWN_KEY) !== '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function markSplashAsShown() {
+  try {
+    localStorage.setItem(APP_SPLASH_SHOWN_KEY, '1');
+  } catch (_) {
+    // ignore storage errors
+  }
+}
+
+function hideSplash(container) {
+  if (!container) return;
+  container.classList.add('fade-out');
+  window.setTimeout(() => {
+    container.classList.add('hidden');
+    container.classList.remove('fade-out');
+  }, 460);
+}
+
+function runAppSplashOnce() {
+  const { container, video } = getAppSplashElements();
+  if (!container || !video || !shouldShowSplash()) {
+    if (container) {
+      container.classList.add('hidden');
+    }
+    return;
+  }
+
+  container.classList.remove('hidden');
+  markSplashAsShown();
+
+  let finished = false;
+  const complete = () => {
+    if (finished) return;
+    finished = true;
+    hideSplash(container);
+  };
+
+  // Закрываем splash строго по завершению ролика.
+  video.addEventListener('ended', complete, { once: true });
+
+  // Если видео не может быть загружено/проиграно, не блокируем вход в приложение.
+  video.addEventListener('error', complete, { once: true });
+
+  video.currentTime = 0;
+  const playPromise = video.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      complete();
+    });
+  }
 }
 
 function showInstallButton() {
@@ -69,6 +140,7 @@ function bindInstallFlow() {
 
 document.addEventListener('DOMContentLoaded', () => {
   hideInstallButton();
+  runAppSplashOnce();
   registerServiceWorker();
   bindInstallFlow();
 });
