@@ -29,11 +29,29 @@
     <link rel="icon" type="image/png" sizes="512x512" href="image/components/appicon-512.png">
     <link rel="apple-touch-icon" href="image/components/AppIcon.png">
     <link rel="manifest" href="manifest.webmanifest?v=2">
+    <script>
+        (function () {
+            var key = 'venera_app_splash_session_shown';
+            var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            var shouldShow = false;
+
+            try {
+                shouldShow = standalone && sessionStorage.getItem(key) !== '1';
+            } catch (e) {
+                shouldShow = standalone;
+            }
+
+            window.__VENERA_SPLASH_PRELOAD__ = shouldShow;
+            if (shouldShow) {
+                document.documentElement.classList.add('show-app-splash-preload');
+            }
+        })();
+    </script>
     <!-- Локальные стили проекта -->
         <link rel="stylesheet" href="styles.css">
 </head>
 <body class="antialiased">
-    <div id="app-splash" class="app-splash hidden" aria-hidden="true">
+    <div id="app-splash" class="app-splash" aria-hidden="true">
         <video id="app-splash-video" class="app-splash-video" autoplay muted playsinline preload="auto">
             <source src="image/components/splash.mp4" type="video/mp4">
         </video>

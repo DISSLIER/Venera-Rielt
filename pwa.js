@@ -17,6 +17,10 @@ function getAppSplashElements() {
 }
 
 function shouldShowSplash() {
+  if (typeof window.__VENERA_SPLASH_PRELOAD__ === 'boolean') {
+    return window.__VENERA_SPLASH_PRELOAD__;
+  }
+
   if (!isAppAlreadyInstalled()) {
     return false;
   }
@@ -42,6 +46,7 @@ function hideSplash(container) {
   window.setTimeout(() => {
     container.classList.add('hidden');
     container.classList.remove('fade-out');
+    document.documentElement.classList.remove('show-app-splash-preload');
   }, 460);
 }
 
@@ -51,6 +56,7 @@ function runAppSplashOnce() {
     if (container) {
       container.classList.add('hidden');
     }
+    document.documentElement.classList.remove('show-app-splash-preload');
     return;
   }
 

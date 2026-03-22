@@ -31,10 +31,19 @@
             z-index: 11000;
             background: #000;
             overflow: hidden;
+            display: none;
+        }
+
+        html.show-app-splash-preload .app-splash {
+            display: block;
+        }
+
+        html.show-app-splash-preload body {
+            overflow: hidden;
         }
 
         .app-splash.hidden {
-            display: none;
+            display: none !important;
         }
 
         .app-splash-video {
