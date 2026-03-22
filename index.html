@@ -12,6 +12,10 @@
     -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Venera Rielt">
     <title>Venera Rielt | Premium Real Estate Moldova</title>
     <!-- Внешние библиотеки интерфейса, карт и отправки формы -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,9 +24,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2/dist/email.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Иконки приложения (FavIcon и AppIcon) -->
-    <link rel="icon" type="image/jpeg" href="image/components/FavIcon.jpg">
+    <!-- Иконки и PWA-манифест -->
+    <link rel="icon" type="image/png" sizes="192x192" href="image/components/appicon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="image/components/appicon-512.png">
     <link rel="apple-touch-icon" href="image/components/AppIcon.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <!-- Локальные стили проекта -->
         <link rel="stylesheet" href="styles.css">
 </head>
@@ -835,6 +841,15 @@
         <img id="image-lightbox-content" src="" alt="Property image fullscreen" class="image-lightbox-content">
     </div>
 
+    <button
+        id="install-app-btn"
+        class="hidden fixed bottom-6 right-6 z-[70] bg-yellow-400 text-black font-semibold px-5 py-3 rounded-full shadow-xl hover:bg-yellow-300 transition"
+        type="button"
+        aria-label="Install app"
+    >
+        <i class="fas fa-download mr-2"></i>Установить приложение
+    </button>
+
 
 
         <!-- Порядок важен: сначала конфиги, затем основной JS -->
@@ -845,6 +860,7 @@
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
         <script src="script.js"></script>
         <script src="admin.js"></script>
+        <script src="pwa.js"></script>
     </body>
 </html>
 
