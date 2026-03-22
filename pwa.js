@@ -1,32 +1,21 @@
 let deferredInstallPrompt = null;
 
-function isStandaloneMode() {
+function getInstallMenuLink() {
+  return document.getElementById('mobile-install-app-link');
+}
+
+function isAppAlreadyInstalled() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
-function showAppLaunchSplash() {
-  const splash = document.getElementById('app-launch-splash');
-  if (!splash || !isStandaloneMode()) return;
-
-  splash.classList.remove('hidden');
-
-  window.setTimeout(() => {
-    splash.classList.add('fade-out');
-    window.setTimeout(() => {
-      splash.classList.add('hidden');
-      splash.classList.remove('fade-out');
-    }, 360);
-  }, 900);
-}
-
 function showInstallButton() {
-  const btn = document.getElementById('install-app-btn');
+  const btn = getInstallMenuLink();
   if (!btn) return;
   btn.classList.remove('hidden');
 }
 
 function hideInstallButton() {
-  const btn = document.getElementById('install-app-btn');
+  const btn = getInstallMenuLink();
   if (!btn) return;
   btn.classList.add('hidden');
 }
@@ -41,8 +30,13 @@ async function registerServiceWorker() {
 }
 
 function bindInstallFlow() {
-  const installBtn = document.getElementById('install-app-btn');
+  const installBtn = getInstallMenuLink();
   if (!installBtn) return;
+
+  if (isAppAlreadyInstalled()) {
+    hideInstallButton();
+    return;
+  }
 
   installBtn.addEventListener('click', async () => {
     if (!deferredInstallPrompt) return;
@@ -52,6 +46,12 @@ function bindInstallFlow() {
     if (choice && choice.outcome === 'accepted') {
       hideInstallButton();
     }
+
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenu) {
+      mobileMenu.classList.add('hidden');
+    }
+
     deferredInstallPrompt = null;
   });
 
@@ -68,7 +68,7 @@ function bindInstallFlow() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  showAppLaunchSplash();
+  hideInstallButton();
   registerServiceWorker();
   bindInstallFlow();
 });

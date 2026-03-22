@@ -33,10 +33,6 @@
         <link rel="stylesheet" href="styles.css">
 </head>
 <body class="antialiased">
-    <div id="app-launch-splash" class="app-launch-splash hidden" aria-hidden="true">
-        <img src="image/components/AppIcon.png" alt="Venera Rielt" class="app-launch-splash-icon">
-    </div>
-
     <!-- Header -->
     <header class="fixed w-full z-50 glass-effect">
         <div class="container mx-auto px-4 py-4">
@@ -69,7 +65,9 @@
                 <a href="#agents" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Специалисты</a>
                 <a href="#about" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">О компании</a>
                 <a href="#contact" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Контакты</a>
-                <a href="#" id="admin-panel-link" class="block px-3 py-2 text-white hover:bg-gray-800 rounded-md">Админ-панель</a>
+                <a href="#" id="mobile-install-app-link" class="hidden block px-3 py-2 text-yellow-300 hover:bg-gray-800 rounded-md">
+                    <i class="fas fa-download mr-2"></i>Установить приложение
+                </a>
             </div>
         </div>
     </header>
@@ -844,17 +842,6 @@
         <div id="image-lightbox-counter" class="image-lightbox-counter">1 / 1</div>
         <img id="image-lightbox-content" src="" alt="Property image fullscreen" class="image-lightbox-content">
     </div>
-
-    <button
-        id="install-app-btn"
-        class="hidden fixed bottom-6 right-6 z-[70] bg-yellow-400 text-black font-semibold px-5 py-3 rounded-full shadow-xl hover:bg-yellow-300 transition"
-        type="button"
-        aria-label="Install app"
-    >
-        <i class="fas fa-download mr-2"></i>Установить приложение
-    </button>
-
-
 
         <!-- Порядок важен: сначала конфиги, затем основной JS -->
         <script src="agents.config.js"></script>
