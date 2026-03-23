@@ -341,10 +341,86 @@
 
         // === Пароль доступа в админ-панель (можно изменить) ===
         const ADMIN_PASSWORD = 'venera2026';
+        const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
+
+        function getUniqueCitiesAndDistricts() {
+            const cities = new Set();
+            const districtsByCity = {};
+
+            const properties = Array.isArray(window.VENERA_PROPERTIES_CONFIG) ? window.VENERA_PROPERTIES_CONFIG : [];
+            properties.forEach(prop => {
+                if (prop.city) {
+                    cities.add(prop.city);
+                    if (!districtsByCity[prop.city]) {
+                        districtsByCity[prop.city] = new Set();
+                    }
+                    if (prop.district) {
+                        districtsByCity[prop.city].add(prop.district);
+                    }
+                }
+            });
+
+            return {
+                cities: Array.from(cities).sort(),
+                districtsByCity: Object.keys(districtsByCity).reduce((acc, city) => {
+                    acc[city] = Array.from(districtsByCity[city]).sort();
+                    return acc;
+                }, {})
+            };
+        }
+
+        function populateCitySelect() {
+            const citySelect = document.getElementById('property-city');
+            if (!citySelect) return;
+
+            const { cities } = getUniqueCitiesAndDistricts();
+            citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
+            
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+
+            citySelect.addEventListener('change', populateDistrictSelect);
+        }
+
+        function populateDistrictSelect() {
+            const citySelect = document.getElementById('property-city');
+            const districtSelect = document.getElementById('property-district');
+            if (!districtSelect) return;
+
+            const selectedCity = citySelect.value;
+            const { districtsByCity } = getUniqueCitiesAndDistricts();
+            const districts = districtsByCity[selectedCity] || [];
+
+            districtSelect.innerHTML = '<option value="">-- Выберите район --</option>';
+            
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+        }
 
         function openAdminPanelWithAuth() {
             const authModal = document.getElementById('admin-auth-modal');
             if (!authModal) return;
+
+            // Проверяем, аутентифицирован ли user в этой сессии
+            const isAuthenticated = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+            if (isAuthenticated) {
+                authModal.classList.add('hidden');
+                const adminPanel = document.getElementById('admin-panel');
+                adminPanel.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                initAdminPanel();
+                return;
+            }
+
+            // Если не аутентифицирован - показываем модал
             document.getElementById('admin-password-input').value = '';
             document.getElementById('admin-auth-error').classList.add('hidden');
             authModal.classList.remove('hidden');
@@ -385,15 +461,39 @@
 
             function attemptAdminLogin() {
                 if (authInput.value === ADMIN_PASSWORD) {
+                    try {
+                        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+                    } catch (e) {
+                        console.log('SessionStorage not available');
+                    }
                     authModal.classList.add('hidden');
                     adminPanel.classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
+                    populateCitySelect();
                     initAdminPanel();
                 } else {
                     authError.classList.remove('hidden');
                     authInput.value = '';
                     authInput.focus();
                 }
+            }
+
+            // Toggle password visibility
+            const passwordToggleBtn = document.getElementById('admin-password-toggle');
+            if (passwordToggleBtn) {
+                passwordToggleBtn.addEventListener('click', function() {
+                    const input = document.getElementById('admin-password-input');
+                    const icon = passwordToggleBtn.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
             }
 
             document.getElementById('admin-auth-submit').addEventListener('click', attemptAdminLogin);
@@ -406,6 +506,7 @@
         });
         
         function initAdminPanel() {
+            populateCitySelect();
             renderPropertiesList();
             renderAgentsList();
         }
@@ -505,6 +606,7 @@
                 document.getElementById('property-main-photo').value = card.querySelector('img').src || '';
                 document.getElementById('property-photos').value = card.dataset.photos || '';
                 document.getElementById('property-city').value = data.city || '';
+                populateDistrictSelect();
                 document.getElementById('property-district').value = data.district || '';
                 document.getElementById('property-type').value = getPropertyTypeForSelect(data.type || 'premium');
                 document.getElementById('property-price').value = data.price || '';
@@ -541,6 +643,7 @@
                 
                 // Reset realtor dropdown to first option
                 document.getElementById('property-rieltor-id').selectedIndex = 0;
+                populateDistrictSelect();
                 syncPropertyConfigTemplateSelection();
             }
 
@@ -798,6 +901,7 @@
                     ? draft.photos.join(', ')
                     : (draft.photos || '');
                 document.getElementById('property-city').value = draft.city || '';
+                populateDistrictSelect();
                 document.getElementById('property-district').value = draft.district || '';
                 document.getElementById('property-type').value = getPropertyTypeForSelect(draft.type || 'premium');
                 if (document.getElementById('property-config-template')) {
@@ -2210,11 +2314,13 @@
             document.body.style.overflow = 'hidden';
         }
 
-        viewDetailsButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                openPropertyOverlay(this);
-            });
+        // Используем делегирование событий вместо прямого bind к кнопкам
+        // Это позволяет обработчикам срабатывать на динамически добавленные карточки
+        document.addEventListener('click', function(e) {
+            const detailsBtn = e.target.closest('.view-details-btn');
+            if (!detailsBtn) return;
+            e.preventDefault();
+            openPropertyOverlay(detailsBtn);
         });
 
         closeOverlay.addEventListener('click', function(e) {

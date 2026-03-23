@@ -77,10 +77,24 @@ function runAppSplashOnce() {
   video.addEventListener('error', complete, { once: true });
 
   video.currentTime = 0;
+  
+  // Для iOS: попытка автозапуска, если не сработает - подключаем ручной запуск по тапу
   const playPromise = video.play();
   if (playPromise && typeof playPromise.catch === 'function') {
     playPromise.catch(() => {
-      complete();
+      // На iOS автоplay не работает, включаем ручной запуск видео по тапу
+      const iosTapHandler = () => {
+        video.play().catch(() => {
+          complete();
+        });
+        container.removeEventListener('touchstart', iosTapHandler);
+      };
+      container.addEventListener('touchstart', iosTapHandler, { once: true });
+      // Если user не кликнет - закрываем splash через 3 сек
+      setTimeout(() => {
+        container.removeEventListener('touchstart', iosTapHandler);
+        complete();
+      }, 3000);
     });
   }
 }
