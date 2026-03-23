@@ -52,7 +52,7 @@
 </head>
 <body class="antialiased">
     <div id="app-splash" class="app-splash" aria-hidden="true">
-        <video id="app-splash-video" class="app-splash-video" autoplay muted playsinline preload="auto">
+        <video id="app-splash-video" class="app-splash-video" autoplay muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
             <source src="image/components/splash.mp4" type="video/mp4">
         </video>
         <div class="app-splash-overlay"></div>
@@ -888,7 +888,7 @@
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
         <script src="script.js"></script>
         <script src="admin.js"></script>
-        <script src="pwa.js"></script>
+        <script src="pwa.js?v=3"></script>
     </body>
 </html>
 

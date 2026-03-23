@@ -76,27 +76,38 @@ function runAppSplashOnce() {
   // Если видео не может быть загружено/проиграно, не блокируем вход в приложение.
   video.addEventListener('error', complete, { once: true });
 
+  // iOS/Safari: для autoplay видео должно быть muted + inline на уровне property и attribute.
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.removeAttribute('controls');
+
   video.currentTime = 0;
-  
-  // Для iOS: попытка автозапуска, если не сработает - подключаем ручной запуск по тапу
-  const playPromise = video.play();
-  if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {
-      // На iOS автоplay не работает, включаем ручной запуск видео по тапу
-      const iosTapHandler = () => {
-        video.play().catch(() => {
-          complete();
-        });
-        container.removeEventListener('touchstart', iosTapHandler);
-      };
-      container.addEventListener('touchstart', iosTapHandler, { once: true });
-      // Если user не кликнет - закрываем splash через 3 сек
-      setTimeout(() => {
-        container.removeEventListener('touchstart', iosTapHandler);
-        complete();
-      }, 3000);
-    });
-  }
+
+  // Несколько попыток autoplay подряд, чтобы обойти гонки готовности видео в iOS.
+  const tryPlay = () => {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Ничего не делаем здесь: дополнительные попытки ниже.
+      });
+    }
+  };
+
+  tryPlay();
+  window.requestAnimationFrame(tryPlay);
+  window.setTimeout(tryPlay, 120);
+  video.addEventListener('canplay', tryPlay, { once: true });
+
+  // Если iOS все равно блокирует autoplay (напр. Low Power Mode), не держим splash бесконечно.
+  window.setTimeout(() => {
+    if (video.paused) {
+      complete();
+    }
+  }, 2200);
 }
 
 function showInstallButton() {
@@ -114,7 +125,7 @@ function hideInstallButton() {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register('/sw.js?v=2');
+    await navigator.serviceWorker.register('/sw.js?v=3');
   } catch (error) {
     console.log('SW register error:', error);
   }
