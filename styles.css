@@ -520,9 +520,13 @@
             height: 500px;
             width: 100%;
             position: relative;
-            border: 1px solid rgba(255, 215, 0, 0.35);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-            background: #d1d5db;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+            background: #dfe8d8;
+        }
+
+        .map-container .leaflet-tile {
+            filter: none;
         }
 
         .map-container .leaflet-control-zoom a,
