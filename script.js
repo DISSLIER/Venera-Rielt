@@ -1709,34 +1709,82 @@
             });
         }
 
-        function initPropertyMap(lat, lng) {
+        function getMiniMapMarkerMeta(typeValue) {
+            const normalized = String(typeValue || '').trim().toLowerCase();
+            const map = {
+                premium: { className: 'custom-icon premium-icon', html: '<i class="fas fa-crown"></i>' },
+                'премиум': { className: 'custom-icon premium-icon', html: '<i class="fas fa-crown"></i>' },
+                secondary: { className: 'custom-icon secondary-icon', html: '<i class="fas fa-home"></i>' },
+                'вторичка': { className: 'custom-icon secondary-icon', html: '<i class="fas fa-home"></i>' },
+                newbuilding: { className: 'custom-icon newbuilding-icon', html: '<i class="fas fa-building"></i>' },
+                'новострой': { className: 'custom-icon newbuilding-icon', html: '<i class="fas fa-building"></i>' },
+                commercial: { className: 'custom-icon commercial-icon', html: '<i class="fas fa-briefcase"></i>' },
+                'коммерческая': { className: 'custom-icon commercial-icon', html: '<i class="fas fa-briefcase"></i>' },
+                garage: { className: 'custom-icon garage-icon', html: '<i class="fas fa-warehouse"></i>' },
+                'гараж': { className: 'custom-icon garage-icon', html: '<i class="fas fa-warehouse"></i>' },
+                parking: { className: 'custom-icon parking-icon', html: '<i class="fas fa-parking"></i>' },
+                'парковка': { className: 'custom-icon parking-icon', html: '<i class="fas fa-parking"></i>' },
+                storage: { className: 'custom-icon storage-icon', html: '<i class="fas fa-box-open"></i>' },
+                'кладовка': { className: 'custom-icon storage-icon', html: '<i class="fas fa-box-open"></i>' },
+                house: { className: 'custom-icon house-icon', html: '<i class="fas fa-home"></i>' },
+                'дом': { className: 'custom-icon house-icon', html: '<i class="fas fa-home"></i>' },
+                land: { className: 'custom-icon land-icon', html: '<i class="fas fa-tree"></i>' },
+                'участок': { className: 'custom-icon land-icon', html: '<i class="fas fa-tree"></i>' }
+            };
+            return map[normalized] || map.premium;
+        }
+
+        function createMiniMapMarkerIcon(typeValue, listingModeValue) {
+            const markerMeta = getMiniMapMarkerMeta(typeValue);
+            const normalizedListingMode = normalizeListingMode(listingModeValue, typeValue);
+
+            if (normalizedListingMode === 'rent') {
+                return L.divIcon({
+                    className: 'mini-map-marker-wrap',
+                    html: `<div class="${markerMeta.className}">${markerMeta.html}</div><span class="mini-map-rent-badge">Аренда</span>`,
+                    iconSize: [86, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor: [0, -14]
+                });
+            }
+
+            return L.divIcon({
+                className: markerMeta.className,
+                html: markerMeta.html,
+                iconSize: [30, 30]
+            });
+        }
+
+        function initPropertyMap(lat, lng, typeValue = 'premium', listingModeValue = 'sale') {
             // Remove existing map if it exists
             if (propertyMap) {
                 propertyMap.remove();
                 propertyMap = null;
             }
-            
+
             // Create new map
             propertyMap = L.map('property-map', {
                 zoomControl: false,
                 attributionControl: false
             }).setView([lat, lng], 15);
-            
+
             L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
 
+            const miniMapIcon = createMiniMapMarkerIcon(typeValue, listingModeValue);
+
             // Add marker
-            L.marker([lat, lng]).addTo(propertyMap);
-            
+            L.marker([lat, lng], { icon: miniMapIcon }).addTo(propertyMap);
+
             // Force map to update its size
             setTimeout(() => {
                 propertyMap.invalidateSize();
             }, 0);
         }
 
-        function openFullscreenPropertyMap(lat, lng) {
+        function openFullscreenPropertyMap(lat, lng, typeValue = 'premium', listingModeValue = 'sale') {
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
                 return;
             }
@@ -1763,7 +1811,8 @@
                 detectRetina: true
             }).addTo(window.overlayMap);
 
-            L.marker([lat, lng]).addTo(window.overlayMap);
+            const miniMapIcon = createMiniMapMarkerIcon(typeValue, listingModeValue);
+            L.marker([lat, lng], { icon: miniMapIcon }).addTo(window.overlayMap);
         }
 
         // Function to update districts based on selected city
@@ -2206,7 +2255,12 @@
             const openPropertyMapFullscreen = function() {
                 if (!propertyMapEl || !propertyMapEl.dataset.coords) return;
                 const [lat, lng] = propertyMapEl.dataset.coords.split(',').map(Number);
-                openFullscreenPropertyMap(lat, lng);
+                openFullscreenPropertyMap(
+                    lat,
+                    lng,
+                    propertyMapEl.dataset.markerType || 'premium',
+                    propertyMapEl.dataset.listingMode || 'sale'
+                );
             };
 
             if (propertyMapExpandBtn) {
@@ -2596,16 +2650,22 @@
             // Get coordinates from property card and init map
             const coords = propertyCard.dataset.coords;
             if (coords) {
-                document.getElementById('property-map').dataset.coords = coords;
+                const propertyMapEl = document.getElementById('property-map');
+                propertyMapEl.dataset.coords = coords;
+                propertyMapEl.dataset.markerType = propertyData.type || propertyType || 'premium';
+                propertyMapEl.dataset.listingMode = propertyData.listingMode || 'sale';
                 const [lat, lng] = coords.split(',').map(Number);
                 setTimeout(() => {
-                    initPropertyMap(lat, lng);
+                    initPropertyMap(lat, lng, propertyData.type || propertyType || 'premium', propertyData.listingMode || 'sale');
                 }, 100);
             } else {
-                document.getElementById('property-map').dataset.coords = '';
+                const propertyMapEl = document.getElementById('property-map');
+                propertyMapEl.dataset.coords = '';
+                propertyMapEl.dataset.markerType = propertyData.type || propertyType || 'premium';
+                propertyMapEl.dataset.listingMode = propertyData.listingMode || 'sale';
                 // Default coordinates if no coords specified
                 setTimeout(() => {
-                    initPropertyMap(47.0245, 28.8323);
+                    initPropertyMap(47.0245, 28.8323, propertyData.type || propertyType || 'premium', propertyData.listingMode || 'sale');
                 }, 100);
             }
             
