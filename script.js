@@ -1740,10 +1740,10 @@
 
             if (normalizedListingMode === 'rent') {
                 return L.divIcon({
-                    className: 'mini-map-marker-wrap',
-                    html: `<div class="${markerMeta.className}">${markerMeta.html}</div><span class="mini-map-rent-badge">Аренда</span>`,
-                    iconSize: [86, 30],
-                    iconAnchor: [15, 15],
+                    className: 'mini-map-marker-combo-icon',
+                    html: `<div class="mini-map-marker-combo"><div class="mini-map-type-icon ${markerMeta.className}">${markerMeta.html}</div><span class="mini-map-rent-badge">Аренда</span></div>`,
+                    iconSize: [98, 30],
+                    iconAnchor: [16, 15],
                     popupAnchor: [0, -14]
                 });
             }

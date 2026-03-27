@@ -772,11 +772,35 @@
             box-shadow: 0 14px 24px rgba(17, 24, 39, 0.45);
         }
 
-        .mini-map-marker-wrap {
+        .mini-map-marker-wrap,
+        .mini-map-marker-combo-icon {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             white-space: nowrap;
+        }
+
+        .mini-map-marker-combo-icon {
+            background: transparent;
+            border: none;
+        }
+
+        .mini-map-marker-combo {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .mini-map-type-icon {
+            width: 30px;
+            height: 30px;
+            min-width: 30px;
+            min-height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
         .mini-map-rent-badge {
