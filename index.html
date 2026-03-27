@@ -119,6 +119,21 @@
             <!-- Search Box -->
             <div class="glass-effect rounded-xl p-4 md:p-6 max-w-4xl mx-auto search-box mt-20 md:mt-0">
                 <form id="search-form">
+                <div class="mb-4">
+                    <label class="block text-left text-white mb-2 text-sm md:text-base">Категория</label>
+                    <div class="listing-switch" role="tablist" aria-label="Категория предложений">
+                        <button type="button" id="listing-sale-btn" class="listing-switch-btn" data-listing-mode="sale" role="tab" aria-selected="false">
+                            <i class="fas fa-tag mr-2"></i>Продажа
+                        </button>
+                        <button type="button" id="listing-all-btn" class="listing-switch-btn active" data-listing-mode="all" role="tab" aria-selected="true">
+                            <i class="fas fa-home mr-2"></i>Все
+                        </button>
+                        <button type="button" id="listing-rent-btn" class="listing-switch-btn" data-listing-mode="rent" role="tab" aria-selected="false">
+                            <i class="fas fa-key mr-2"></i>Аренда
+                        </button>
+                    </div>
+                    <input type="hidden" id="listing-category" value="all">
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <div>
                         <label class="block text-left text-white mb-1 text-sm md:text-base">Город</label>
@@ -156,12 +171,11 @@
                     </div>
                     <div>
                         <label class="block text-left text-white mb-1 text-sm md:text-base">Тип предложения</label>
-                        <select id="property-type" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
+                        <select id="search-property-type" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
                             <option value="Все">Все типы</option>
                             <option>Премиум</option>
                             <option>Вторичка</option>
                             <option>Новострой</option>
-                            <option>Аренда</option>
                             <option>Коммерческая</option>
                             <option>Гараж</option>
                             <option>Парковка</option>
@@ -299,7 +313,7 @@
                                 <div class="text-sm text-gray-400">Довольных клиентов</div>
                             </div>
                             <div class="glass-effect rounded-lg p-4">
-                                <div class="text-3xl font-bold gold-text mb-2">45</div>
+                                <div class="text-3xl font-bold gold-text mb-2" id="properties-for-sale-count">0</div>
                                 <div class="text-sm text-gray-400">Объектов в продаже</div>
                             </div>
                             <div class="glass-effect rounded-lg p-4">
@@ -591,12 +605,18 @@
                         </select>
                     </div>
                     <div>
+                        <label class="block text-gray-400 mb-2">Сделка</label>
+                        <select id="property-listing-mode" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                            <option value="sale">Продажа</option>
+                            <option value="rent">Аренда</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-gray-400 mb-2">Тип</label>
                         <select id="property-type" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
                             <option value="premium">Премиум</option>
                             <option value="secondary">Вторичка</option>
                             <option value="newbuilding">Новострой</option>
-                            <option value="rental">Аренда</option>
                             <option value="commercial">Коммерческая</option>
                             <option value="garage">Гараж</option>
                             <option value="parking">Парковка</option>
@@ -785,7 +805,12 @@
                     <!-- Map -->
                     <div class="p-4">
                         <h4 class="font-semibold mb-2 gold-text">Расположение</h4>
-                        <div id="property-map" class="h-48 rounded-lg" style="background-color: #1a1a1a;"></div>
+                        <div class="relative">
+                            <div id="property-map" class="h-48 rounded-lg cursor-pointer" style="background-color: #1a1a1a;"></div>
+                            <button type="button" id="property-map-expand-btn" class="property-map-expand-btn" title="Открыть карту на весь экран" aria-label="Открыть карту на весь экран">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -851,7 +876,7 @@
                     </div>
                     
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <button class="flex-1 gold-bg text-black font-bold py-3 px-6 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
+                        <button class="contact-call-btn flex-1 gold-bg text-black font-bold py-3 px-6 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300">
                             <i class="fas fa-phone-alt mr-2"></i> Позвонить
                         </button>
                         <div class="flex-1 flex justify-center space-x-4 items-center bg-transparent border border-gold-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gold-500 hover:text-black transition duration-300">

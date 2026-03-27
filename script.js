@@ -382,11 +382,70 @@
             };
         }
 
+        function registerCityDistrict(city, district) {
+            const cleanCity = String(city || '').trim();
+            const cleanDistrict = String(district || '').trim();
+            if (!cleanCity) return;
+
+            if (!cityDistricts[cleanCity]) {
+                cityDistricts[cleanCity] = ['Все районы'];
+            }
+
+            if (cleanDistrict && cleanDistrict !== 'Все районы' && !cityDistricts[cleanCity].includes(cleanDistrict)) {
+                cityDistricts[cleanCity].push(cleanDistrict);
+            }
+
+            cityDistricts[cleanCity] = Array.from(new Set(cityDistricts[cleanCity])).sort((a, b) => {
+                if (a === 'Все районы') return -1;
+                if (b === 'Все районы') return 1;
+                return a.localeCompare(b, 'ru');
+            });
+        }
+
+        function syncCityDistrictCatalog() {
+            const { cities, districtsByCity } = getUniqueCitiesAndDistricts();
+            cities.forEach(city => registerCityDistrict(city, 'Все районы'));
+            Object.keys(districtsByCity).forEach(city => {
+                districtsByCity[city].forEach(district => registerCityDistrict(city, district));
+            });
+
+            document.querySelectorAll('.property-card').forEach(card => {
+                registerCityDistrict(card.dataset.city, card.dataset.district);
+            });
+        }
+
+        function populateSearchCitySelect() {
+            const searchCity = document.getElementById('city');
+            if (!searchCity) return;
+
+            const currentValue = searchCity.value || 'Все';
+            searchCity.innerHTML = '';
+
+            const allOption = document.createElement('option');
+            allOption.value = 'Все';
+            allOption.textContent = 'Все города';
+            searchCity.appendChild(allOption);
+
+            Object.keys(cityDistricts)
+                .sort((a, b) => a.localeCompare(b, 'ru'))
+                .forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    searchCity.appendChild(option);
+                });
+
+            const canRestore = Array.from(searchCity.options).some(option => option.value === currentValue);
+            searchCity.value = canRestore ? currentValue : 'Все';
+        }
+
         function populateCitySelect() {
             const citySelect = document.getElementById('property-city');
             if (!citySelect) return;
 
-            const { cities } = getUniqueCitiesAndDistricts();
+            syncCityDistrictCatalog();
+            const cities = Object.keys(cityDistricts).sort((a, b) => a.localeCompare(b, 'ru'));
+            const currentValue = citySelect.value || '';
             citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
             
             cities.forEach(city => {
@@ -395,6 +454,10 @@
                 option.textContent = city;
                 citySelect.appendChild(option);
             });
+
+            if (currentValue && Array.from(citySelect.options).some(option => option.value === currentValue)) {
+                citySelect.value = currentValue;
+            }
 
             citySelect.addEventListener('change', populateDistrictSelect);
         }
@@ -405,8 +468,8 @@
             if (!districtSelect) return;
 
             const selectedCity = citySelect.value;
-            const { districtsByCity } = getUniqueCitiesAndDistricts();
-            const districts = districtsByCity[selectedCity] || [];
+            const currentDistrict = districtSelect.value || '';
+            const districts = cityDistricts[selectedCity] || ['Все районы'];
 
             districtSelect.innerHTML = '<option value="">-- Выберите район --</option>';
             
@@ -416,6 +479,10 @@
                 option.textContent = district;
                 districtSelect.appendChild(option);
             });
+
+            if (currentDistrict && Array.from(districtSelect.options).some(option => option.value === currentDistrict)) {
+                districtSelect.value = currentDistrict;
+            }
         }
 
         function openAdminPanelWithAuth() {
@@ -624,6 +691,8 @@
                 document.getElementById('property-title').value = card.querySelector('h3').textContent;
                 document.getElementById('property-main-photo').value = card.querySelector('img').src || '';
                 document.getElementById('property-photos').value = card.dataset.photos || '';
+                registerCityDistrict(data.city, data.district);
+                populateCitySelect();
                 document.getElementById('property-city').value = data.city || '';
                 populateDistrictSelect();
                 document.getElementById('property-district').value = data.district || '';
@@ -664,6 +733,7 @@
                 // Reset realtor dropdown to first option
                 document.getElementById('property-rieltor-id').selectedIndex = 0;
                 document.getElementById('property-listing-mode').value = 'sale';
+                populateCitySelect();
                 populateDistrictSelect();
                 syncPropertyConfigTemplateSelection();
             }
@@ -933,6 +1003,8 @@
                 document.getElementById('property-photos').value = Array.isArray(draft.photos)
                     ? draft.photos.join(', ')
                     : (draft.photos || '');
+                registerCityDistrict(draft.city, draft.district);
+                populateCitySelect();
                 document.getElementById('property-city').value = draft.city || '';
                 populateDistrictSelect();
                 document.getElementById('property-district').value = draft.district || '';
@@ -1178,6 +1250,10 @@
             if (typeof renderPropertiesList === 'function') renderPropertiesList();
             if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
             if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+            registerCityDistrict(normalized.city, normalized.district);
+            syncCityDistrictCatalog();
+            populateSearchCitySelect();
+            populateCitySelect();
 
             if (mainMap) {
                 mainMap.remove();
@@ -1463,39 +1539,40 @@
                 const groupListingModes = [firstProperty.listingMode];
 
                 let icon;
-                switch(type.toLowerCase()) {
-                    case 'премиум':
-                        icon = iconPremium;
-                        break;
-                    case 'вторичка':
-                        icon = iconSecondary;
-                        break;
-                    case 'новострой':
-                        icon = iconNewbuilding;
-                        break;
-                    case 'коммерческая':
-                        icon = iconCommercial;
-                        break;
-                    case 'аренда':
-                        icon = iconPremium;
-                        break;
-                    case 'гараж':
-                        icon = iconGarage;
-                        break;
-                    case 'парковка':
-                        icon = iconParking;
-                        break;
-                    case 'кладовка':
-                        icon = iconStorage;
-                        break;
-                    case 'дом':
-                        icon = iconHouse;
-                        break;
-                    case 'участок':
-                        icon = iconLand;
-                        break;
-                    default:
-                        icon = iconPremium;
+                if (firstProperty.listingMode === 'rent') {
+                    icon = iconRental;
+                } else {
+                    switch(type.toLowerCase()) {
+                        case 'премиум':
+                            icon = iconPremium;
+                            break;
+                        case 'вторичка':
+                            icon = iconSecondary;
+                            break;
+                        case 'новострой':
+                            icon = iconNewbuilding;
+                            break;
+                        case 'коммерческая':
+                            icon = iconCommercial;
+                            break;
+                        case 'гараж':
+                            icon = iconGarage;
+                            break;
+                        case 'парковка':
+                            icon = iconParking;
+                            break;
+                        case 'кладовка':
+                            icon = iconStorage;
+                            break;
+                        case 'дом':
+                            icon = iconHouse;
+                            break;
+                        case 'участок':
+                            icon = iconLand;
+                            break;
+                        default:
+                            icon = iconPremium;
+                    }
                 }
 
                 // If multiple properties at same location, add badge
@@ -1661,6 +1738,36 @@
             setTimeout(() => {
                 propertyMap.invalidateSize();
             }, 0);
+        }
+
+        function openFullscreenPropertyMap(lat, lng) {
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                return;
+            }
+
+            const mapOverlay = document.getElementById('map-overlay');
+            if (!mapOverlay) {
+                return;
+            }
+
+            disableBodyScroll();
+            mapOverlay.classList.add('active');
+
+            if (window.overlayMap) {
+                window.overlayMap.remove();
+                window.overlayMap = null;
+            }
+
+            window.overlayMap = L.map('map-overlay-container', {
+                zoomControl: true
+            }).setView([lat, lng], 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                attribution: '',
+                detectRetina: true
+            }).addTo(window.overlayMap);
+
+            L.marker([lat, lng]).addTo(window.overlayMap);
         }
 
         // Function to update districts based on selected city
@@ -1996,6 +2103,9 @@
 
         // Initialize main map when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            syncCityDistrictCatalog();
+            populateSearchCitySelect();
+            populateCitySelect();
             countAgentProperties();
             renderAgents();
             initMainMap();
@@ -2052,49 +2162,65 @@
             // Expand map functionality
             expandBtn.addEventListener('click', function() {
                 document.getElementById('map-overlay').classList.add('active');
+                disableBodyScroll();
+
+                if (window.overlayMap) {
+                    window.overlayMap.remove();
+                    window.overlayMap = null;
+                }
                 
-                // Initialize overlay map if not already initialized
-                if (!window.overlayMap) {
-                    window.overlayMap = L.map('map-overlay-container', {
-                        zoomControl: true
-                    }).setView(mainMap.getCenter(), mainMap.getZoom());
-                    
-                    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-                        attribution: '',
-                        detectRetina: true
+                window.overlayMap = L.map('map-overlay-container', {
+                    zoomControl: true
+                }).setView(mainMap.getCenter(), mainMap.getZoom());
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                    attribution: '',
+                    detectRetina: true
+                }).addTo(window.overlayMap);
+                
+                // Copy markers from main map to overlay
+                propertyMarkers.forEach(marker => {
+                    const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+                    const markerModes = Array.isArray(marker.listingModes) && marker.listingModes.length > 0
+                        ? marker.listingModes
+                        : ['sale'];
+                    const shouldShow = listingCategory === 'all' || markerModes.includes(listingCategory);
+                    if (!shouldShow) {
+                        return;
+                    }
+
+                    const overlayMarker = L.marker(marker.getLatLng(), {
+                        icon: marker.options.icon
                     }).addTo(window.overlayMap);
                     
-                    // Copy markers from main map to overlay
-                    propertyMarkers.forEach(marker => {
-                        const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
-                        const markerModes = Array.isArray(marker.listingModes) && marker.listingModes.length > 0
-                            ? marker.listingModes
-                            : ['sale'];
-                        const shouldShow = listingCategory === 'all' || markerModes.includes(listingCategory);
-                        if (!shouldShow) {
-                            return;
-                        }
-
-                        const overlayMarker = L.marker(marker.getLatLng(), {
-                            icon: marker.options.icon
-                        }).addTo(window.overlayMap);
-                        
-                        // Copy popup content
-                        if (marker._popup) {
-                            overlayMarker.bindPopup(marker._popup._content, {
-                                maxWidth: 300,
-                                minWidth: 200,
-                                className: 'map-popup-mini-container',
-                                closeButton: false,
-                                offset: L.point(0, -20)
-                            });
-                        }
-                    });
-                } else {
-                    // Update view if map already exists
-                    window.overlayMap.setView(mainMap.getCenter(), mainMap.getZoom());
-                }
+                    // Copy popup content
+                    if (marker._popup) {
+                        overlayMarker.bindPopup(marker._popup._content, {
+                            maxWidth: 300,
+                            minWidth: 200,
+                            className: 'map-popup-mini-container',
+                            closeButton: false,
+                            offset: L.point(0, -20)
+                        });
+                    }
+                });
             });
+
+            const propertyMapEl = document.getElementById('property-map');
+            const propertyMapExpandBtn = document.getElementById('property-map-expand-btn');
+            const openPropertyMapFullscreen = function() {
+                if (!propertyMapEl || !propertyMapEl.dataset.coords) return;
+                const [lat, lng] = propertyMapEl.dataset.coords.split(',').map(Number);
+                openFullscreenPropertyMap(lat, lng);
+            };
+
+            if (propertyMapExpandBtn) {
+                propertyMapExpandBtn.addEventListener('click', openPropertyMapFullscreen);
+            }
+
+            if (propertyMapEl) {
+                propertyMapEl.addEventListener('dblclick', openPropertyMapFullscreen);
+            }
             
             // Close overlay map
             document.getElementById('map-overlay-close').addEventListener('click', function() {
@@ -2452,7 +2578,7 @@
                     document.querySelector('#property-overlay .flex.items-center .text-sm').textContent = agent.position;
                     
                     // Update contact buttons
-                    const callBtn = document.querySelector('#property-overlay button:has(i.fa-phone-alt)');
+                    const callBtn = document.querySelector('#property-overlay .contact-call-btn');
                     callBtn.innerHTML = `<i class="fas fa-phone-alt mr-2"></i> ${agent.phone}`;
                     callBtn.onclick = function() { window.location.href = `tel:${agent.phone}`; };
                     
@@ -2475,11 +2601,13 @@
             // Get coordinates from property card and init map
             const coords = propertyCard.dataset.coords;
             if (coords) {
+                document.getElementById('property-map').dataset.coords = coords;
                 const [lat, lng] = coords.split(',').map(Number);
                 setTimeout(() => {
                     initPropertyMap(lat, lng);
                 }, 100);
             } else {
+                document.getElementById('property-map').dataset.coords = '';
                 // Default coordinates if no coords specified
                 setTimeout(() => {
                     initPropertyMap(47.0245, 28.8323);

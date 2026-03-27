@@ -526,11 +526,11 @@
         }
 
         .map-container .leaflet-tile {
-            filter: saturate(1.22) contrast(1.1) brightness(1.03);
+            filter: saturate(1.35) contrast(1.14) brightness(1.04);
         }
 
         .map-overlay-container .leaflet-tile {
-            filter: saturate(1.22) contrast(1.1) brightness(1.03);
+            filter: saturate(1.35) contrast(1.14) brightness(1.04);
         }
 
         .map-container .leaflet-control-zoom a,
@@ -563,6 +563,28 @@
 
         .map-expand-btn:hover {
             background: rgba(0,0,0,0.9);
+        }
+
+        .property-map-expand-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            z-index: 500;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(0, 0, 0, 0.72);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .property-map-expand-btn:hover {
+            background: rgba(0, 0, 0, 0.88);
         }
 
         .map-overlay {
@@ -758,6 +780,21 @@
         }
         .land-icon {
             background-color: #8BC34A;
+        }
+
+        #property-overlay .contact-call-btn {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 1024px) {
+            #property-overlay .contact-call-btn {
+                font-size: 0.95rem;
+            }
         }
 
         .type-tag {

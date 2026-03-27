@@ -120,6 +120,9 @@ function replacePropertiesInDom(propertiesPayload) {
     if (typeof updateAgentPhotos === 'function') updateAgentPhotos();
     if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
     if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+    if (typeof syncCityDistrictCatalog === 'function') syncCityDistrictCatalog();
+    if (typeof populateSearchCitySelect === 'function') populateSearchCitySelect();
+    if (typeof populateCitySelect === 'function') populateCitySelect();
 
     if (typeof mainMap !== 'undefined' && mainMap && typeof initMainMap === 'function') {
         mainMap.remove();
@@ -355,6 +358,9 @@ function updatePropertySaveHandler() {
         if (typeof renderPropertiesList === 'function') renderPropertiesList();
         if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
         if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+        if (typeof syncCityDistrictCatalog === 'function') syncCityDistrictCatalog();
+        if (typeof populateSearchCitySelect === 'function') populateSearchCitySelect();
+        if (typeof populateCitySelect === 'function') populateCitySelect();
 
         if (typeof mainMap !== 'undefined' && mainMap) {
             mainMap.remove();
