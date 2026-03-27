@@ -1339,31 +1339,16 @@
         let mainMap, propertyMap;
         const propertyMarkers = [];
         const markerGroups = {}; // To track markers by coordinates
-
-        const MAP_BASE_TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png';
-        const MAP_LABELS_TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
-
-        function addContourMapLayers(targetMap) {
-            L.tileLayer(MAP_BASE_TILE_URL, {
-                attribution: '',
-                detectRetina: true,
-                subdomains: 'abcd'
-            }).addTo(targetMap);
-
-            L.tileLayer(MAP_LABELS_TILE_URL, {
-                attribution: '',
-                detectRetina: true,
-                pane: 'overlayPane',
-                subdomains: 'abcd'
-            }).addTo(targetMap);
-        }
         
         // Property coordinates will be read from data-coords attribute
 
         function initMainMap() {
             mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
-
-            addContourMapLayers(mainMap);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '',
+                detectRetina: true
+            }).addTo(mainMap);
 
             // Custom icons for different property types
             const iconPremium = L.divIcon({
@@ -1663,8 +1648,11 @@
                 zoomControl: false,
                 attributionControl: false
             }).setView([lat, lng], 15);
-
-            addContourMapLayers(propertyMap);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '',
+                detectRetina: true
+            }).addTo(propertyMap);
 
             // Add marker
             L.marker([lat, lng]).addTo(propertyMap);
@@ -2070,8 +2058,11 @@
                     window.overlayMap = L.map('map-overlay-container', {
                         zoomControl: true
                     }).setView(mainMap.getCenter(), mainMap.getZoom());
-
-                    addContourMapLayers(window.overlayMap);
+                    
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '',
+                        detectRetina: true
+                    }).addTo(window.overlayMap);
                     
                     // Copy markers from main map to overlay
                     propertyMarkers.forEach(marker => {
