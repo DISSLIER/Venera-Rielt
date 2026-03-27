@@ -1571,6 +1571,16 @@
                         icon = iconPremium;
                 }
 
+                if (firstProperty.listingMode === 'rent') {
+                    icon = L.divIcon({
+                        className: 'main-map-marker-combo-icon',
+                        html: `<div class="main-map-marker-combo"><div class="main-map-type-icon ${icon.options.className}">${icon.options.html}</div><span class="main-map-rent-badge">Аренда</span></div>`,
+                        iconSize: [98, 30],
+                        iconAnchor: [16, 15],
+                        popupAnchor: [0, -14]
+                    });
+                }
+
                 // If multiple properties at same location, add badge
                 if (group.length > 1) {
                     const badgeHtml = `<div style="position: relative; display: inline-block;">
@@ -1604,6 +1614,10 @@
                         const propertyAddress = propertyCard.querySelector('.flex.items-center span').textContent;
                         const propertyPrice = propertyCard.querySelector('.price-tag').textContent;
                         const propertyType = propertyCard.querySelector('.type-tag').textContent;
+                        const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
+                        const rentBadgeHtml = propertyListingMode === 'rent'
+                            ? '<div class="absolute top-2 left-[86px] bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Аренда</div>'
+                            : '';
                         const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                             label: feature.querySelector('.text-sm').textContent,
                             value: feature.querySelector('.font-semibold').textContent
@@ -1616,6 +1630,7 @@
                                 <div class="absolute top-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${propertyType === 'ПРЕМИУМ' ? 'bg-yellow-500 text-black' : 'bg-blue-500 text-white'}">
                                     ${propertyType}
                                 </div>
+                                ${rentBadgeHtml}
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
                                     ${propertyPrice}
                                 </div>
@@ -1657,6 +1672,10 @@
                     const propertyAddress = propertyCard.querySelector('.flex.items-center span').textContent;
                     const propertyPrice = propertyCard.querySelector('.price-tag').textContent;
                     const propertyType = propertyCard.querySelector('.type-tag').textContent;
+                    const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
+                    const rentBadgeHtml = propertyListingMode === 'rent'
+                        ? '<div class="absolute top-2 left-[86px] bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Аренда</div>'
+                        : '';
                     const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                         label: feature.querySelector('.text-sm').textContent,
                         value: feature.querySelector('.font-semibold').textContent
@@ -1669,6 +1688,7 @@
                                 <div class="absolute top-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${propertyType === 'ПРЕМИУМ' ? 'bg-yellow-500 text-black' : 'bg-blue-500 text-white'}">
                                     ${propertyType}
                                 </div>
+                                ${rentBadgeHtml}
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
                                     ${propertyPrice}
                                 </div>
@@ -1736,17 +1756,6 @@
 
         function createMiniMapMarkerIcon(typeValue, listingModeValue) {
             const markerMeta = getMiniMapMarkerMeta(typeValue);
-            const normalizedListingMode = normalizeListingMode(listingModeValue, typeValue);
-
-            if (normalizedListingMode === 'rent') {
-                return L.divIcon({
-                    className: 'mini-map-marker-combo-icon',
-                    html: `<div class="mini-map-marker-combo"><div class="mini-map-type-icon ${markerMeta.className}">${markerMeta.html}</div><span class="mini-map-rent-badge">Аренда</span></div>`,
-                    iconSize: [98, 30],
-                    iconAnchor: [16, 15],
-                    popupAnchor: [0, -14]
-                });
-            }
 
             return L.divIcon({
                 className: markerMeta.className,
