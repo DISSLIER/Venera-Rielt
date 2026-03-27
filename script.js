@@ -1345,7 +1345,7 @@
         function initMainMap() {
             mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
@@ -1458,41 +1458,46 @@
                 const title = card.querySelector('h3').textContent;
                 const typeTag = card.querySelector('.type-tag');
                 const type = typeTag ? typeTag.textContent.trim() : '';
-                
+                const cardListingMode = normalizeListingMode(card.dataset.listingMode, card.dataset.type);
+
                 let icon;
-                switch(type.toLowerCase()) {
-                    case 'премиум':
-                        icon = iconPremium;
-                        break;
-                    case 'вторичка':
-                        icon = iconSecondary;
-                        break;
-                    case 'новострой':
-                        icon = iconNewbuilding;
-                        break;
-                    case 'коммерческая':
-                        icon = iconCommercial;
-                        break;
-                    case 'аренда':
-                        icon = iconRental;
-                        break;
-                    case 'гараж':
-                        icon = iconGarage;
-                        break;
-                    case 'парковка':
-                        icon = iconParking;
-                        break;
-                    case 'кладовка':
-                        icon = iconStorage;
-                        break;
-                    case 'дом':
-                        icon = iconHouse;
-                        break;
-                    case 'участок':
-                        icon = iconLand;
-                        break;
-                    default:
-                        icon = iconPremium;
+                if (cardListingMode === 'rent') {
+                    icon = iconRental;
+                } else {
+                    switch(type.toLowerCase()) {
+                        case 'премиум':
+                            icon = iconPremium;
+                            break;
+                        case 'вторичка':
+                            icon = iconSecondary;
+                            break;
+                        case 'новострой':
+                            icon = iconNewbuilding;
+                            break;
+                        case 'коммерческая':
+                            icon = iconCommercial;
+                            break;
+                        case 'аренда':
+                            icon = iconRental;
+                            break;
+                        case 'гараж':
+                            icon = iconGarage;
+                            break;
+                        case 'парковка':
+                            icon = iconParking;
+                            break;
+                        case 'кладовка':
+                            icon = iconStorage;
+                            break;
+                        case 'дом':
+                            icon = iconHouse;
+                            break;
+                        case 'участок':
+                            icon = iconLand;
+                            break;
+                        default:
+                            icon = iconPremium;
+                    }
                 }
 
                 // If multiple properties at same location, add badge
@@ -1646,7 +1651,7 @@
                 attributionControl: false
             }).setView([lat, lng], 15);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
@@ -1965,7 +1970,7 @@
                         zoomControl: true
                     }).setView(mainMap.getCenter(), mainMap.getZoom());
                     
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                         attribution: '',
                         detectRetina: true
                     }).addTo(window.overlayMap);
@@ -2064,6 +2069,9 @@
                 matchingCards[i].classList.add('visible');
             }
             visibleCount = showCount;
+            // Store search results so Load More / Close respect the active filter
+            currentFilteredAgentId = null;
+            filteredProperties = Array.from(matchingCards);
             
             // Show/hide load more button
             if (matchingCount <= itemsPerPage) {
@@ -2816,8 +2824,8 @@
             const isMobile = window.innerWidth < 768;
             const itemsPerPage = isMobile ? 5 : 6;
             
-            if (currentFilteredAgentId) {
-                // Filtered by agent - show next batch from filtered properties
+            if (filteredProperties.length > 0) {
+                // Filtered by agent or search - show next batch from filtered properties
                 const visibleCount = document.querySelectorAll('.property-card.visible').length;
                 const showCount = Math.min(itemsPerPage, filteredProperties.length - visibleCount);
                 
@@ -2859,8 +2867,8 @@
         function closeProperties() {
             const initialCount = window.innerWidth < 768 ? 5 : 6;
             
-            if (currentFilteredAgentId) {
-                // Filtered by agent - show only initial batch
+            if (filteredProperties.length > 0) {
+                // Filtered by agent or search - show only initial batch
                 document.querySelectorAll('.property-card').forEach(card => card.classList.remove('visible'));
                 
                 for (let i = 0; i < Math.min(initialCount, filteredProperties.length); i++) {
