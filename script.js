@@ -1345,7 +1345,7 @@
         function initMainMap() {
             mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
@@ -1434,14 +1434,15 @@
                     card: card,
                     lat: lat,
                     lng: lng,
-                    index: index
+                    index: index,
+                    listingMode: normalizeListingMode(card.dataset.listingMode, card.dataset.type)
                 });
             });
 
-            // Group properties by coordinates
+            // Group properties by coordinates and listing mode to keep rent/sale isolated in filters
             const groupedProperties = {};
             properties.forEach(prop => {
-                const key = `${prop.lat},${prop.lng}`;
+                const key = `${prop.lat},${prop.lng}|${prop.listingMode}`;
                 if (!groupedProperties[key]) {
                     groupedProperties[key] = [];
                 }
@@ -1451,53 +1452,50 @@
             // Create markers for each group
             Object.keys(groupedProperties).forEach(key => {
                 const group = groupedProperties[key];
-                const [lat, lng] = key.split(',').map(Number);
+                const [coordsPart] = key.split('|');
+                const [lat, lng] = coordsPart.split(',').map(Number);
                 const firstProperty = group[0];
                 const card = firstProperty.card;
                 
                 const title = card.querySelector('h3').textContent;
                 const typeTag = card.querySelector('.type-tag');
                 const type = typeTag ? typeTag.textContent.trim() : '';
-                const cardListingMode = normalizeListingMode(card.dataset.listingMode, card.dataset.type);
+                const groupListingModes = [firstProperty.listingMode];
 
                 let icon;
-                if (cardListingMode === 'rent') {
-                    icon = iconRental;
-                } else {
-                    switch(type.toLowerCase()) {
-                        case 'премиум':
-                            icon = iconPremium;
-                            break;
-                        case 'вторичка':
-                            icon = iconSecondary;
-                            break;
-                        case 'новострой':
-                            icon = iconNewbuilding;
-                            break;
-                        case 'коммерческая':
-                            icon = iconCommercial;
-                            break;
-                        case 'аренда':
-                            icon = iconRental;
-                            break;
-                        case 'гараж':
-                            icon = iconGarage;
-                            break;
-                        case 'парковка':
-                            icon = iconParking;
-                            break;
-                        case 'кладовка':
-                            icon = iconStorage;
-                            break;
-                        case 'дом':
-                            icon = iconHouse;
-                            break;
-                        case 'участок':
-                            icon = iconLand;
-                            break;
-                        default:
-                            icon = iconPremium;
-                    }
+                switch(type.toLowerCase()) {
+                    case 'премиум':
+                        icon = iconPremium;
+                        break;
+                    case 'вторичка':
+                        icon = iconSecondary;
+                        break;
+                    case 'новострой':
+                        icon = iconNewbuilding;
+                        break;
+                    case 'коммерческая':
+                        icon = iconCommercial;
+                        break;
+                    case 'аренда':
+                        icon = iconPremium;
+                        break;
+                    case 'гараж':
+                        icon = iconGarage;
+                        break;
+                    case 'парковка':
+                        icon = iconParking;
+                        break;
+                    case 'кладовка':
+                        icon = iconStorage;
+                        break;
+                    case 'дом':
+                        icon = iconHouse;
+                        break;
+                    case 'участок':
+                        icon = iconLand;
+                        break;
+                    default:
+                        icon = iconPremium;
                 }
 
                 // If multiple properties at same location, add badge
@@ -1633,7 +1631,7 @@
                     });
                 }
 
-                marker.listingMode = normalizeListingMode(firstProperty.card.dataset.listingMode, firstProperty.card.dataset.type);
+                marker.listingModes = groupListingModes;
                 propertyMarkers.push(marker);
             });
         }
@@ -1651,7 +1649,7 @@
                 attributionControl: false
             }).setView([lat, lng], 15);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
@@ -1731,8 +1729,10 @@
             if (!mainMap) return;
             const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
             propertyMarkers.forEach(marker => {
-                const mode = marker.listingMode || 'sale';
-                const shouldShow = listingCategory === 'all' || listingCategory === mode;
+                const markerModes = Array.isArray(marker.listingModes) && marker.listingModes.length > 0
+                    ? marker.listingModes
+                    : ['sale'];
+                const shouldShow = listingCategory === 'all' || markerModes.includes(listingCategory);
                 if (shouldShow) {
                     if (!mainMap.hasLayer(marker)) marker.addTo(mainMap);
                 } else {
@@ -1741,7 +1741,91 @@
             });
         }
 
-        function setListingMode(mode) {
+        function applyPropertyFilters(options = {}) {
+            const {
+                scrollToResults = false,
+                showNoMatchesAlert = true
+            } = options;
+
+            const city = document.getElementById('city').value;
+            const district = document.getElementById('district').value;
+            const propertyType = document.getElementById('search-property-type').value;
+            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+            const minPrice = parseInt(document.getElementById('min-price').value, 10) || 0;
+            const maxPrice = parseInt(document.getElementById('max-price').value, 10) || Infinity;
+            const minArea = parseInt(document.getElementById('min-area').value, 10) || 0;
+            const maxArea = parseInt(document.getElementById('max-area').value, 10) || Infinity;
+
+            const propertyCards = document.querySelectorAll('.property-card');
+            let hasMatches = false;
+
+            const isMobile = window.innerWidth < 768;
+            const itemsPerPage = isMobile ? 5 : 6;
+            visibleCount = 0;
+
+            let matchingCount = 0;
+            const matchingCards = [];
+
+            propertyCards.forEach(card => {
+                const cardCity = card.dataset.city || '';
+                const cardDistrict = card.dataset.district || '';
+                const cardPrice = parseInt(card.dataset.price, 10) || 0;
+                const cardArea = parseInt(card.dataset.area, 10) || 0;
+                const cardType = card.dataset.type || '';
+                const cardListingCategory = normalizeListingMode(card.dataset.listingMode, cardType);
+
+                const cityMatch = city === 'Все города' || city === 'Все' || !city ||
+                    city.toLowerCase() === cardCity.toLowerCase();
+                const districtMatch = district === 'Все районы' || district === 'Все' || !district ||
+                    district.toLowerCase() === cardDistrict.toLowerCase();
+                const typeMatch = propertyType === 'Все типы' || propertyType === 'Все' || !propertyType ||
+                    propertyType.toLowerCase() === cardType.toLowerCase() ||
+                    (propertyType === 'Премиум' && cardType.toLowerCase() === 'premium') ||
+                    (propertyType === 'Вторичка' && cardType.toLowerCase() === 'вторичка') ||
+                    (propertyType === 'Новострой' && cardType.toLowerCase() === 'newbuilding') ||
+                    (propertyType === 'Коммерческая' && cardType.toLowerCase() === 'commercial');
+                const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
+                const areaMatch = cardArea >= minArea && cardArea <= maxArea;
+                const listingMatch = listingCategory === 'all' || listingCategory === cardListingCategory;
+
+                if (cityMatch && districtMatch && typeMatch && priceMatch && areaMatch && listingMatch) {
+                    matchingCards.push(card);
+                    matchingCount += 1;
+                    hasMatches = true;
+                }
+
+                card.classList.remove('visible');
+            });
+
+            const showCount = Math.min(itemsPerPage, matchingCount);
+            for (let i = 0; i < showCount; i++) {
+                matchingCards[i].classList.add('visible');
+            }
+
+            visibleCount = showCount;
+            currentFilteredAgentId = null;
+            filteredProperties = Array.from(matchingCards);
+
+            if (matchingCount <= itemsPerPage) {
+                loadMoreBtn.style.display = 'none';
+                closeBtn.classList.add('hidden');
+            } else {
+                loadMoreBtn.style.display = 'inline-flex';
+                closeBtn.classList.add('hidden');
+            }
+
+            updateListingModeBadgesVisibility();
+            filterMapMarkers();
+
+            if (!hasMatches && showNoMatchesAlert) {
+                alert('По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска.');
+            } else if (hasMatches && scrollToResults) {
+                document.getElementById('properties').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function setListingMode(mode, options = {}) {
+            const { applyFilters = true } = options;
             const listingCategory = document.getElementById('listing-category');
             const saleBtn = document.getElementById('listing-sale-btn');
             const allBtn = document.getElementById('listing-all-btn');
@@ -1760,6 +1844,11 @@
 
             updateListingModeBadgesVisibility();
             filterMapMarkers();
+
+            const searchForm = document.getElementById('search-form');
+            if (applyFilters && searchForm) {
+                applyPropertyFilters({ scrollToResults: false, showNoMatchesAlert: false });
+            }
         }
 
         // Function to render agents with pagination
@@ -1935,7 +2024,7 @@
                 });
             }
 
-            setListingMode('all');
+            setListingMode('all', { applyFilters: false });
             
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);
@@ -1970,13 +2059,22 @@
                         zoomControl: true
                     }).setView(mainMap.getCenter(), mainMap.getZoom());
                     
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                         attribution: '',
                         detectRetina: true
                     }).addTo(window.overlayMap);
                     
                     // Copy markers from main map to overlay
                     propertyMarkers.forEach(marker => {
+                        const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+                        const markerModes = Array.isArray(marker.listingModes) && marker.listingModes.length > 0
+                            ? marker.listingModes
+                            : ['sale'];
+                        const shouldShow = listingCategory === 'all' || markerModes.includes(listingCategory);
+                        if (!shouldShow) {
+                            return;
+                        }
+
                         const overlayMarker = L.marker(marker.getLatLng(), {
                             icon: marker.options.icon
                         }).addTo(window.overlayMap);
@@ -2008,89 +2106,7 @@
         // Property search functionality
         document.getElementById('search-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Get filter values
-            const city = document.getElementById('city').value;
-            const district = document.getElementById('district').value;
-            const propertyType = document.getElementById('search-property-type').value;
-            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
-            const minPrice = parseInt(document.getElementById('min-price').value) || 0;
-            const maxPrice = parseInt(document.getElementById('max-price').value) || Infinity;
-            const minArea = parseInt(document.getElementById('min-area').value) || 0;
-            const maxArea = parseInt(document.getElementById('max-area').value) || Infinity;
-            
-            // Get all property cards
-            const propertyCards = document.querySelectorAll('.property-card');
-            let hasMatches = false;
-            
-            // Reset pagination on new search
-            const isMobile = window.innerWidth < 768;
-            const itemsPerPage = isMobile ? 5 : 6;
-            visibleCount = 0;
-            
-            // Filter properties
-            let matchingCount = 0;
-            const matchingCards = [];
-            propertyCards.forEach(card => {
-                const cardCity = card.dataset.city || '';
-                const cardDistrict = card.dataset.district || '';
-                const cardPrice = parseInt(card.dataset.price) || 0;
-                const cardArea = parseInt(card.dataset.area) || 0;
-                const cardType = card.dataset.type || '';
-                const cardListingCategory = normalizeListingMode(card.dataset.listingMode, cardType);
-                
-                // Check filters
-                const cityMatch = city === 'Все города' || city === 'Все' || !city || 
-                                city.toLowerCase() === cardCity.toLowerCase();
-                const districtMatch = district === 'Все районы' || district === 'Все' || !district || 
-                                    district.toLowerCase() === cardDistrict.toLowerCase();
-                const typeMatch = propertyType === 'Все типы' || propertyType === 'Все' || !propertyType || 
-                                propertyType.toLowerCase() === cardType.toLowerCase() ||
-                                (propertyType === 'Премиум' && cardType.toLowerCase() === 'premium') ||
-                                (propertyType === 'Вторичка' && cardType.toLowerCase() === 'вторичка') ||
-                                (propertyType === 'Новострой' && cardType.toLowerCase() === 'newbuilding') ||
-                                (propertyType === 'Коммерческая' && cardType.toLowerCase() === 'commercial');
-                const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
-                const areaMatch = cardArea >= minArea && cardArea <= maxArea;
-                const listingMatch = listingCategory === 'all' || listingCategory === cardListingCategory;
-                
-                // Check matches and collect matching cards
-                if (cityMatch && districtMatch && typeMatch && priceMatch && areaMatch && listingMatch) {
-                    matchingCards.push(card);
-                    matchingCount++;
-                    hasMatches = true;
-                }
-                card.classList.remove('visible');
-            });
-            
-            // Show first batch of matching properties
-            const showCount = Math.min(itemsPerPage, matchingCount);
-            for (let i = 0; i < showCount; i++) {
-                matchingCards[i].classList.add('visible');
-            }
-            visibleCount = showCount;
-            // Store search results so Load More / Close respect the active filter
-            currentFilteredAgentId = null;
-            filteredProperties = Array.from(matchingCards);
-            
-            // Show/hide load more button
-            if (matchingCount <= itemsPerPage) {
-                loadMoreBtn.style.display = 'none';
-                closeBtn.classList.add('hidden');
-            } else {
-                loadMoreBtn.style.display = 'inline-flex';
-                closeBtn.classList.add('hidden');
-            }
-
-            updateListingModeBadgesVisibility();
-            
-            // Show message if no matches
-            if (!hasMatches) {
-                alert('По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска.');
-            } else {
-                // Scroll to properties section
-                document.getElementById('properties').scrollIntoView({ behavior: 'smooth' });
-            }
+            applyPropertyFilters({ scrollToResults: true, showNoMatchesAlert: true });
         });
 
         // Mobile menu toggle
