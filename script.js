@@ -1606,7 +1606,7 @@
                         const propertyType = propertyCard.querySelector('.type-tag').textContent;
                         const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
                         const rentBadgeHtml = propertyListingMode === 'rent'
-                            ? '<div class="absolute top-2 left-[86px] bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Аренда</div>'
+                            ? '<div class="map-popup-rent-badge">Аренда</div>'
                             : '';
                         const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                             label: feature.querySelector('.text-sm').textContent,
@@ -1664,7 +1664,7 @@
                     const propertyType = propertyCard.querySelector('.type-tag').textContent;
                     const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
                     const rentBadgeHtml = propertyListingMode === 'rent'
-                        ? '<div class="absolute top-2 left-[86px] bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Аренда</div>'
+                        ? '<div class="map-popup-rent-badge">Аренда</div>'
                         : '';
                     const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                         label: feature.querySelector('.text-sm').textContent,
@@ -2159,35 +2159,30 @@
             const rentModeBtn = document.getElementById('listing-rent-btn');
             const searchForm = document.getElementById('search-form');
 
-            if (saleModeBtn) {
-                saleModeBtn.addEventListener('click', function() {
-                    setListingMode('sale');
+            function bindListingModeButton(button, mode) {
+                if (!button) return;
+
+                button.addEventListener('click', function() {
+                    setListingMode(mode);
                 });
-                saleModeBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    setListingMode('sale');
-                }, { passive: false });
+
+                button.addEventListener('pointerup', function(e) {
+                    if (e.pointerType === 'touch') {
+                        setListingMode(mode);
+                    }
+                });
+
+                button.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setListingMode(mode);
+                    }
+                });
             }
 
-            if (allModeBtn) {
-                allModeBtn.addEventListener('click', function() {
-                    setListingMode('all');
-                });
-                allModeBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    setListingMode('all');
-                }, { passive: false });
-            }
-
-            if (rentModeBtn) {
-                rentModeBtn.addEventListener('click', function() {
-                    setListingMode('rent');
-                });
-                rentModeBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    setListingMode('rent');
-                }, { passive: false });
-            }
+            bindListingModeButton(saleModeBtn, 'sale');
+            bindListingModeButton(allModeBtn, 'all');
+            bindListingModeButton(rentModeBtn, 'rent');
 
             setListingMode('all', { applyFilters: false });
             
