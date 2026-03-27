@@ -1539,40 +1539,36 @@
                 const groupListingModes = [firstProperty.listingMode];
 
                 let icon;
-                if (firstProperty.listingMode === 'rent') {
-                    icon = iconRental;
-                } else {
-                    switch(type.toLowerCase()) {
-                        case 'премиум':
-                            icon = iconPremium;
-                            break;
-                        case 'вторичка':
-                            icon = iconSecondary;
-                            break;
-                        case 'новострой':
-                            icon = iconNewbuilding;
-                            break;
-                        case 'коммерческая':
-                            icon = iconCommercial;
-                            break;
-                        case 'гараж':
-                            icon = iconGarage;
-                            break;
-                        case 'парковка':
-                            icon = iconParking;
-                            break;
-                        case 'кладовка':
-                            icon = iconStorage;
-                            break;
-                        case 'дом':
-                            icon = iconHouse;
-                            break;
-                        case 'участок':
-                            icon = iconLand;
-                            break;
-                        default:
-                            icon = iconPremium;
-                    }
+                switch(type.toLowerCase()) {
+                    case 'премиум':
+                        icon = iconPremium;
+                        break;
+                    case 'вторичка':
+                        icon = iconSecondary;
+                        break;
+                    case 'новострой':
+                        icon = iconNewbuilding;
+                        break;
+                    case 'коммерческая':
+                        icon = iconCommercial;
+                        break;
+                    case 'гараж':
+                        icon = iconGarage;
+                        break;
+                    case 'парковка':
+                        icon = iconParking;
+                        break;
+                    case 'кладовка':
+                        icon = iconStorage;
+                        break;
+                    case 'дом':
+                        icon = iconHouse;
+                        break;
+                    case 'участок':
+                        icon = iconLand;
+                        break;
+                    default:
+                        icon = iconPremium;
                 }
 
                 // If multiple properties at same location, add badge
@@ -1802,10 +1798,9 @@
         }
 
         function updateListingModeBadgesVisibility() {
-            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
             document.querySelectorAll('.property-card').forEach(card => {
                 const mode = normalizeListingMode(card.dataset.listingMode, card.dataset.type);
-                const shouldShowRentBadge = listingCategory === 'all' && mode === 'rent';
+                const shouldShowRentBadge = mode === 'rent';
 
                 let badge = card.querySelector('.listing-mode-badge');
                 if (!badge) {
