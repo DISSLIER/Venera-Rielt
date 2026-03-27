@@ -1,11 +1,11 @@
-const CACHE_NAME = 'venera-rielt-v4';
+const CACHE_NAME = 'venera-rielt-v3';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/styles.css?v=4',
-  '/script.js?v=4',
-  '/admin.js?v=4',
+  '/styles.css',
+  '/script.js',
+  '/admin.js',
   '/agents.config.js',
   '/properties.config.js',
   '/manifest.webmanifest',

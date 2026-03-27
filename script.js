@@ -1515,10 +1515,12 @@
                 });
             });
 
-            // Group properties by coordinates and listing mode to keep rent/sale isolated in filters
+            // Group properties by coordinates (proximity ~11m) regardless of listing mode
             const groupedProperties = {};
             properties.forEach(prop => {
-                const key = `${prop.lat},${prop.lng}|${prop.listingMode}`;
+                const keyLat = Math.round(prop.lat * 10000) / 10000;
+                const keyLng = Math.round(prop.lng * 10000) / 10000;
+                const key = `${keyLat},${keyLng}`;
                 if (!groupedProperties[key]) {
                     groupedProperties[key] = [];
                 }
@@ -1528,15 +1530,15 @@
             // Create markers for each group
             Object.keys(groupedProperties).forEach(key => {
                 const group = groupedProperties[key];
-                const [coordsPart] = key.split('|');
-                const [lat, lng] = coordsPart.split(',').map(Number);
                 const firstProperty = group[0];
+                const lat = firstProperty.lat;
+                const lng = firstProperty.lng;
                 const card = firstProperty.card;
                 
                 const title = card.querySelector('h3').textContent;
                 const typeTag = card.querySelector('.type-tag');
                 const type = typeTag ? typeTag.textContent.trim() : '';
-                const groupListingModes = [firstProperty.listingMode];
+                const groupListingModes = [...new Set(group.map(p => p.listingMode))];
 
                 let icon;
                 switch(type.toLowerCase()) {
@@ -1571,19 +1573,31 @@
                         icon = iconPremium;
                 }
 
-                // If multiple properties at same location, add badge
+                // Build final marker icon with count badge and/or rent chip
+                const hasRent = groupListingModes.includes('rent');
+                const baseClass = icon.options.className;
+                const baseHtml = icon.options.html;
+
+                let iconCoreHtml;
                 if (group.length > 1) {
-                    const badgeHtml = `<div style="position: relative; display: inline-block;">
-                        ${icon.options.html}
-                        <div style="position: absolute; top: -8px; right: -8px; background: #ff0000; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid white;">
-                            ${group.length}
-                        </div>
-                    </div>`;
-                    
+                    iconCoreHtml = `<div style="position:relative;display:inline-block;"><div class="${baseClass}">${baseHtml}</div><div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${group.length}</div></div>`;
+                } else {
+                    iconCoreHtml = `<div class="${baseClass}">${baseHtml}</div>`;
+                }
+
+                if (hasRent) {
                     icon = L.divIcon({
-                        className: icon.options.className,
-                        html: badgeHtml,
-                        iconSize: [30, 30]
+                        className: 'marker-with-rent',
+                        html: `${iconCoreHtml}<div class="marker-rent-chip">Аренда</div>`,
+                        iconSize: [40, 52],
+                        iconAnchor: [20, 52]
+                    });
+                } else if (group.length > 1) {
+                    icon = L.divIcon({
+                        className: 'marker-with-rent',
+                        html: iconCoreHtml,
+                        iconSize: [40, 30],
+                        iconAnchor: [20, 30]
                     });
                 }
 
@@ -1617,10 +1631,10 @@
                         <div class="map-popup-mini" style="width: 250px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div class="relative">
                                 <img src="${propertyImage}" alt="${propertyTitle}" class="w-full h-32 object-cover rounded-t-lg">
-                                <div class="absolute top-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${propertyType === 'ПРЕМИУМ' ? 'bg-yellow-500 text-black' : 'bg-blue-500 text-white'}">
-                                    ${propertyType}
+                                <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
+                                    <div class="map-popup-type-chip ${propertyType === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
+                                    ${rentBadgeHtml}
                                 </div>
-                                ${rentBadgeHtml}
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
                                     ${propertyPrice}
                                 </div>
@@ -1675,10 +1689,10 @@
                         <div class="map-popup-mini" style="width: 250px;">
                             <div class="relative">
                                 <img src="${propertyImage}" alt="${propertyTitle}" class="w-full h-32 object-cover rounded-t-lg">
-                                <div class="absolute top-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${propertyType === 'ПРЕМИУМ' ? 'bg-yellow-500 text-black' : 'bg-blue-500 text-white'}">
-                                    ${propertyType}
+                                <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
+                                    <div class="map-popup-type-chip ${propertyType === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
+                                    ${rentBadgeHtml}
                                 </div>
-                                ${rentBadgeHtml}
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
                                     ${propertyPrice}
                                 </div>
