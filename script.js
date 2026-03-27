@@ -1345,7 +1345,7 @@
         function initMainMap() {
             mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
@@ -1649,7 +1649,7 @@
                 attributionControl: false
             }).setView([lat, lng], 15);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
@@ -2059,7 +2059,7 @@
                         zoomControl: true
                     }).setView(mainMap.getCenter(), mainMap.getZoom());
                     
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '',
                         detectRetina: true
                     }).addTo(window.overlayMap);
