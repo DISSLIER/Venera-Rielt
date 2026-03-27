@@ -1571,16 +1571,6 @@
                         icon = iconPremium;
                 }
 
-                if (firstProperty.listingMode === 'rent') {
-                    icon = L.divIcon({
-                        className: 'main-map-marker-combo-icon',
-                        html: `<div class="main-map-marker-combo"><div class="main-map-type-icon ${icon.options.className}">${icon.options.html}</div><span class="main-map-rent-badge">Аренда</span></div>`,
-                        iconSize: [98, 30],
-                        iconAnchor: [16, 15],
-                        popupAnchor: [0, -14]
-                    });
-                }
-
                 // If multiple properties at same location, add badge
                 if (group.length > 1) {
                     const badgeHtml = `<div style="position: relative; display: inline-block;">
@@ -2173,18 +2163,30 @@
                 saleModeBtn.addEventListener('click', function() {
                     setListingMode('sale');
                 });
+                saleModeBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    setListingMode('sale');
+                }, { passive: false });
             }
 
             if (allModeBtn) {
                 allModeBtn.addEventListener('click', function() {
                     setListingMode('all');
                 });
+                allModeBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    setListingMode('all');
+                }, { passive: false });
             }
 
             if (rentModeBtn) {
                 rentModeBtn.addEventListener('click', function() {
                     setListingMode('rent');
                 });
+                rentModeBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    setListingMode('rent');
+                }, { passive: false });
             }
 
             setListingMode('all', { applyFilters: false });
@@ -2602,6 +2604,12 @@
             const propertyImg = propertyCard.querySelector('img').src;
             const propertyImages = parsePropertyImages(propertyData, propertyImg);
             const propertyType = propertyCard.querySelector('.type-tag').textContent;
+            const overlayRentBadge = document.getElementById('property-overlay-rent-badge');
+            const isRentalListing = normalizeListingMode(propertyData.listingMode, propertyData.type) === 'rent';
+
+            if (overlayRentBadge) {
+                overlayRentBadge.classList.toggle('hidden', !isRentalListing);
+            }
             
             // Update overlay with property data
             document.querySelector('#property-overlay .p-8 h3').textContent = agentName;
