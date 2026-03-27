@@ -128,6 +128,7 @@
                 city,
                 district,
                 type: String(property.type || 'Премиум').trim(),
+                listingMode: normalizeListingMode(property.listingMode, property.type),
                 coords: normalizeCoords(property.coords),
                 rieltorId: property.rieltorId ? String(property.rieltorId).trim() : '',
                 price: toPositiveNumber(property.price, 0),
@@ -175,23 +176,28 @@
             const fullAddress = property.fullAddress || `${city}, ${district}, ${shortAddress}`.replace(/(^,\s*)|(,\s*,)/g, '').replace(/,\s*$/, '');
             const image = property.mainPhoto || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1470&q=80';
             const title = property.title || `Объект ${propertyId}`;
+            const listingMode = normalizeListingMode(property.listingMode, property.type);
             const priceValue = Number(property.price) || 0;
             const area = property.area || 0;
             const rooms = property.rooms || 0;
             const floors = property.floors || 1;
             const rieltorId = property.rieltorId || '';
             const photosSerialized = serializePhotosForDataAttr(property.photos);
+            const listingBadgeClass = listingMode === 'rent' ? 'listing-mode-badge' : 'listing-mode-badge hidden';
 
             return `
                 <div class="property-card glass-effect rounded-xl overflow-hidden transition duration-500 ease-in-out hover:shadow-lg"
-                     data-id="${propertyId}" data-city="${city}" data-district="${district}" data-type="${typeMeta.dataType}" data-coords="${property.coords || ''}" data-rieltor-id="${rieltorId}"
+                     data-id="${propertyId}" data-city="${city}" data-district="${district}" data-type="${typeMeta.dataType}" data-listing-mode="${listingMode}" data-coords="${property.coords || ''}" data-rieltor-id="${rieltorId}"
                      data-price="${priceValue}" data-area="${area}" data-rooms="${rooms}" data-floors="${floors}"
                      data-year="${property.year || ''}" data-land="${property.land || ''}" data-parking="${property.parking || ''}" data-address="${shortAddress}"
                      data-full-address="${fullAddress}" data-description="${property.description || ''}" data-condition="${property.condition || 'Евроремонт'}"
                      data-bathroom="${property.bathroom || 'Раздельный'}" data-balcony="${property.balcony || '1 балкон'}" data-main-photo="${image}" data-photos="${photosSerialized}">
                     <div class="relative">
                         <img src="${image}" alt="${title}" class="w-full h-64 object-cover">
-                        <div class="type-tag ${typeMeta.tagClass}">${typeMeta.label}</div>
+                        <div class="property-badges">
+                            <div class="type-tag ${typeMeta.tagClass}">${typeMeta.label}</div>
+                            <div class="${listingBadgeClass}">Аренда</div>
+                        </div>
                         <div class="price-tag gold-bg text-black font-bold px-4 py-2 rounded-full">
                             ${formatPriceValue(priceValue)}
                         </div>
@@ -294,7 +300,14 @@
 
         appendConfiguredProperties();
 
-    // Поиск по карточкам в админ-панели.
+        // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
+        function updatePropertiesForSaleCount() {
+            const el = document.getElementById('properties-for-sale-count');
+            if (!el) return;
+            el.textContent = document.querySelectorAll('.property-card').length;
+        }
+
+        updatePropertiesForSaleCount();
         function filterAdminProperties(searchTerm) {
             searchTerm = searchTerm.toLowerCase();
             const propertyCards = document.querySelectorAll('.property-card');
@@ -591,6 +604,12 @@
             const modal = document.getElementById('property-edit-modal');
             const title = document.getElementById('property-modal-title');
             const snippetField = document.getElementById('property-config-snippet');
+            const statusEl = document.getElementById('property-edit-status');
+
+            if (statusEl) {
+                statusEl.classList.add('hidden');
+                statusEl.textContent = '';
+            }
             
             // Populate realtor dropdown
             populateRealtorDropdown();
@@ -608,6 +627,7 @@
                 document.getElementById('property-city').value = data.city || '';
                 populateDistrictSelect();
                 document.getElementById('property-district').value = data.district || '';
+                document.getElementById('property-listing-mode').value = normalizeListingMode(data.listingMode, data.type);
                 document.getElementById('property-type').value = getPropertyTypeForSelect(data.type || 'premium');
                 document.getElementById('property-price').value = data.price || '';
                 document.getElementById('property-area').value = data.area || '';
@@ -643,6 +663,7 @@
                 
                 // Reset realtor dropdown to first option
                 document.getElementById('property-rieltor-id').selectedIndex = 0;
+                document.getElementById('property-listing-mode').value = 'sale';
                 populateDistrictSelect();
                 syncPropertyConfigTemplateSelection();
             }
@@ -674,8 +695,13 @@
         
         function closePropertyEditModal() {
             const snippetField = document.getElementById('property-config-snippet');
+            const statusEl = document.getElementById('property-edit-status');
             if (snippetField) {
                 snippetField.value = '';
+            }
+            if (statusEl) {
+                statusEl.classList.add('hidden');
+                statusEl.textContent = '';
             }
             document.getElementById('property-edit-modal').classList.add('hidden');
         }
@@ -686,7 +712,7 @@
                 premium: 'Премиум',
                 secondary: 'Вторичка',
                 newbuilding: 'Новострой',
-                rental: 'Аренда',
+                rental: 'Премиум',
                 commercial: 'Коммерческая',
                 garage: 'Гараж',
                 parking: 'Парковка',
@@ -704,7 +730,7 @@
                 'премиум': 'premium',
                 'вторичка': 'secondary',
                 'новострой': 'newbuilding',
-                'аренда': 'rental',
+                'аренда': 'premium',
                 'коммерческая': 'commercial',
                 'гараж': 'garage',
                 'парковка': 'parking',
@@ -713,7 +739,7 @@
                 'участок': 'land'
             };
 
-            return map[normalized] || normalized || 'premium';
+            return map[normalized] || 'premium';
         }
 
         function inferPropertyConfigTemplate(rawType, landValue) {
@@ -757,6 +783,7 @@
                 title: document.getElementById('property-title').value.trim(),
                 city: document.getElementById('property-city').value.trim(),
                 district: document.getElementById('property-district').value.trim(),
+                listingMode: document.getElementById('property-listing-mode').value.trim(),
                 type: document.getElementById('property-type').value,
                 configTemplate: document.getElementById('property-config-template')
                     ? document.getElementById('property-config-template').value
@@ -867,6 +894,12 @@
             if (typeof renderPropertiesList === 'function') {
                 renderPropertiesList();
             }
+            if (typeof updatePropertiesForSaleCount === 'function') {
+                updatePropertiesForSaleCount();
+            }
+            if (typeof updateListingModeBadgesVisibility === 'function') {
+                updateListingModeBadgesVisibility();
+            }
 
             if (mainMap) {
                 mainMap.remove();
@@ -903,6 +936,7 @@
                 document.getElementById('property-city').value = draft.city || '';
                 populateDistrictSelect();
                 document.getElementById('property-district').value = draft.district || '';
+                document.getElementById('property-listing-mode').value = normalizeListingMode(draft.listingMode, draft.type);
                 document.getElementById('property-type').value = getPropertyTypeForSelect(draft.type || 'premium');
                 if (document.getElementById('property-config-template')) {
                     document.getElementById('property-config-template').value = draft.configTemplate || inferPropertyConfigTemplate(draft.type, draft.land);
@@ -1015,6 +1049,12 @@
         function openAgentEditModal(index = null) {
             const modal = document.getElementById('agent-edit-modal');
             const title = document.getElementById('agent-modal-title');
+            const statusEl = document.getElementById('agent-edit-status');
+
+            if (statusEl) {
+                statusEl.classList.add('hidden');
+                statusEl.textContent = '';
+            }
             
             if (index !== null) {
                 // Edit existing agent
@@ -1043,8 +1083,13 @@
         
         function closeAgentEditModal() {
             const snippetField = document.getElementById('agent-config-snippet');
+            const statusEl = document.getElementById('agent-edit-status');
             if (snippetField) {
                 snippetField.value = '';
+            }
+            if (statusEl) {
+                statusEl.classList.add('hidden');
+                statusEl.textContent = '';
             }
             document.getElementById('agent-edit-modal').classList.add('hidden');
         }
@@ -1093,6 +1138,7 @@
                     card.dataset.city = normalized.city;
                     card.dataset.district = normalized.district;
                     card.dataset.type = typeMeta.dataType;
+                    card.dataset.listingMode = normalizeListingMode(normalized.listingMode, normalized.type);
                     card.dataset.coords = normalized.coords;
                     card.dataset.rieltorId = normalized.rieltorId;
                     card.dataset.price = priceValue;
@@ -1130,6 +1176,8 @@
             if (typeof countAgentProperties === 'function') countAgentProperties();
             if (typeof renderAgents === 'function') renderAgents();
             if (typeof renderPropertiesList === 'function') renderPropertiesList();
+            if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
+            if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
 
             if (mainMap) {
                 mainMap.remove();
@@ -1197,6 +1245,8 @@
             if (typeof countAgentProperties === 'function') countAgentProperties();
             if (typeof renderAgents === 'function') renderAgents();
             if (typeof renderPropertiesList === 'function') renderPropertiesList();
+            if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
+            if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
         }
 
         // Delete agent - реально удаляет риелтора из списка
@@ -1295,7 +1345,7 @@
         function initMainMap() {
             mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
@@ -1577,7 +1627,8 @@
                         offset: L.point(0, -20)
                     });
                 }
-                
+
+                marker.listingMode = normalizeListingMode(firstProperty.card.dataset.listingMode, firstProperty.card.dataset.type);
                 propertyMarkers.push(marker);
             });
         }
@@ -1595,7 +1646,7 @@
                 attributionControl: false
             }).setView([lat, lng], 15);
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
@@ -1633,6 +1684,77 @@
                 option.textContent = 'Все районы';
                 districtSelect.appendChild(option);
             }
+        }
+
+        function isRentalType(typeValue) {
+            const normalized = String(typeValue || '').toLowerCase().trim();
+            return normalized === 'rental' || normalized === 'аренда';
+        }
+
+        function updateListingModeBadgesVisibility() {
+            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+            document.querySelectorAll('.property-card').forEach(card => {
+                const mode = normalizeListingMode(card.dataset.listingMode, card.dataset.type);
+                const shouldShowRentBadge = listingCategory === 'all' && mode === 'rent';
+
+                let badge = card.querySelector('.listing-mode-badge');
+                if (!badge) {
+                    const mediaWrap = card.querySelector('.relative');
+                    if (!mediaWrap) return;
+                    badge = document.createElement('div');
+                    badge.className = 'listing-mode-badge hidden';
+                    badge.textContent = 'Аренда';
+                    mediaWrap.appendChild(badge);
+                }
+
+                badge.classList.toggle('hidden', !shouldShowRentBadge);
+            });
+        }
+
+        function normalizeListingMode(modeValue, fallbackType) {
+            const normalizedMode = String(modeValue || '').toLowerCase().trim();
+            if (normalizedMode === 'rent' || normalizedMode === 'аренда') {
+                return 'rent';
+            }
+            if (normalizedMode === 'sale' || normalizedMode === 'продажа') {
+                return 'sale';
+            }
+            return isRentalType(fallbackType) ? 'rent' : 'sale';
+        }
+
+        function filterMapMarkers() {
+            if (!mainMap) return;
+            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+            propertyMarkers.forEach(marker => {
+                const mode = marker.listingMode || 'sale';
+                const shouldShow = listingCategory === 'all' || listingCategory === mode;
+                if (shouldShow) {
+                    if (!mainMap.hasLayer(marker)) marker.addTo(mainMap);
+                } else {
+                    if (mainMap.hasLayer(marker)) mainMap.removeLayer(marker);
+                }
+            });
+        }
+
+        function setListingMode(mode) {
+            const listingCategory = document.getElementById('listing-category');
+            const saleBtn = document.getElementById('listing-sale-btn');
+            const allBtn = document.getElementById('listing-all-btn');
+            const rentBtn = document.getElementById('listing-rent-btn');
+            if (!listingCategory || !saleBtn || !allBtn || !rentBtn) return;
+
+            const safeMode = mode === 'rent' || mode === 'sale' ? mode : 'all';
+            listingCategory.value = safeMode;
+
+            saleBtn.classList.toggle('active', safeMode === 'sale');
+            allBtn.classList.toggle('active', safeMode === 'all');
+            rentBtn.classList.toggle('active', safeMode === 'rent');
+            saleBtn.setAttribute('aria-selected', safeMode === 'sale' ? 'true' : 'false');
+            allBtn.setAttribute('aria-selected', safeMode === 'all' ? 'true' : 'false');
+            rentBtn.setAttribute('aria-selected', safeMode === 'rent' ? 'true' : 'false');
+
+            updateListingModeBadgesVisibility();
+            filterMapMarkers();
         }
 
         // Function to render agents with pagination
@@ -1784,6 +1906,31 @@
             renderAgents();
             initMainMap();
             updateAgentPhotos();
+
+            const saleModeBtn = document.getElementById('listing-sale-btn');
+            const allModeBtn = document.getElementById('listing-all-btn');
+            const rentModeBtn = document.getElementById('listing-rent-btn');
+            const searchForm = document.getElementById('search-form');
+
+            if (saleModeBtn) {
+                saleModeBtn.addEventListener('click', function() {
+                    setListingMode('sale');
+                });
+            }
+
+            if (allModeBtn) {
+                allModeBtn.addEventListener('click', function() {
+                    setListingMode('all');
+                });
+            }
+
+            if (rentModeBtn) {
+                rentModeBtn.addEventListener('click', function() {
+                    setListingMode('rent');
+                });
+            }
+
+            setListingMode('all');
             
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);
@@ -1799,6 +1946,7 @@
                 }
             });
             visibleCount = initialCount;
+            updateListingModeBadgesVisibility();
             
             // Add expand button to main map
             const expandBtn = document.createElement('button');
@@ -1817,7 +1965,7 @@
                         zoomControl: true
                     }).setView(mainMap.getCenter(), mainMap.getZoom());
                     
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                         attribution: '',
                         detectRetina: true
                     }).addTo(window.overlayMap);
@@ -1859,7 +2007,8 @@
             // Get filter values
             const city = document.getElementById('city').value;
             const district = document.getElementById('district').value;
-            const propertyType = document.getElementById('property-type').value;
+            const propertyType = document.getElementById('search-property-type').value;
+            const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
             const minPrice = parseInt(document.getElementById('min-price').value) || 0;
             const maxPrice = parseInt(document.getElementById('max-price').value) || Infinity;
             const minArea = parseInt(document.getElementById('min-area').value) || 0;
@@ -1883,6 +2032,7 @@
                 const cardPrice = parseInt(card.dataset.price) || 0;
                 const cardArea = parseInt(card.dataset.area) || 0;
                 const cardType = card.dataset.type || '';
+                const cardListingCategory = normalizeListingMode(card.dataset.listingMode, cardType);
                 
                 // Check filters
                 const cityMatch = city === 'Все города' || city === 'Все' || !city || 
@@ -1894,13 +2044,13 @@
                                 (propertyType === 'Премиум' && cardType.toLowerCase() === 'premium') ||
                                 (propertyType === 'Вторичка' && cardType.toLowerCase() === 'вторичка') ||
                                 (propertyType === 'Новострой' && cardType.toLowerCase() === 'newbuilding') ||
-                                (propertyType === 'Аренда' && cardType.toLowerCase() === 'rental') ||
                                 (propertyType === 'Коммерческая' && cardType.toLowerCase() === 'commercial');
                 const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
                 const areaMatch = cardArea >= minArea && cardArea <= maxArea;
+                const listingMatch = listingCategory === 'all' || listingCategory === cardListingCategory;
                 
                 // Check matches and collect matching cards
-                if (cityMatch && districtMatch && typeMatch && priceMatch && areaMatch) {
+                if (cityMatch && districtMatch && typeMatch && priceMatch && areaMatch && listingMatch) {
                     matchingCards.push(card);
                     matchingCount++;
                     hasMatches = true;
@@ -1923,6 +2073,8 @@
                 loadMoreBtn.style.display = 'inline-flex';
                 closeBtn.classList.add('hidden');
             }
+
+            updateListingModeBadgesVisibility();
             
             // Show message if no matches
             if (!hasMatches) {
@@ -2570,6 +2722,7 @@
             // 2. Reset search form and agent filter
             document.getElementById('search-form').reset();
             updateDistricts();
+            setListingMode('all');
             currentFilteredAgentId = null;
             filteredProperties = [];
             

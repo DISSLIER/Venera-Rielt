@@ -50,6 +50,7 @@ function collectPropertiesFromDom() {
             city: String(data.city || '').trim(),
             district: String(data.district || '').trim(),
             type: String(data.type || '').trim(),
+            listingMode: String(data.listingMode || '').trim(),
             coords: String(data.coords || '').trim(),
             rieltorId: String(data.rieltorId || '').trim(),
             price: Number(data.price || 0),
@@ -78,6 +79,8 @@ function replacePropertiesInDom(propertiesPayload) {
     const incoming = Array.isArray(propertiesPayload) ? propertiesPayload : [];
     const existingIds = new Set();
     let nextAutoId = 0;
+    const initialShowLimit = window.innerWidth < 768 ? 5 : 6;
+    let visibleInitCount = 0;
 
     incoming.forEach((rawItem, index) => {
         const normalized = validateAndNormalizeConfiguredProperty
@@ -90,17 +93,33 @@ function replacePropertiesInDom(propertiesPayload) {
 
         const appended = appendPropertyCardToGrid(normalized, grid, existingIds, nextAutoId);
         if (appended && appended.card) {
-            appended.card.classList.add('visible');
+            if (visibleInitCount < initialShowLimit) {
+                appended.card.classList.add('visible');
+                visibleInitCount++;
+            }
         }
-        if (appended && typeof appended.nextIdNumber === 'number') {
-            nextAutoId = appended.nextIdNumber;
+        if (appended && typeof appended.maxId === 'number') {
+            nextAutoId = appended.maxId;
         }
     });
+
+    // Reset pagination buttons to initial state
+    const loadMoreBtnEl = document.getElementById('load-more-btn');
+    const closeBtnEl = document.getElementById('close-btn');
+    const totalLoadedCards = document.querySelectorAll('.property-card').length;
+    if (loadMoreBtnEl) {
+        loadMoreBtnEl.style.display = totalLoadedCards > initialShowLimit ? 'inline-flex' : 'none';
+    }
+    if (closeBtnEl) {
+        closeBtnEl.classList.add('hidden');
+    }
 
     if (typeof countAgentProperties === 'function') countAgentProperties();
     if (typeof renderAgents === 'function') renderAgents();
     if (typeof renderPropertiesList === 'function') renderPropertiesList();
     if (typeof updateAgentPhotos === 'function') updateAgentPhotos();
+    if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
+    if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
 
     if (typeof mainMap !== 'undefined' && mainMap && typeof initMainMap === 'function') {
         mainMap.remove();
@@ -109,6 +128,7 @@ function replacePropertiesInDom(propertiesPayload) {
             propertyMarkers.length = 0;
         }
         initMainMap();
+        if (typeof filterMapMarkers === 'function') filterMapMarkers();
     }
 }
 
@@ -281,6 +301,9 @@ function updatePropertySaveHandler() {
                 card.dataset.city = normalized.city;
                 card.dataset.district = normalized.district;
                 card.dataset.type = typeMeta ? typeMeta.dataType : normalized.type;
+                card.dataset.listingMode = typeof normalizeListingMode === 'function'
+                    ? normalizeListingMode(normalized.listingMode, normalized.type)
+                    : String(normalized.listingMode || 'sale');
                 card.dataset.coords = normalized.coords;
                 card.dataset.rieltorId = normalized.rieltorId;
                 card.dataset.price = priceValue;
@@ -330,6 +353,8 @@ function updatePropertySaveHandler() {
         if (typeof countAgentProperties === 'function') countAgentProperties();
         if (typeof renderAgents === 'function') renderAgents();
         if (typeof renderPropertiesList === 'function') renderPropertiesList();
+        if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
+        if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
 
         if (typeof mainMap !== 'undefined' && mainMap) {
             mainMap.remove();
@@ -338,6 +363,7 @@ function updatePropertySaveHandler() {
                 propertyMarkers.length = 0;
             }
             if (typeof initMainMap === 'function') initMainMap();
+            if (typeof filterMapMarkers === 'function') filterMapMarkers();
         }
 
         pushSharedSnapshot();
