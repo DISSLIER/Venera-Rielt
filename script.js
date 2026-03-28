@@ -2809,6 +2809,7 @@
                 if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum) });
                 if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum) });
 
+                overlayFeaturesContainer.classList.toggle('hidden', overlayFeatureItems.length === 0);
                 overlayFeaturesContainer.innerHTML = overlayFeatureItems.length > 0
                     ? overlayFeatureItems.map(item => `
                         <div class="glass-effect rounded-lg p-3 text-center">
@@ -2816,7 +2817,7 @@
                             <div class="font-semibold text-gray-400">${item.value}</div>
                         </div>
                     `).join('')
-                    : '<div class="col-span-2 md:col-span-3 text-center text-sm text-gray-500">Характеристики не указаны</div>';
+                    : '';
             }
             
             // Update description
