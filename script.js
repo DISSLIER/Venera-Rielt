@@ -1573,14 +1573,17 @@
                         icon = iconPremium;
                 }
 
+                const baseIconClass = icon.options.className;
+                const baseIconHtml = icon.options.html;
+
                 // Add count badge for grouped markers (rent chip only in popup, not on marker)
                 if (group.length > 1) {
                     const badgeHtml = `<div style="position:relative;display:inline-block;">
-                        ${icon.options.html}
+                        ${baseIconHtml}
                         <div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${group.length}</div>
                     </div>`;
                     icon = L.divIcon({
-                        className: icon.options.className,
+                        className: baseIconClass,
                         html: badgeHtml,
                         iconSize: [30, 30]
                     });
@@ -1730,6 +1733,8 @@
                         }))
                     };
                 });
+                marker.baseIconClass = baseIconClass;
+                marker.baseIconHtml = baseIconHtml;
                 marker.listingModes = groupListingModes;
                 propertyMarkers.push(marker);
             });
@@ -1989,6 +1994,27 @@
                     : allProps.filter(p => p.listingMode === listingCategory);
                 const shouldShow = filtered.length > 0;
                 if (shouldShow) {
+                    const markerBaseClass = marker.baseIconClass || 'custom-icon premium-icon';
+                    const markerBaseHtml = marker.baseIconHtml || '<i class="fas fa-crown"></i>';
+
+                    if (filtered.length > 1) {
+                        const badgeHtml = `<div style="position:relative;display:inline-block;">
+                            ${markerBaseHtml}
+                            <div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${filtered.length}</div>
+                        </div>`;
+                        marker.setIcon(L.divIcon({
+                            className: markerBaseClass,
+                            html: badgeHtml,
+                            iconSize: [30, 30]
+                        }));
+                    } else {
+                        marker.setIcon(L.divIcon({
+                            className: markerBaseClass,
+                            html: markerBaseHtml,
+                            iconSize: [30, 30]
+                        }));
+                    }
+
                     if (!mainMap.hasLayer(marker)) marker.addTo(mainMap);
                     bindMarkerPopup(marker, filtered);
                 } else {
