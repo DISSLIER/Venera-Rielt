@@ -1,7 +1,7 @@
 let deferredInstallPrompt = null;
 const APP_SPLASH_SESSION_KEY = 'venera_app_splash_session_shown';
 const WEB_CACHE_MIGRATION_KEY = 'venera_web_cache_migration_done';
-const WEB_CACHE_MIGRATION_VERSION = '6';
+const WEB_CACHE_MIGRATION_VERSION = '7';
 
 function getInstallMenuLink() {
   return document.getElementById('mobile-install-app-link');
@@ -127,7 +127,7 @@ function hideInstallButton() {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register('/sw.js?v=6');
+    await navigator.serviceWorker.register('/sw.js?v=7');
   } catch (error) {
     console.log('SW register error:', error);
   }

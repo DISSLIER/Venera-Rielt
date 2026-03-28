@@ -1,4 +1,4 @@
-const CACHE_NAME = 'venera-rielt-v6';
+const CACHE_NAME = 'venera-rielt-v7';
 
 const PRECACHE_URLS = [
   '/',
