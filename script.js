@@ -2447,7 +2447,7 @@
                 if (submitButton) {
                     const toggleWrap = document.createElement('div');
                     toggleWrap.className = 'advanced-toggle-wrap';
-                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full p-3 rounded-lg transition" aria-expanded="false" aria-controls="advanced-search-panel"><i class="fas fa-sliders-h mr-2"></i>Расширенный поиск</button>';
+                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full p-3 rounded-lg transition" aria-expanded="false" aria-controls="advanced-search-panel"><span class="advanced-search-toggle-inner"><span class="advanced-search-toggle-accent" aria-hidden="true"></span><span class="advanced-search-toggle-label-wrap"><i class="fas fa-sliders-h mr-2"></i><span class="advanced-search-toggle-label">Расширенный поиск</span></span></span></button>';
                     searchForm.insertBefore(toggleWrap, submitButton);
                 }
             }
