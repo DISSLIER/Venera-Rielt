@@ -462,25 +462,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.2rem;
+            gap: 0.28rem;
             min-height: 102px;
         }
 
         .overlay-feature-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(180deg, rgba(255, 215, 0, 0.14), rgba(255, 215, 0, 0.05));
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            margin-bottom: 0.22rem;
-        }
-
-        .overlay-feature-icon i {
             color: rgba(255, 230, 150, 0.95);
-            font-size: 0.84rem;
+            font-size: 0.98rem;
+            line-height: 1;
+            margin-bottom: 0.08rem;
         }
         
         .btn-gold {

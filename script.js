@@ -2938,9 +2938,7 @@
                 overlayFeaturesContainer.innerHTML = overlayFeatureItems.length > 0
                     ? overlayFeatureItems.map(item => `
                         <div class="glass-effect rounded-lg p-3 text-center overlay-feature-card">
-                            <div class="overlay-feature-icon">
-                                <i class="fas ${item.icon || 'fa-circle-info'}"></i>
-                            </div>
+                            <i class="fas ${item.icon || 'fa-circle-info'} overlay-feature-icon" aria-hidden="true"></i>
                             <div class="text-sm mb-1">${item.label}</div>
                             <div class="font-semibold text-gray-400">${item.value}</div>
                         </div>
