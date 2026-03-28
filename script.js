@@ -1713,6 +1713,23 @@
                     });
                 }
 
+                // Pre-extract display data for dynamic popup filtering by category
+                marker.allProps = group.map(prop => {
+                    const c = prop.card;
+                    return {
+                        index: prop.index,
+                        listingMode: prop.listingMode,
+                        image: c.querySelector('img').src,
+                        title: c.querySelector('h3').textContent,
+                        address: (c.querySelector('.flex.items-center span') || {}).textContent || '',
+                        price: c.querySelector('.price-tag').textContent,
+                        type: c.querySelector('.type-tag') ? c.querySelector('.type-tag').textContent : '',
+                        features: Array.from(c.querySelectorAll('.grid-cols-3 > div')).map(f => ({
+                            label: f.querySelector('.text-sm') ? f.querySelector('.text-sm').textContent : '',
+                            value: f.querySelector('.font-semibold') ? f.querySelector('.font-semibold').textContent : ''
+                        }))
+                    };
+                });
                 marker.listingModes = groupListingModes;
                 propertyMarkers.push(marker);
             });
@@ -1874,16 +1891,106 @@
             return isRentalType(fallbackType) ? 'rent' : 'sale';
         }
 
+        function buildMarkerPopupContent(props) {
+            if (props.length === 0) return '<div style="padding:8px;font-size:12px;color:#666;">Нет объектов</div>';
+            if (props.length === 1) {
+                const p = props[0];
+                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">Аренда</div>' : '';
+                return `
+                    <div class="map-popup-mini" style="width: 250px;">
+                        <div class="relative">
+                            <img src="${p.image}" alt="${p.title}" class="w-full h-32 object-cover rounded-t-lg">
+                            <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
+                                <div class="map-popup-type-chip ${p.type === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
+                                ${rentBadge}
+                            </div>
+                            <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
+                                ${p.price}
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-bold text-sm mb-1 truncate">${p.title}</h4>
+                            <p class="text-gray-600 text-xs mb-2 truncate">
+                                <i class="fas fa-map-marker-alt text-yellow-500 mr-1"></i>
+                                ${p.address}
+                            </p>
+                            <div class="grid grid-cols-3 gap-1 mb-3">
+                                ${p.features.slice(0, 3).map(f => `
+                                    <div class="text-center">
+                                        <div class="text-xs text-gray-500">${f.label}</div>
+                                        <div class="text-sm font-semibold">${f.value}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
+                                    onclick="openPropertyOverlay(${p.index})">
+                                Подробнее
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            let html = `<div class="map-popup-list" style="max-height: 400px; overflow-y: auto; padding: 5px;">`;
+            props.forEach(p => {
+                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">Аренда</div>' : '';
+                html += `
+                <div class="map-popup-mini" style="width: 250px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="relative">
+                        <img src="${p.image}" alt="${p.title}" class="w-full h-32 object-cover rounded-t-lg">
+                        <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
+                            <div class="map-popup-type-chip ${p.type === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
+                            ${rentBadge}
+                        </div>
+                        <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
+                            ${p.price}
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-bold text-sm mb-1 truncate">${p.title}</h4>
+                        <p class="text-gray-600 text-xs mb-2 truncate">
+                            <i class="fas fa-map-marker-alt text-yellow-500 mr-1"></i>
+                            ${p.address}
+                        </p>
+                        <div class="grid grid-cols-3 gap-1 mb-3">
+                            ${p.features.slice(0, 3).map(f => `
+                                <div class="text-center">
+                                    <div class="text-xs text-gray-500">${f.label}</div>
+                                    <div class="text-sm font-semibold">${f.value}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
+                                onclick="openPropertyOverlay(${p.index})">
+                            Подробнее
+                        </button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        function bindMarkerPopup(marker, props) {
+            const content = buildMarkerPopupContent(props);
+            if (props.length <= 1) {
+                marker.bindPopup(content, { maxWidth: 300, minWidth: 200, className: 'map-popup-mini-container', closeButton: false, offset: L.point(0, -20) });
+            } else {
+                marker.bindPopup(content, { maxWidth: 270, className: 'map-popup-list-container', closeButton: true });
+            }
+        }
+
         function filterMapMarkers() {
             if (!mainMap) return;
             const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
             propertyMarkers.forEach(marker => {
-                const markerModes = Array.isArray(marker.listingModes) && marker.listingModes.length > 0
-                    ? marker.listingModes
-                    : ['sale'];
-                const shouldShow = listingCategory === 'all' || markerModes.includes(listingCategory);
+                const allProps = marker.allProps || [];
+                const filtered = listingCategory === 'all'
+                    ? allProps
+                    : allProps.filter(p => p.listingMode === listingCategory);
+                const shouldShow = filtered.length > 0;
                 if (shouldShow) {
                     if (!mainMap.hasLayer(marker)) marker.addTo(mainMap);
+                    bindMarkerPopup(marker, filtered);
                 } else {
                     if (mainMap.hasLayer(marker)) mainMap.removeLayer(marker);
                 }
