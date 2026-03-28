@@ -361,6 +361,19 @@
         .property-card.visible {
             display: block;
         }
+
+        .property-spec-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            line-height: 1.2;
+        }
+
+        .property-spec-icon {
+            font-size: 0.78rem;
+            color: rgba(255, 215, 0, 0.88);
+        }
         
         .agent-photo {
             transition: all 0.3s ease;

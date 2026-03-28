@@ -254,15 +254,15 @@
                         </div>
                         <div class="grid grid-cols-3 gap-2 mb-4">
                             <div class="text-center">
-                                <div class="text-sm text-gray-400">Площадь</div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-ruler-combined property-spec-icon" aria-hidden="true"></i><span>Площадь</span></div>
                                 <div class="font-semibold">${area > 0 ? `${area} м²` : '-'}</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-sm text-gray-400">Комнат</div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-bed property-spec-icon" aria-hidden="true"></i><span>Комнат</span></div>
                                 <div class="font-semibold">${rooms > 0 ? rooms : '-'}</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-sm text-gray-400">Этаж</div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-layer-group property-spec-icon" aria-hidden="true"></i><span>Этаж</span></div>
                                 <div class="font-semibold">${floors || '-'}</div>
                             </div>
                         </div>
