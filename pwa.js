@@ -1,5 +1,7 @@
 let deferredInstallPrompt = null;
 const APP_SPLASH_SESSION_KEY = 'venera_app_splash_session_shown';
+const WEB_CACHE_MIGRATION_KEY = 'venera_web_cache_migration_done';
+const WEB_CACHE_MIGRATION_VERSION = '5';
 
 function getInstallMenuLink() {
   return document.getElementById('mobile-install-app-link');
@@ -125,10 +127,46 @@ function hideInstallButton() {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register('/sw.js?v=4');
+    await navigator.serviceWorker.register('/sw.js?v=5');
   } catch (error) {
     console.log('SW register error:', error);
   }
+}
+
+async function runWebCacheMigrationIfNeeded() {
+  // Do not disrupt installed standalone mode.
+  if (isAppAlreadyInstalled()) return false;
+
+  try {
+    if (localStorage.getItem(WEB_CACHE_MIGRATION_KEY) === WEB_CACHE_MIGRATION_VERSION) {
+      return false;
+    }
+  } catch (_) {
+    // ignore storage errors
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+    }
+
+    if ('caches' in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map(key => caches.delete(key)));
+    }
+  } catch (_) {
+    // ignore migration errors, continue normal bootstrap
+  }
+
+  try {
+    localStorage.setItem(WEB_CACHE_MIGRATION_KEY, WEB_CACHE_MIGRATION_VERSION);
+  } catch (_) {
+    // ignore storage errors
+  }
+
+  window.location.reload();
+  return true;
 }
 
 function bindInstallFlow() {
@@ -169,7 +207,10 @@ function bindInstallFlow() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const migrated = await runWebCacheMigrationIfNeeded();
+  if (migrated) return;
+
   hideInstallButton();
   runAppSplashOnce();
   registerServiceWorker();
