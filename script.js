@@ -2062,6 +2062,64 @@
             });
         }
 
+        function getInputValueByIds(ids) {
+            for (const id of ids) {
+                const element = document.getElementById(id);
+                if (!element) continue;
+                const value = String(element.value || '').trim();
+                if (value) return value;
+            }
+            return '';
+        }
+
+        function getNumericMinByIds(ids) {
+            const raw = getInputValueByIds(ids);
+            if (!raw) return 0;
+            const parsed = Number(raw);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function getNumericMaxByIds(ids) {
+            const raw = getInputValueByIds(ids);
+            if (!raw) return Infinity;
+            const parsed = Number(raw);
+            return Number.isFinite(parsed) ? parsed : Infinity;
+        }
+
+        function setAdvancedSearchExpanded(expanded) {
+            const panel = document.getElementById('advanced-search-panel');
+            if (!panel) return;
+
+            panel.classList.toggle('is-open', !!expanded);
+
+            ['advanced-search-toggle', 'advanced-search-toggle-desktop', 'advanced-search-toggle-mobile'].forEach(buttonId => {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                button.textContent = expanded ? 'Закрыть расширенный поиск' : 'Расширенный поиск';
+            });
+        }
+
+        function toggleAdvancedSearch() {
+            const panel = document.getElementById('advanced-search-panel');
+            if (!panel) return;
+            setAdvancedSearchExpanded(!panel.classList.contains('is-open'));
+        }
+
+        function bindMirroredInputs(inputIdA, inputIdB) {
+            const inputA = document.getElementById(inputIdA);
+            const inputB = document.getElementById(inputIdB);
+            if (!inputA || !inputB) return;
+
+            inputA.addEventListener('input', function() {
+                inputB.value = inputA.value;
+            });
+
+            inputB.addEventListener('input', function() {
+                inputA.value = inputB.value;
+            });
+        }
+
         function applyPropertyFilters(options = {}) {
             const {
                 scrollToResults = false,
@@ -2074,8 +2132,21 @@
             const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
             const minPrice = parseInt(document.getElementById('min-price').value, 10) || 0;
             const maxPrice = parseInt(document.getElementById('max-price').value, 10) || Infinity;
-            const minArea = parseInt(document.getElementById('min-area').value, 10) || 0;
-            const maxArea = parseInt(document.getElementById('max-area').value, 10) || Infinity;
+            const minArea = getNumericMinByIds(['min-area', 'min-area-advanced']);
+            const maxArea = getNumericMaxByIds(['max-area', 'max-area-advanced']);
+            const minRooms = getNumericMinByIds(['min-rooms']);
+            const maxRooms = getNumericMaxByIds(['max-rooms']);
+            const minLand = getNumericMinByIds(['min-land']);
+            const maxLand = getNumericMaxByIds(['max-land']);
+            const minParking = getNumericMinByIds(['min-parking']);
+            const maxParking = getNumericMaxByIds(['max-parking']);
+            const minYear = getNumericMinByIds(['min-year']);
+            const maxYear = getNumericMaxByIds(['max-year']);
+            const floorsQuery = getInputValueByIds(['floors-query']).toLowerCase();
+            const conditionQuery = getInputValueByIds(['search-condition']).toLowerCase();
+            const bathroomQuery = getInputValueByIds(['search-bathroom-query']).toLowerCase();
+            const balconyQuery = getInputValueByIds(['search-balcony-query']).toLowerCase();
+            const addressQuery = getInputValueByIds(['search-address-query']).toLowerCase();
 
             const propertyCards = document.querySelectorAll('.property-card');
             let hasMatches = false;
@@ -2092,6 +2163,15 @@
                 const cardDistrict = card.dataset.district || '';
                 const cardPrice = parseInt(card.dataset.price, 10) || 0;
                 const cardArea = parseInt(card.dataset.area, 10) || 0;
+                const cardRooms = parseInt(card.dataset.rooms, 10) || 0;
+                const cardLand = parseInt(card.dataset.land, 10) || 0;
+                const cardParking = parseInt(card.dataset.parking, 10) || 0;
+                const cardYear = parseInt(card.dataset.year, 10) || 0;
+                const cardFloors = String(card.dataset.floors || '').toLowerCase();
+                const cardCondition = String(card.dataset.condition || '').toLowerCase();
+                const cardBathroom = String(card.dataset.bathroom || '').toLowerCase();
+                const cardBalcony = String(card.dataset.balcony || '').toLowerCase();
+                const cardFullAddress = String(card.dataset.fullAddress || '').toLowerCase();
                 const cardType = card.dataset.type || '';
                 const cardListingCategory = normalizeListingMode(card.dataset.listingMode, cardType);
 
@@ -2107,9 +2187,34 @@
                     (propertyType === 'Коммерческая' && cardType.toLowerCase() === 'commercial');
                 const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
                 const areaMatch = cardArea >= minArea && cardArea <= maxArea;
+                const roomsMatch = cardRooms >= minRooms && cardRooms <= maxRooms;
+                const landMatch = cardLand >= minLand && cardLand <= maxLand;
+                const parkingMatch = cardParking >= minParking && cardParking <= maxParking;
+                const yearMatch = cardYear >= minYear && cardYear <= maxYear;
+                const floorsMatch = !floorsQuery || cardFloors.includes(floorsQuery);
+                const conditionMatch = !conditionQuery || cardCondition === conditionQuery;
+                const bathroomMatch = !bathroomQuery || cardBathroom.includes(bathroomQuery);
+                const balconyMatch = !balconyQuery || cardBalcony.includes(balconyQuery);
+                const addressMatch = !addressQuery || cardFullAddress.includes(addressQuery);
                 const listingMatch = listingCategory === 'all' || listingCategory === cardListingCategory;
 
-                if (cityMatch && districtMatch && typeMatch && priceMatch && areaMatch && listingMatch) {
+                if (
+                    cityMatch &&
+                    districtMatch &&
+                    typeMatch &&
+                    priceMatch &&
+                    areaMatch &&
+                    roomsMatch &&
+                    landMatch &&
+                    parkingMatch &&
+                    yearMatch &&
+                    floorsMatch &&
+                    conditionMatch &&
+                    bathroomMatch &&
+                    balconyMatch &&
+                    addressMatch &&
+                    listingMatch
+                ) {
                     matchingCards.push(card);
                     matchingCount += 1;
                     hasMatches = true;
@@ -2330,6 +2435,21 @@
             const rentModeBtn = document.getElementById('listing-rent-btn');
             const searchForm = document.getElementById('search-form');
 
+            // Fallback: if cached HTML lacks the toggle, inject it right above submit.
+            if (searchForm && !document.getElementById('advanced-search-toggle')) {
+                const submitButton = searchForm.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    const toggleWrap = document.createElement('div');
+                    toggleWrap.className = 'mt-4 mb-3 advanced-toggle-wrap';
+                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full gold-bg text-black font-bold p-3 rounded-lg border border-yellow-300 hover:bg-yellow-500 transition" aria-expanded="false" aria-controls="advanced-search-panel"><i class="fas fa-sliders-h mr-2"></i>Расширенный поиск</button>';
+                    searchForm.insertBefore(toggleWrap, submitButton);
+                }
+            }
+
+            const advancedToggle = document.getElementById('advanced-search-toggle');
+            const advancedToggleDesktop = document.getElementById('advanced-search-toggle-desktop');
+            const advancedToggleMobile = document.getElementById('advanced-search-toggle-mobile');
+
             function bindListingModeButton(button, mode) {
                 if (!button) return;
 
@@ -2354,6 +2474,22 @@
             bindListingModeButton(saleModeBtn, 'sale');
             bindListingModeButton(allModeBtn, 'all');
             bindListingModeButton(rentModeBtn, 'rent');
+
+            if (advancedToggle) {
+                advancedToggle.addEventListener('click', toggleAdvancedSearch);
+            }
+
+            if (advancedToggleDesktop) {
+                advancedToggleDesktop.addEventListener('click', toggleAdvancedSearch);
+            }
+
+            if (advancedToggleMobile) {
+                advancedToggleMobile.addEventListener('click', toggleAdvancedSearch);
+            }
+
+            setAdvancedSearchExpanded(false);
+            bindMirroredInputs('min-area', 'min-area-advanced');
+            bindMirroredInputs('max-area', 'max-area-advanced');
 
             setListingMode('all', { applyFilters: false });
             
@@ -2459,6 +2595,7 @@
         document.getElementById('search-form').addEventListener('submit', function(e) {
             e.preventDefault();
             applyPropertyFilters({ scrollToResults: true, showNoMatchesAlert: true });
+            setAdvancedSearchExpanded(false);
         });
 
         // Mobile menu toggle
@@ -3140,6 +3277,7 @@
             document.getElementById('search-form').reset();
             updateDistricts();
             setListingMode('all');
+            setAdvancedSearchExpanded(false);
             currentFilteredAgentId = null;
             filteredProperties = [];
             
