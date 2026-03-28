@@ -2441,21 +2441,6 @@
             const rentModeBtn = document.getElementById('listing-rent-btn');
             const searchForm = document.getElementById('search-form');
 
-            // Fallback: if cached HTML lacks the toggle, inject it right above submit.
-            if (searchForm && !document.getElementById('advanced-search-toggle')) {
-                const submitButton = searchForm.querySelector('button[type="submit"]');
-                if (submitButton) {
-                    const toggleWrap = document.createElement('div');
-                    toggleWrap.className = 'advanced-toggle-wrap';
-                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full p-3 rounded-lg transition" aria-expanded="false" aria-controls="advanced-search-panel"><span class="advanced-search-toggle-inner"><span class="advanced-search-toggle-accent" aria-hidden="true"></span><span class="advanced-search-toggle-label-wrap"><i class="fas fa-sliders-h mr-2"></i><span class="advanced-search-toggle-label">Расширенный поиск</span></span></span></button>';
-                    searchForm.insertBefore(toggleWrap, submitButton);
-                }
-            }
-
-            const advancedToggle = document.getElementById('advanced-search-toggle');
-            const advancedToggleDesktop = document.getElementById('advanced-search-toggle-desktop');
-            const advancedToggleMobile = document.getElementById('advanced-search-toggle-mobile');
-
             function bindListingModeButton(button, mode) {
                 if (!button) return;
 
@@ -2481,23 +2466,16 @@
             bindListingModeButton(allModeBtn, 'all');
             bindListingModeButton(rentModeBtn, 'rent');
 
-            if (advancedToggle) {
-                advancedToggle.addEventListener('click', toggleAdvancedSearch);
-            }
-
-            if (advancedToggleDesktop) {
-                advancedToggleDesktop.addEventListener('click', toggleAdvancedSearch);
-            }
-
-            if (advancedToggleMobile) {
-                advancedToggleMobile.addEventListener('click', toggleAdvancedSearch);
-            }
-
-            setAdvancedSearchExpanded(false);
-            bindMirroredInputs('min-area', 'min-area-advanced');
-            bindMirroredInputs('max-area', 'max-area-advanced');
-
             setListingMode('all', { applyFilters: false });
+
+            // Advanced search button handler
+            const advancedSearchBtn = document.getElementById('advanced-search-btn');
+            if (advancedSearchBtn) {
+                advancedSearchBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Advanced search button clicked');
+                });
+            }
             
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);

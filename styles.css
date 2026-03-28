@@ -379,70 +379,33 @@
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
 
-        .advanced-search-toggle {
-            display: block;
+        .advanced-search-btn {
             width: 100%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.015));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(236, 233, 224, 0.84);
-            font-weight: 500;
-            font-size: 0.93rem;
-            letter-spacing: 0.01em;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
-            backdrop-filter: blur(6px);
-        }
-
-        .advanced-search-toggle:hover {
-            border-color: rgba(214, 176, 84, 0.22);
-            color: rgba(248, 245, 238, 0.96);
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.036), rgba(255, 255, 255, 0.02));
-        }
-
-        .advanced-search-toggle-inner {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+            border: 1px solid rgba(214, 176, 84, 0.18);
+            border-radius: 0.5rem;
+            color: rgba(244, 244, 240, 0.88);
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 0.008em;
+            cursor: pointer;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
+            gap: 0.6rem;
         }
 
-        .advanced-search-toggle-accent {
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: rgba(214, 176, 84, 0.88);
-            box-shadow: 0 0 0 2px rgba(214, 176, 84, 0.07);
-            flex: 0 0 5px;
+        .advanced-search-btn:hover {
+            border-color: rgba(214, 176, 84, 0.28);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.044), rgba(255, 255, 255, 0.022));
+            color: rgba(255, 255, 255, 0.96);
         }
 
-        .advanced-search-toggle-label-wrap {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.92;
-        }
-
-        .advanced-search-toggle-label {
-            display: inline-block;
-        }
-
-        .advanced-toggle-wrap {
-            display: block;
-            margin-top: 0.5rem;
-            margin-bottom: 0.45rem;
-        }
-
-        .advanced-search-panel {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            pointer-events: none;
-            transition: max-height 0.35s ease, opacity 0.25s ease;
-        }
-
-        .advanced-search-panel.is-open {
-            max-height: 1200px;
-            opacity: 1;
-            pointer-events: auto;
+        .advanced-search-btn i {
+            font-size: 0.85rem;
+            opacity: 0.8;
         }
 
         .advanced-search-inner {
