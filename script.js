@@ -150,16 +150,16 @@
                 price: toPositiveNumber(property.price, 0),
                 area: toPositiveNumber(property.area, 0),
                 rooms: toPositiveNumber(property.rooms, 0),
-                floors: normalizeFloorsValue(property.floors, '1'),
+                floors: normalizeFloorsValue(property.floors, ''),
                 year: toPositiveNumber(property.year, ''),
                 land: toPositiveNumber(property.land, ''),
                 parking: toPositiveNumber(property.parking, ''),
                 address: String(property.address || '').trim(),
                 fullAddress: String(property.fullAddress || '').trim(),
                 description: String(property.description || '').trim(),
-                condition: String(property.condition || 'Евроремонт').trim(),
-                bathroom: String(property.bathroom || 'Раздельный').trim(),
-                balcony: String(property.balcony || '1 балкон').trim(),
+                condition: String(property.condition || '').trim(),
+                bathroom: String(property.bathroom || '').trim(),
+                balcony: String(property.balcony || '').trim(),
                 mainPhoto: String(property.mainPhoto || '').trim(),
                 photos: normalizePhotosValue(property.photos)
             };
@@ -221,7 +221,7 @@
             const priceValue = Number(property.price) || 0;
             const area = property.area || 0;
             const rooms = property.rooms || 0;
-            const floors = normalizeFloorsValue(property.floors, '1');
+            const floors = normalizeFloorsValue(property.floors, '');
             const rieltorId = property.rieltorId || '';
             const photosSerialized = serializePhotosForDataAttr(property.photos);
             const listingBadgeClass = listingMode === 'rent' ? 'listing-mode-badge' : 'listing-mode-badge hidden';
@@ -255,15 +255,15 @@
                         <div class="grid grid-cols-3 gap-2 mb-4">
                             <div class="text-center">
                                 <div class="text-sm text-gray-400">Площадь</div>
-                                <div class="font-semibold">${area} м²</div>
+                                <div class="font-semibold">${area > 0 ? `${area} м²` : '-'}</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-sm text-gray-400">Комнат</div>
-                                <div class="font-semibold">${rooms}</div>
+                                <div class="font-semibold">${rooms > 0 ? rooms : '-'}</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-sm text-gray-400">Этаж</div>
-                                <div class="font-semibold">${floors}</div>
+                                <div class="font-semibold">${floors || '-'}</div>
                             </div>
                         </div>
                         <button class="view-details-btn w-full gold-bg text-black font-bold py-2 px-4 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300" data-price="${priceValue}">
@@ -901,7 +901,7 @@
                 price: Number(document.getElementById('property-price').value) || 0,
                 area: Number(document.getElementById('property-area').value) || 0,
                 rooms: Number(document.getElementById('property-rooms').value) || 0,
-                floors: normalizeFloorsValue(document.getElementById('property-floors').value, '1'),
+                floors: normalizeFloorsValue(document.getElementById('property-floors').value, ''),
                 year: document.getElementById('property-year') ? document.getElementById('property-year').value.trim() : '',
                 land: document.getElementById('property-land').value.trim(),
                 parking: document.getElementById('property-parking').value.trim(),
@@ -2778,11 +2778,11 @@
             }
             
             // Update overlay with property data
-            document.querySelector('#property-overlay .p-8 h3').textContent = agentName;
+            document.querySelector('#property-overlay .p-8 h3').textContent = propertyCard.querySelector('h3').textContent;
             const price = button.dataset.price ? `€${parseInt(button.dataset.price).toLocaleString()}` : `€${parseInt(propertyData.price || '0').toLocaleString()}`;
             document.querySelector('#property-overlay .p-8 .gold-bg').textContent = price;
             // Update address in overlay
-            const addressElement = document.querySelector('#property-overlay .flex.items-center span');
+            const addressElement = document.getElementById('property-overlay-full-address');
             addressElement.textContent = propertyData.fullAddress || `${propertyData.city || ''}, ${propertyData.district || ''}, ${propertyData.address || ''}`.replace(/, , /g, ', ').replace(/^, |, $/g, '');
             
             // Update property features

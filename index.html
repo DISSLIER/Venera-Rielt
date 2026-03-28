@@ -631,15 +631,15 @@
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Площадь (м²)</label>
-                        <input type="number" id="property-area" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="number" id="property-area" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Комнаты</label>
-                        <input type="number" id="property-rooms" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="number" id="property-rooms" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Этаж</label>
-                        <input type="text" id="property-floors" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: 5/12 или 3" required>
+                        <input type="text" id="property-floors" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: 5/12 или 3">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Участок (соток)</label>
@@ -652,6 +652,7 @@
                     <div>
                         <label class="block text-gray-400 mb-2">Состояние</label>
                         <select id="property-condition" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="">Не указано</option>
                             <option value="Евроремонт">Евроремонт</option>
                             <option value="Хорошее">Хорошее</option>
                             <option value="Среднее">Среднее</option>
@@ -801,15 +802,38 @@
                         </button>
                     </div>
                     <div id="property-carousel-thumbs" class="property-carousel-thumbs p-4 pt-3"></div>
-                    
-                    <!-- Map -->
-                    <div class="p-4">
-                        <h4 class="font-semibold mb-2 gold-text">Расположение</h4>
-                        <div class="relative">
-                            <div id="property-map" class="h-48 rounded-lg cursor-pointer" style="background-color: #1a1a1a;"></div>
-                            <button type="button" id="property-map-expand-btn" class="property-map-expand-btn" title="Открыть карту на весь экран" aria-label="Открыть карту на весь экран">
-                                <i class="fas fa-expand"></i>
-                            </button>
+
+                    <div class="p-4 lg:pt-2">
+                        <div class="flex items-center text-gray-400 mb-6">
+                            <i class="fas fa-map-marker-alt mr-2 gold-text"></i>
+                            <span id="property-overlay-full-address"></span>
+                        </div>
+
+                        <div id="property-overlay-features" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Площадь</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Комнат</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Этаж</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Состояние</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Санузел</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-3 text-center">
+                                <div class="text-sm mb-1">Балкон</div>
+                                <div class="font-semibold text-gray-400">-</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -821,36 +845,15 @@
                             €0
                         </div>
                     </div>
-                    
-                    <div class="flex items-center text-gray-400 mb-6">
-                        <i class="fas fa-map-marker-alt mr-2 gold-text"></i>
-                        <span id="property-full-address"></span>
-                    </div>
-                    
-                    <div id="property-overlay-features" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Площадь</div>
-                            <div class="font-semibold text-gray-400">-</div>
-                        </div>
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Комнат</div>
-                            <div class="font-semibold text-gray-400">-</div>
-                        </div>
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Этаж</div>
-                            <div class="font-semibold text-gray-400">-</div>
-                        </div>
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Состояние</div>
-                            <div class="font-semibold text-gray-400">-</div>
-                        </div>
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Санузел</div>
-                            <div class="font-semibold text-gray-400">-</div>
-                        </div>
-                        <div class="glass-effect rounded-lg p-3 text-center">
-                            <div class="text-sm mb-1">Балкон</div>
-                            <div class="font-semibold text-gray-400">-</div>
+
+                    <!-- Map -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2 gold-text">Расположение</h4>
+                        <div class="relative">
+                            <div id="property-map" class="h-48 rounded-lg cursor-pointer" style="background-color: #1a1a1a;"></div>
+                            <button type="button" id="property-map-expand-btn" class="property-map-expand-btn" title="Открыть карту на весь экран" aria-label="Открыть карту на весь экран">
+                                <i class="fas fa-expand"></i>
+                            </button>
                         </div>
                     </div>
                     
