@@ -1573,31 +1573,16 @@
                         icon = iconPremium;
                 }
 
-                // Build final marker icon with count badge and/or rent chip
-                const hasRent = groupListingModes.includes('rent');
-                const baseClass = icon.options.className;
-                const baseHtml = icon.options.html;
-
-                let iconCoreHtml;
+                // Add count badge for grouped markers (rent chip only in popup, not on marker)
                 if (group.length > 1) {
-                    iconCoreHtml = `<div style="position:relative;display:inline-block;"><div class="${baseClass}">${baseHtml}</div><div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${group.length}</div></div>`;
-                } else {
-                    iconCoreHtml = `<div class="${baseClass}">${baseHtml}</div>`;
-                }
-
-                if (hasRent) {
+                    const badgeHtml = `<div style="position:relative;display:inline-block;">
+                        ${icon.options.html}
+                        <div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${group.length}</div>
+                    </div>`;
                     icon = L.divIcon({
-                        className: 'marker-with-rent',
-                        html: `${iconCoreHtml}<div class="marker-rent-chip">Аренда</div>`,
-                        iconSize: [40, 52],
-                        iconAnchor: [20, 52]
-                    });
-                } else if (group.length > 1) {
-                    icon = L.divIcon({
-                        className: 'marker-with-rent',
-                        html: iconCoreHtml,
-                        iconSize: [40, 30],
-                        iconAnchor: [20, 30]
+                        className: icon.options.className,
+                        html: badgeHtml,
+                        iconSize: [30, 30]
                     });
                 }
 
