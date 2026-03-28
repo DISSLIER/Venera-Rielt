@@ -408,6 +408,20 @@
             opacity: 0.8;
         }
 
+        .advanced-search-panel {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            transition: max-height 0.3s ease, opacity 0.25s ease;
+        }
+
+        .advanced-search-panel.is-open {
+            max-height: 800px;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         .advanced-search-inner {
             padding-top: 0.25rem;
         }

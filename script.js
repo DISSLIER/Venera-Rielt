@@ -2468,14 +2468,18 @@
 
             setListingMode('all', { applyFilters: false });
 
-            // Advanced search button handler
-            const advancedSearchBtn = document.getElementById('advanced-search-btn');
-            if (advancedSearchBtn) {
-                advancedSearchBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Advanced search button clicked');
-                });
-            }
+                // Advanced search toggle functionality
+                const advancedSearchBtn = document.getElementById('advanced-search-btn');
+                const advancedSearchPanel = document.getElementById('advanced-search-panel');
+            
+                if (advancedSearchBtn && advancedSearchPanel) {
+                    advancedSearchBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const isOpen = advancedSearchPanel.classList.contains('is-open');
+                        advancedSearchPanel.classList.toggle('is-open', !isOpen);
+                        advancedSearchBtn.setAttribute('aria-expanded', !isOpen);
+                    });
+                }
             
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);
