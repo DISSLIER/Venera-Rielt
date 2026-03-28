@@ -2086,6 +2086,12 @@
             return Number.isFinite(parsed) ? parsed : Infinity;
         }
 
+        function buildAdvancedSearchToggleContent(expanded) {
+            const label = expanded ? 'Закрыть расширенный поиск' : 'Расширенный поиск';
+            const icon = expanded ? 'fa-chevron-up' : 'fa-sliders-h';
+            return `<i class="fas ${icon} mr-2"></i>${label}`;
+        }
+
         function setAdvancedSearchExpanded(expanded) {
             const panel = document.getElementById('advanced-search-panel');
             if (!panel) return;
@@ -2096,7 +2102,7 @@
                 const button = document.getElementById(buttonId);
                 if (!button) return;
                 button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-                button.textContent = expanded ? 'Закрыть расширенный поиск' : 'Расширенный поиск';
+                button.innerHTML = buildAdvancedSearchToggleContent(expanded);
             });
         }
 
@@ -2441,7 +2447,7 @@
                 if (submitButton) {
                     const toggleWrap = document.createElement('div');
                     toggleWrap.className = 'mt-4 mb-3 advanced-toggle-wrap';
-                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full gold-bg text-black font-bold p-3 rounded-lg border border-yellow-300 hover:bg-yellow-500 transition" aria-expanded="false" aria-controls="advanced-search-panel"><i class="fas fa-sliders-h mr-2"></i>Расширенный поиск</button>';
+                    toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full p-3 rounded-lg transition" aria-expanded="false" aria-controls="advanced-search-panel"><i class="fas fa-sliders-h mr-2"></i>Расширенный поиск</button>';
                     searchForm.insertBefore(toggleWrap, submitButton);
                 }
             }
