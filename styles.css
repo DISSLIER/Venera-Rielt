@@ -381,31 +381,45 @@
 
         .advanced-search-btn {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
-            border: 1px solid rgba(214, 176, 84, 0.18);
+            padding: 0.82rem 1rem;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+                linear-gradient(120deg, rgba(18, 24, 34, 0.95), rgba(11, 15, 22, 0.96));
+            border: 1px solid rgba(214, 176, 84, 0.24);
             border-radius: 0.5rem;
-            color: rgba(244, 244, 240, 0.88);
-            font-size: 0.9rem;
-            font-weight: 400;
-            letter-spacing: 0.008em;
+            color: rgba(248, 245, 236, 0.93);
+            font-size: 0.92rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
             cursor: pointer;
             transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.6rem;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                inset 0 -1px 0 rgba(214, 176, 84, 0.1),
+                0 10px 24px rgba(0, 0, 0, 0.2);
         }
 
         .advanced-search-btn:hover {
-            border-color: rgba(214, 176, 84, 0.28);
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.044), rgba(255, 255, 255, 0.022));
-            color: rgba(255, 255, 255, 0.96);
+            border-color: rgba(214, 176, 84, 0.42);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+                linear-gradient(120deg, rgba(20, 27, 38, 0.96), rgba(12, 17, 24, 0.98));
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                inset 0 -1px 0 rgba(214, 176, 84, 0.14),
+                0 13px 28px rgba(0, 0, 0, 0.26);
         }
 
         .advanced-search-btn i {
-            font-size: 0.85rem;
-            opacity: 0.8;
+            font-size: 0.84rem;
+            opacity: 1;
+            color: rgba(214, 176, 84, 0.9);
         }
 
         .advanced-search-panel {
