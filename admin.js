@@ -56,7 +56,7 @@ function collectPropertiesFromDom() {
             price: Number(data.price || 0),
             area: Number(data.area || (featureVals[0] ? String(featureVals[0].textContent).replace(/[^\d.]/g, '') : 0)),
             rooms: Number(data.rooms || (featureVals[1] ? String(featureVals[1].textContent).replace(/[^\d.]/g, '') : 0)),
-            floors: Number(data.floors || (featureVals[2] ? String(featureVals[2].textContent).replace(/[^\d.]/g, '') : 0)),
+            floors: String(data.floors || (featureVals[2] ? String(featureVals[2].textContent).trim() : '')).trim(),
             condition: String(data.condition || '').trim(),
             bathroom: String(data.bathroom || '').trim(),
             balcony: String(data.balcony || '').trim(),
@@ -258,7 +258,7 @@ function updatePropertySaveHandler() {
         const collected = collectPropertyFormData && collectPropertyFormData();
         if (!collected) return false;
 
-        const { configTemplate, ...formProperty } = collected;
+        const formProperty = collected;
         if (!validatePropertyFormData || !validatePropertyFormData(formProperty, isNew ? 'добавлением' : 'сохранением')) {
             return false;
         }
@@ -342,12 +342,18 @@ function updatePropertySaveHandler() {
                 const addressEl = card.querySelector('.flex.items-center span');
                 if (addressEl) addressEl.textContent = normalized.fullAddress;
 
-                const featureVals = card.querySelectorAll('.grid-cols-3 > div .font-semibold');
-                if (featureVals[0]) featureVals[0].textContent = `${normalized.area} м²`;
-                if (featureVals[1]) featureVals[1].textContent = normalized.rooms;
-                if (featureVals[2]) featureVals[2].textContent = normalized.floors;
+                const oldVisibleClass = card.classList.contains('visible');
+                const replacement = createPropertyCardElement
+                    ? createPropertyCardElement(normalized, card.dataset.id)
+                    : null;
+                if (replacement) {
+                    replacement.dataset.index = card.dataset.index || '';
+                    if (oldVisibleClass) replacement.classList.add('visible');
+                    card.replaceWith(replacement);
+                }
 
-                const viewBtn = card.querySelector('.view-details-btn');
+                const updatedCard = replacement || card;
+                const viewBtn = updatedCard.querySelector('.view-details-btn');
                 if (viewBtn) viewBtn.dataset.price = priceValue;
             }
         }

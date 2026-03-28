@@ -55,6 +55,22 @@
             return parsed;
         }
 
+        function normalizeFloorsValue(value, fallback = '1') {
+            const raw = String(value == null ? '' : value).trim();
+            if (!raw) return fallback;
+
+            if (/^\d+(\/\d+)?$/.test(raw)) {
+                return raw;
+            }
+
+            const numeric = Number(raw);
+            if (Number.isFinite(numeric) && numeric >= 0) {
+                return String(Math.trunc(numeric));
+            }
+
+            return fallback;
+        }
+
         function normalizeCoords(rawCoords) {
             if (typeof rawCoords !== 'string' || !rawCoords.trim()) {
                 return '';
@@ -134,7 +150,7 @@
                 price: toPositiveNumber(property.price, 0),
                 area: toPositiveNumber(property.area, 0),
                 rooms: toPositiveNumber(property.rooms, 0),
-                floors: toPositiveNumber(property.floors, 1),
+                floors: normalizeFloorsValue(property.floors, '1'),
                 year: toPositiveNumber(property.year, ''),
                 land: toPositiveNumber(property.land, ''),
                 parking: toPositiveNumber(property.parking, ''),
@@ -168,6 +184,31 @@
         }
 
         // Сборка HTML карточки объекта из записи конфига.
+        function buildPropertyFeatureItems(property) {
+            const items = [];
+            const area = Number(property.area);
+            const rooms = Number(property.rooms);
+            const floors = String(property.floors || '').trim();
+            const land = Number(property.land);
+            const parking = Number(property.parking);
+            const year = Number(property.year);
+            const condition = String(property.condition || '').trim();
+            const bathroom = String(property.bathroom || '').trim();
+            const balcony = String(property.balcony || '').trim();
+
+            if (Number.isFinite(area) && area > 0) items.push({ label: 'Площадь', value: `${area} м²` });
+            if (Number.isFinite(rooms) && rooms > 0) items.push({ label: 'Комнат', value: String(rooms) });
+            if (floors) items.push({ label: 'Этаж', value: floors });
+            if (Number.isFinite(land) && land > 0) items.push({ label: 'Участок', value: `${land} сот.` });
+            if (Number.isFinite(parking) && parking > 0) items.push({ label: 'Парковка', value: String(parking) });
+            if (Number.isFinite(year) && year > 0) items.push({ label: 'Год', value: String(year) });
+            if (condition) items.push({ label: 'Состояние', value: condition });
+            if (bathroom) items.push({ label: 'Санузел', value: bathroom });
+            if (balcony) items.push({ label: 'Балкон', value: balcony });
+
+            return items;
+        }
+
         function buildPropertyCardHtml(property, propertyId) {
             const typeMeta = getPropertyTypeMeta(property.type);
             const city = property.city || '';
@@ -180,10 +221,21 @@
             const priceValue = Number(property.price) || 0;
             const area = property.area || 0;
             const rooms = property.rooms || 0;
-            const floors = property.floors || 1;
+            const floors = normalizeFloorsValue(property.floors, '1');
             const rieltorId = property.rieltorId || '';
             const photosSerialized = serializePhotosForDataAttr(property.photos);
             const listingBadgeClass = listingMode === 'rent' ? 'listing-mode-badge' : 'listing-mode-badge hidden';
+            const featureItems = buildPropertyFeatureItems({ ...property, floors });
+            const featureHtml = featureItems.length > 0
+                ? featureItems.map(item => `
+                            <div class="text-center">
+                                <div class="text-sm text-gray-400">${item.label}</div>
+                                <div class="font-semibold">${item.value}</div>
+                            </div>
+                        `).join('')
+                : `
+                            <div class="col-span-3 text-center text-sm text-gray-500">Характеристики не указаны</div>
+                        `;
 
             return `
                 <div class="property-card glass-effect rounded-xl overflow-hidden transition duration-500 ease-in-out hover:shadow-lg"
@@ -212,18 +264,7 @@
                             <span class="truncate">${fullAddress}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mb-4">
-                            <div class="text-center">
-                                <div class="text-sm text-gray-400">Площадь</div>
-                                <div class="font-semibold">${area} м²</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-sm text-gray-400">Комнат</div>
-                                <div class="font-semibold">${rooms}</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-sm text-gray-400">Этаж</div>
-                                <div class="font-semibold">${floors}</div>
-                            </div>
+                            ${featureHtml}
                         </div>
                         <button class="view-details-btn w-full gold-bg text-black font-bold py-2 px-4 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300" data-price="${priceValue}">
                             Подробнее
@@ -855,15 +896,12 @@
                 district: document.getElementById('property-district').value.trim(),
                 listingMode: document.getElementById('property-listing-mode').value.trim(),
                 type: document.getElementById('property-type').value,
-                configTemplate: document.getElementById('property-config-template')
-                    ? document.getElementById('property-config-template').value
-                    : inferPropertyConfigTemplate(document.getElementById('property-type').value, document.getElementById('property-land').value),
                 coords: document.getElementById('property-coords').value.trim(),
                 rieltorId: document.getElementById('property-rieltor-id').value.trim(),
                 price: Number(document.getElementById('property-price').value) || 0,
                 area: Number(document.getElementById('property-area').value) || 0,
                 rooms: Number(document.getElementById('property-rooms').value) || 0,
-                floors: Number(document.getElementById('property-floors').value) || 1,
+                floors: normalizeFloorsValue(document.getElementById('property-floors').value, '1'),
                 year: document.getElementById('property-year') ? document.getElementById('property-year').value.trim() : '',
                 land: document.getElementById('property-land').value.trim(),
                 parking: document.getElementById('property-parking').value.trim(),
@@ -890,12 +928,12 @@
 
         function buildPropertyConfigSnippetFromForm() {
             const collected = collectPropertyFormData();
-            const { configTemplate, ...property } = collected;
+            const property = collected;
             if (!validatePropertyFormData(property, 'генерацией')) {
                 return '';
             }
 
-            const templateReference = getPropertyTemplateReference(configTemplate || inferPropertyConfigTemplate(property.type, property.land));
+            const templateReference = getPropertyTemplateReference(inferPropertyConfigTemplate(property.type, property.land));
             const configProperty = {
                 ...property,
                 type: getPropertyTypeForConfig(property.type)
@@ -912,7 +950,7 @@
 
         function previewPropertyFromForm() {
             const collected = collectPropertyFormData();
-            const { configTemplate, ...property } = collected;
+            const property = collected;
             if (!validatePropertyFormData(property, 'добавлением в каталог')) {
                 return;
             }
@@ -1010,9 +1048,6 @@
                 document.getElementById('property-district').value = draft.district || '';
                 document.getElementById('property-listing-mode').value = normalizeListingMode(draft.listingMode, draft.type);
                 document.getElementById('property-type').value = getPropertyTypeForSelect(draft.type || 'premium');
-                if (document.getElementById('property-config-template')) {
-                    document.getElementById('property-config-template').value = draft.configTemplate || inferPropertyConfigTemplate(draft.type, draft.land);
-                }
                 document.getElementById('property-price').value = draft.price || '';
                 document.getElementById('property-area').value = draft.area || '';
                 document.getElementById('property-rooms').value = draft.rooms || '';
@@ -1173,7 +1208,7 @@
             const isNew = cardId === '';
 
             const collected = collectPropertyFormData();
-            const { configTemplate, ...formProperty } = collected;
+            const formProperty = collected;
             if (!validatePropertyFormData(formProperty, isNew ? 'добавлением' : 'сохранением')) {
                 return false;
             }
@@ -1235,11 +1270,15 @@
                     if (titleEl) titleEl.textContent = normalized.title;
                     const addressEl = card.querySelector('.flex.items-center span');
                     if (addressEl) addressEl.textContent = normalized.fullAddress;
-                    const featureVals = card.querySelectorAll('.grid-cols-3 > div .font-semibold');
-                    if (featureVals[0]) featureVals[0].textContent = `${normalized.area} м²`;
-                    if (featureVals[1]) featureVals[1].textContent = normalized.rooms;
-                    if (featureVals[2]) featureVals[2].textContent = normalized.floors;
-                    const viewBtn = card.querySelector('.view-details-btn');
+                    const oldVisibleClass = card.classList.contains('visible');
+                    const replacement = createPropertyCardElement(normalized, card.dataset.id);
+                    if (replacement) {
+                        replacement.dataset.index = card.dataset.index || '';
+                        if (oldVisibleClass) replacement.classList.add('visible');
+                        card.replaceWith(replacement);
+                    }
+                    const updatedCard = replacement || card;
+                    const viewBtn = updatedCard.querySelector('.view-details-btn');
                     if (viewBtn) viewBtn.dataset.price = priceValue;
                 }
             }
