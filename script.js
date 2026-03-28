@@ -2446,7 +2446,7 @@
                 const submitButton = searchForm.querySelector('button[type="submit"]');
                 if (submitButton) {
                     const toggleWrap = document.createElement('div');
-                    toggleWrap.className = 'mt-4 mb-3 advanced-toggle-wrap';
+                    toggleWrap.className = 'advanced-toggle-wrap';
                     toggleWrap.innerHTML = '<button type="button" id="advanced-search-toggle" class="advanced-search-toggle w-full p-3 rounded-lg transition" aria-expanded="false" aria-controls="advanced-search-panel"><i class="fas fa-sliders-h mr-2"></i>Расширенный поиск</button>';
                     searchForm.insertBefore(toggleWrap, submitButton);
                 }
