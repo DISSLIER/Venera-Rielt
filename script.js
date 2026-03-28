@@ -225,17 +225,6 @@
             const rieltorId = property.rieltorId || '';
             const photosSerialized = serializePhotosForDataAttr(property.photos);
             const listingBadgeClass = listingMode === 'rent' ? 'listing-mode-badge' : 'listing-mode-badge hidden';
-            const featureItems = buildPropertyFeatureItems({ ...property, floors });
-            const featureHtml = featureItems.length > 0
-                ? featureItems.map(item => `
-                            <div class="text-center">
-                                <div class="text-sm text-gray-400">${item.label}</div>
-                                <div class="font-semibold">${item.value}</div>
-                            </div>
-                        `).join('')
-                : `
-                            <div class="col-span-3 text-center text-sm text-gray-500">Характеристики не указаны</div>
-                        `;
 
             return `
                 <div class="property-card glass-effect rounded-xl overflow-hidden transition duration-500 ease-in-out hover:shadow-lg"
@@ -264,7 +253,18 @@
                             <span class="truncate">${fullAddress}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mb-4">
-                            ${featureHtml}
+                            <div class="text-center">
+                                <div class="text-sm text-gray-400">Площадь</div>
+                                <div class="font-semibold">${area} м²</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-sm text-gray-400">Комнат</div>
+                                <div class="font-semibold">${rooms}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-sm text-gray-400">Этаж</div>
+                                <div class="font-semibold">${floors}</div>
+                            </div>
                         </div>
                         <button class="view-details-btn w-full gold-bg text-black font-bold py-2 px-4 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300" data-price="${priceValue}">
                             Подробнее
@@ -2786,12 +2786,38 @@
             addressElement.textContent = propertyData.fullAddress || `${propertyData.city || ''}, ${propertyData.district || ''}, ${propertyData.address || ''}`.replace(/, , /g, ', ').replace(/^, |, $/g, '');
             
             // Update property features
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(1) div.font-semibold').textContent = `${propertyData.area} м²`;
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(2) div.font-semibold').textContent = propertyData.rooms;
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(3) div.font-semibold').textContent = propertyData.floors || '1';
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(4) div.font-semibold').textContent = propertyData.condition || 'Евроремонт';
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(5) div.font-semibold').textContent = propertyData.bathroom || 'Раздельный';
-            document.querySelector('#property-overlay .grid-cols-2 div:nth-child(6) div.font-semibold').textContent = propertyData.balcony || '1 балкон';
+            const overlayFeaturesContainer = document.getElementById('property-overlay-features');
+            if (overlayFeaturesContainer) {
+                const areaNum = Number(propertyData.area);
+                const roomsNum = Number(propertyData.rooms);
+                const floorsValue = String(propertyData.floors || '').trim();
+                const conditionValue = String(propertyData.condition || '').trim();
+                const bathroomValue = String(propertyData.bathroom || '').trim();
+                const balconyValue = String(propertyData.balcony || '').trim();
+                const landNum = Number(propertyData.land);
+                const parkingNum = Number(propertyData.parking);
+                const yearNum = Number(propertyData.year);
+
+                const overlayFeatureItems = [];
+                if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: 'Площадь', value: `${areaNum} м²` });
+                if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: 'Комнат', value: String(roomsNum) });
+                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue });
+                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue });
+                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue });
+                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue });
+                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.` });
+                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum) });
+                if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum) });
+
+                overlayFeaturesContainer.innerHTML = overlayFeatureItems.length > 0
+                    ? overlayFeatureItems.map(item => `
+                        <div class="glass-effect rounded-lg p-3 text-center">
+                            <div class="text-sm mb-1">${item.label}</div>
+                            <div class="font-semibold text-gray-400">${item.value}</div>
+                        </div>
+                    `).join('')
+                    : '<div class="col-span-2 md:col-span-3 text-center text-sm text-gray-500">Характеристики не указаны</div>';
+            }
             
             // Update description
             document.querySelector('#property-overlay .p-8 p.text-gray-400').textContent = 
