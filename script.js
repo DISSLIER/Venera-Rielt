@@ -2924,20 +2924,23 @@
                 const yearNum = Number(propertyData.year);
 
                 const overlayFeatureItems = [];
-                if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: 'Площадь', value: `${areaNum} м²` });
-                if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: 'Комнат', value: String(roomsNum) });
-                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue });
-                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue });
-                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue });
-                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue });
-                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.` });
-                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum) });
-                if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum) });
+                if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: 'Площадь', value: `${areaNum} м²`, icon: 'fa-ruler-combined' });
+                if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: 'Комнат', value: String(roomsNum), icon: 'fa-bed' });
+                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue, icon: 'fa-layer-group' });
+                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue, icon: 'fa-tools' });
+                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue, icon: 'fa-bath' });
+                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue, icon: 'fa-door-open' });
+                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.`, icon: 'fa-tree' });
+                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum), icon: 'fa-parking' });
+                if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum), icon: 'fa-calendar-alt' });
 
                 overlayFeaturesContainer.classList.toggle('hidden', overlayFeatureItems.length === 0);
                 overlayFeaturesContainer.innerHTML = overlayFeatureItems.length > 0
                     ? overlayFeatureItems.map(item => `
-                        <div class="glass-effect rounded-lg p-3 text-center">
+                        <div class="glass-effect rounded-lg p-3 text-center overlay-feature-card">
+                            <div class="overlay-feature-icon">
+                                <i class="fas ${item.icon || 'fa-circle-info'}"></i>
+                            </div>
                             <div class="text-sm mb-1">${item.label}</div>
                             <div class="font-semibold text-gray-400">${item.value}</div>
                         </div>
