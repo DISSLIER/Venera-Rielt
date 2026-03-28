@@ -2926,12 +2926,12 @@
                 const overlayFeatureItems = [];
                 if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: 'Площадь', value: `${areaNum} м²`, icon: 'fa-ruler-combined' });
                 if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: 'Комнат', value: String(roomsNum), icon: 'fa-bed' });
-                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue, icon: 'fa-building' });
-                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue, icon: 'fa-check-circle' });
-                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue, icon: 'fa-shower' });
-                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue, icon: 'fa-sun' });
-                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.`, icon: 'fa-seedling' });
-                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum), icon: 'fa-car' });
+                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue, icon: 'fa-layer-group' });
+                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue, icon: 'fa-tools' });
+                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue, icon: 'fa-bath' });
+                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue, icon: 'fa-door-open' });
+                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.`, icon: 'fa-tree' });
+                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum), icon: 'fa-parking' });
                 if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum), icon: 'fa-calendar-alt' });
 
                 overlayFeaturesContainer.classList.toggle('hidden', overlayFeatureItems.length === 0);
