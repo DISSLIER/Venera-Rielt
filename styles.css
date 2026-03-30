@@ -394,13 +394,11 @@
 
         #search-form input[type="number"]::-webkit-inner-spin-button,
         #search-form input[type="number"]::-webkit-outer-spin-button {
-            opacity: 1;
-            filter: sepia(1) saturate(8) hue-rotate(350deg) brightness(1.18);
             cursor: pointer;
         }
 
         #search-form input[type="number"] {
-            border-color: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.16);
         }
 
         .advanced-search-btn {
@@ -949,7 +947,12 @@
         }
         
         .social-icon {
+            font-size: 1.5em;
             transition: all 0.3s ease;
+        }
+
+        .social-icon i {
+            font-size: 1.5em;
         }
         
         .social-icon:hover {
