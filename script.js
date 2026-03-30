@@ -393,9 +393,13 @@
             return hasMatches;
         }
 
-        // === Пароль доступа в админ-панель (можно изменить) ===
-        const ADMIN_PASSWORD = 'venera2026';
+        // === Доступ к админ-панели только в локальной среде (без пароля в клиентском коде) ===
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
+
+        function isLocalEnvironment() {
+            const host = window.location.hostname;
+            return host === 'localhost' || host === '127.0.0.1';
+        }
 
         function getUniqueCitiesAndDistricts() {
             const cities = new Set();
@@ -527,25 +531,23 @@
         }
 
         function openAdminPanelWithAuth() {
-            const authModal = document.getElementById('admin-auth-modal');
-            if (!authModal) return;
-
-            // Проверяем, аутентифицирован ли user в этой сессии
-            const isAuthenticated = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
-            if (isAuthenticated) {
-                authModal.classList.add('hidden');
-                const adminPanel = document.getElementById('admin-panel');
-                adminPanel.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-                initAdminPanel();
+            if (!isLocalEnvironment()) {
+                alert('Админ-панель доступна только в локальной версии сайта.');
                 return;
             }
 
-            // Если не аутентифицирован - показываем модал
-            document.getElementById('admin-password-input').value = '';
-            document.getElementById('admin-auth-error').classList.add('hidden');
-            authModal.classList.remove('hidden');
-            setTimeout(() => document.getElementById('admin-password-input').focus(), 50);
+            const adminPanel = document.getElementById('admin-panel');
+            if (!adminPanel) return;
+
+            try {
+                sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+            } catch (e) {
+                console.log('SessionStorage not available');
+            }
+
+            adminPanel.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            initAdminPanel();
         }
 
         // Admin panel functionality
@@ -575,55 +577,14 @@
             // Initialize admin panel
             initAdminPanel();
 
-            // === Обработчики модального окна авторизации ===
+            // Оставляем только кнопку закрытия legacy-модала авторизации.
             const authModal = document.getElementById('admin-auth-modal');
-            const authInput = document.getElementById('admin-password-input');
-            const authError = document.getElementById('admin-auth-error');
-
-            function attemptAdminLogin() {
-                if (authInput.value === ADMIN_PASSWORD) {
-                    try {
-                        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
-                    } catch (e) {
-                        console.log('SessionStorage not available');
-                    }
+            const authCancelBtn = document.getElementById('admin-auth-cancel');
+            if (authModal && authCancelBtn) {
+                authCancelBtn.addEventListener('click', function() {
                     authModal.classList.add('hidden');
-                    adminPanel.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                    populateCitySelect();
-                    initAdminPanel();
-                } else {
-                    authError.classList.remove('hidden');
-                    authInput.value = '';
-                    authInput.focus();
-                }
-            }
-
-            // Toggle password visibility
-            const passwordToggleBtn = document.getElementById('admin-password-toggle');
-            if (passwordToggleBtn) {
-                passwordToggleBtn.addEventListener('click', function() {
-                    const input = document.getElementById('admin-password-input');
-                    const icon = passwordToggleBtn.querySelector('i');
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        icon.classList.remove('fa-eye');
-                        icon.classList.add('fa-eye-slash');
-                    } else {
-                        input.type = 'password';
-                        icon.classList.remove('fa-eye-slash');
-                        icon.classList.add('fa-eye');
-                    }
                 });
             }
-
-            document.getElementById('admin-auth-submit').addEventListener('click', attemptAdminLogin);
-            authInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') attemptAdminLogin();
-            });
-            document.getElementById('admin-auth-cancel').addEventListener('click', function() {
-                authModal.classList.add('hidden');
-            });
         });
         
         function initAdminPanel() {
@@ -3054,14 +3015,6 @@
             if (e.target === overlay) {
                 overlay.classList.remove('active');
                 enableBodyScroll();
-            }
-        });
-
-        // Close overlay when clicking outside content
-        overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) {
-                overlay.classList.remove('active');
-                document.body.style.overflow = 'auto';
             }
         });
 
