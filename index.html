@@ -257,7 +257,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-left text-white mb-1 text-sm md:text-base">Участок от (соток)</label>
@@ -278,16 +278,6 @@
                                     <input id="max-parking" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-left text-white mb-1 text-sm md:text-base">Год от</label>
-                                    <input id="min-year" type="number" placeholder="Минимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-left text-white mb-1 text-sm md:text-base">Год до</label>
-                                    <input id="max-year" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                                </div>
-                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -298,59 +288,6 @@
                             <div>
                                 <label class="block text-left text-white mb-1 text-sm md:text-base">Балкон</label>
                                 <input id="search-balcony-query" type="text" placeholder="Например: 2 балкона, лоджия" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="advanced-search-panel" class="advanced-search-panel">
-                    <div class="mt-3 mb-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Площадь от (м²)</label>
-                                <input id="min-area-advanced" type="number" placeholder="Минимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Площадь до (м²)</label>
-                                <input id="max-area-advanced" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Комнат от</label>
-                                <input id="min-rooms" type="number" placeholder="Минимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Комнат до</label>
-                                <input id="max-rooms" type="number" placeholder="Максимум" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Этаж</label>
-                                <input id="floors-query" type="text" placeholder="Например: не первый" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Состояние</label>
-                                <input id="search-condition" type="text" placeholder="Например: требует ремонта" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="block text-left text-white mb-1 text-sm md:text-base">Адрес</label>
-                            <input id="search-address-query" type="text" placeholder="Например: Садыр Ажар" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Санузел</label>
-                                <input id="search-bathroom-query" type="text" placeholder="Например: раздельный" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
-                            </div>
-                            <div>
-                                <label class="block text-left text-white mb-1 text-sm md:text-base">Балкон</label>
-                                <input id="search-balcony-query" type="text" placeholder="Например: лоджия" class="w-full bg-gray-800 text-white p-2 md:p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none text-sm md:text-base">
                             </div>
                         </div>
                     </div>

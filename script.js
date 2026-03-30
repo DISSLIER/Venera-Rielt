@@ -2146,8 +2146,6 @@
             const maxLand = getNumericMaxByIds(['max-land']);
             const minParking = getNumericMinByIds(['min-parking']);
             const maxParking = getNumericMaxByIds(['max-parking']);
-            const minYear = getNumericMinByIds(['min-year']);
-            const maxYear = getNumericMaxByIds(['max-year']);
             const floorsQuery = getInputValueByIds(['floors-query']).toLowerCase();
             const conditionQuery = getInputValueByIds(['search-condition']).toLowerCase();
             const bathroomQuery = getInputValueByIds(['search-bathroom-query']).toLowerCase();
@@ -2172,7 +2170,6 @@
                 const cardRooms = parseInt(card.dataset.rooms, 10) || 0;
                 const cardLand = parseInt(card.dataset.land, 10) || 0;
                 const cardParking = parseInt(card.dataset.parking, 10) || 0;
-                const cardYear = parseInt(card.dataset.year, 10) || 0;
                 const cardFloors = String(card.dataset.floors || '').toLowerCase();
                 const cardCondition = String(card.dataset.condition || '').toLowerCase();
                 const cardBathroom = String(card.dataset.bathroom || '').toLowerCase();
@@ -2196,7 +2193,6 @@
                 const roomsMatch = cardRooms >= minRooms && cardRooms <= maxRooms;
                 const landMatch = cardLand >= minLand && cardLand <= maxLand;
                 const parkingMatch = cardParking >= minParking && cardParking <= maxParking;
-                const yearMatch = cardYear >= minYear && cardYear <= maxYear;
                 const floorsMatch = !floorsQuery || cardFloors.includes(floorsQuery);
                 const conditionMatch = !conditionQuery || cardCondition === conditionQuery;
                 const bathroomMatch = !bathroomQuery || cardBathroom.includes(bathroomQuery);
@@ -2213,7 +2209,6 @@
                     roomsMatch &&
                     landMatch &&
                     parkingMatch &&
-                    yearMatch &&
                     floorsMatch &&
                     conditionMatch &&
                     bathroomMatch &&
@@ -3015,9 +3010,23 @@
         // Это позволяет обработчикам срабатывать на динамически добавленные карточки
         document.addEventListener('click', function(e) {
             const detailsBtn = e.target.closest('.view-details-btn');
-            if (!detailsBtn) return;
+            if (detailsBtn) {
+                e.preventDefault();
+                openPropertyOverlay(detailsBtn);
+                return;
+            }
+
+            const propertyCard = e.target.closest('.property-card');
+            if (!propertyCard) return;
+
+            // Do not hijack clicks on interactive elements inside a card.
+            if (e.target.closest('a, button, input, select, textarea, label')) return;
+
+            const cardDetailsBtn = propertyCard.querySelector('.view-details-btn');
+            if (!cardDetailsBtn) return;
+
             e.preventDefault();
-            openPropertyOverlay(detailsBtn);
+            openPropertyOverlay(cardDetailsBtn);
         });
 
         closeOverlay.addEventListener('click', function(e) {
