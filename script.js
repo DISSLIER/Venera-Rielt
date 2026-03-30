@@ -2281,16 +2281,15 @@
         // Function to render agents with pagination
         let visibleAgents = [];
         let currentAgentPage = 0;
-        const agentsPerPage = window.innerWidth < 768 ? 3 : 4;
+        const agentsPerPage = 4;
 
         function renderAgents() {
             const container = document.getElementById('agents-container');
             container.innerHTML = '';
             
             // Calculate agents to show
-            const startIndex = currentAgentPage * agentsPerPage;
-            const endIndex = startIndex + agentsPerPage;
-            visibleAgents = agents.slice(0, endIndex);
+            const visibleCount = Math.min((currentAgentPage + 1) * agentsPerPage, agents.length);
+            visibleAgents = agents.slice(0, visibleCount);
             
             // Render visible agents
             visibleAgents.forEach(agent => {
@@ -2323,22 +2322,31 @@
             const loadMoreBtn = document.getElementById('load-more-agents-btn');
             const closeBtn = document.getElementById('close-agents-btn');
             
-            if (endIndex >= agents.length) {
-                loadMoreBtn.style.display = 'none';
+            if (agents.length <= agentsPerPage) {
+                loadMoreBtn.classList.add('hidden');
+                closeBtn.classList.add('hidden');
+                return;
+            }
+
+            if (visibleCount >= agents.length) {
+                loadMoreBtn.classList.add('hidden');
+            } else {
+                loadMoreBtn.classList.remove('hidden');
+            }
+
+            // Show "Close" as soon as list is expanded beyond first page.
+            if (currentAgentPage > 0) {
                 closeBtn.classList.remove('hidden');
             } else {
-                loadMoreBtn.style.display = 'inline-flex';
-                closeBtn.classList.add('hidden');
-            }
-            
-            // Hide both buttons if there are less agents than initial page size
-            if (agents.length <= agentsPerPage) {
-                loadMoreBtn.style.display = 'none';
                 closeBtn.classList.add('hidden');
             }
         }
 
         function loadMoreAgents() {
+            if ((currentAgentPage + 1) * agentsPerPage >= agents.length) {
+                return;
+            }
+
             currentAgentPage++;
             renderAgents();
             
@@ -3347,18 +3355,11 @@
         // Initialize agents on page load
         renderAgents();
         
-        // Handle window resize to update pagination
-        window.addEventListener('resize', function() {
-            const newAgentsPerPage = window.innerWidth < 768 ? 3 : 4;
-            if (newAgentsPerPage !== agentsPerPage) {
-                currentAgentPage = 0;
-                renderAgents();
-            }
-        });
-
         // Agents buttons handlers
-        document.getElementById('load-more-agents-btn').addEventListener('click', loadMoreAgents);
-        document.getElementById('close-agents-btn').addEventListener('click', closeAgents);
+        const loadMoreAgentsBtn = document.getElementById('load-more-agents-btn');
+        const closeAgentsBtn = document.getElementById('close-agents-btn');
+        if (loadMoreAgentsBtn) loadMoreAgentsBtn.addEventListener('click', loadMoreAgents);
+        if (closeAgentsBtn) closeAgentsBtn.addEventListener('click', closeAgents);
 
         // Property pagination
         const propertyCards = document.querySelectorAll('.property-card');
