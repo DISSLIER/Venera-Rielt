@@ -947,11 +947,10 @@
         }
         
         .social-icon {
-            font-size: 1.5em;
             transition: all 0.3s ease;
         }
 
-        .social-icon i {
+        footer .social-icon i {
             font-size: 1.5em;
         }
         
