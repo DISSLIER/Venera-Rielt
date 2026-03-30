@@ -459,25 +459,25 @@
             pointer-events: auto;
         }
 
-        .advanced-search-panel .grid > div {
+        .advanced-search-panel .grid > div:not(.grid) {
             display: flex;
             flex-direction: column;
         }
 
-        .advanced-search-panel .grid > div > label {
+        .advanced-search-panel .grid > div:not(.grid) > label {
             margin-bottom: 0.4rem;
             line-height: 1.2;
         }
 
         @media (min-width: 768px) {
-            .advanced-search-panel .grid > div > label {
+            .advanced-search-panel .grid > div:not(.grid) > label {
                 min-height: 1.25rem;
                 white-space: nowrap;
             }
         }
 
         .advanced-search-inner {
-            padding-top: 0.25rem;
+            padding-top: 0;
         }
 
         .overlay-feature-card {
