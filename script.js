@@ -593,6 +593,7 @@
         
         function initAdminPanel() {
             populateCitySelect();
+            countAgentProperties();
             renderPropertiesList();
             renderAgentsList();
         }
@@ -638,8 +639,19 @@
         function renderAgentsList() {
             const agentsList = document.getElementById('agents-list');
             agentsList.innerHTML = '';
+
+            const propertyCountsByAgent = {};
+            document.querySelectorAll('.property-card').forEach(card => {
+                const agentId = String(card.dataset.rieltorId || '').trim();
+                if (!agentId) return;
+                propertyCountsByAgent[agentId] = (propertyCountsByAgent[agentId] || 0) + 1;
+            });
             
             agents.forEach((agent, index) => {
+                const agentId = String(agent.rieltor_id || '').trim();
+                const exactCount = propertyCountsByAgent[agentId] || 0;
+                agent.properties_count = exactCount;
+
                 const agentDiv = document.createElement('div');
                 agentDiv.className = 'p-3 bg-gray-800 rounded-lg flex flex-col';
                 agentDiv.innerHTML = `
@@ -660,7 +672,7 @@
                             </div>
                         </div>
                         <div class="text-center bg-gray-700 rounded py-1">
-                            <span class="text-xs">Объектов: <span class="font-bold">${agent.properties_count}</span></span>
+                            <span class="text-xs">Объектов: <span class="font-bold">${exactCount}</span></span>
                         </div>
                     </div>
                     <div class="flex justify-between mt-auto pt-2">

@@ -854,7 +854,12 @@
                 </div>
 
                 <section id="admin-properties-view" class="admin-view">
-                    <h3 class="text-2xl font-semibold mb-4 gold-text">Объекты недвижимости</h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-2xl font-semibold gold-text">Объекты недвижимости</h3>
+                        <button id="add-property" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Добавить объект
+                        </button>
+                    </div>
                     <div class="mb-4">
                         <input type="text" id="admin-property-search"
                                class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"
@@ -863,19 +868,18 @@
                     <div id="properties-list" class="admin-list-scroll admin-list-grid mb-6">
                         <!-- Properties will be populated here -->
                     </div>
-                    <button id="add-property" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Добавить объект
-                    </button>
                 </section>
 
                 <section id="admin-agents-view" class="admin-view hidden">
-                    <h3 class="text-2xl font-semibold mb-4 gold-text">Риелторы</h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-2xl font-semibold gold-text">Риелторы</h3>
+                        <button id="add-agent" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Добавить риелтора
+                        </button>
+                    </div>
                     <div id="agents-list" class="admin-list-scroll admin-list-grid mb-6">
                         <!-- Agents will be populated here -->
                     </div>
-                    <button id="add-agent" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Добавить риелтора
-                    </button>
                 </section>
             </div>
         </div>
