@@ -608,28 +608,28 @@
                 const price = card.querySelector('.price-tag').textContent;
                 const type = card.querySelector('.type-tag').textContent;
                 const propertyDiv = document.createElement('div');
-                propertyDiv.className = 'p-3 bg-gray-800 rounded-lg flex flex-col admin-property-card';
+                propertyDiv.className = 'p-4 bg-gray-800 rounded-lg flex flex-col admin-property-card h-full';
                 propertyDiv.dataset.id = card.dataset.id;
                 propertyDiv.innerHTML = `
                     <div class="flex-grow">
-                        <div class="relative mb-2">
-                            <img src="${card.dataset.mainPhoto || imageSrc}" alt="${title}" class="w-full h-32 object-cover rounded-lg">
-                            <div class="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        <div class="relative mb-3 overflow-hidden rounded-lg">
+                            <img src="${card.dataset.mainPhoto || imageSrc}" alt="${title}" class="w-full h-40 object-cover">
+                            <div class="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                                 ${type}
                             </div>
-                            <div class="absolute top-1 right-1 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">
+                            <div class="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">
                                 ${price}
                             </div>
                         </div>
-                        <h4 class="font-semibold text-sm mb-2 truncate">${title}</h4>
-                        <div class="text-xs text-gray-400 mb-3 truncate">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            ${card.dataset.fullAddress || card.dataset.address || ''}
+                        <h4 class="font-semibold text-sm mb-2 line-clamp-2">${title}</h4>
+                        <div class="text-xs text-gray-400 mb-3 line-clamp-1 flex items-center">
+                            <i class="fas fa-map-marker-alt mr-1 flex-shrink-0"></i>
+                            <span class="truncate">${card.dataset.fullAddress || card.dataset.address || ''}</span>
                         </div>
                     </div>
-                    <div class="flex justify-between mt-auto pt-2">
-                        <button class="edit-property flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Изменить</button>
-                        <button class="delete-property flex-1 text-red-500 py-1 text-sm ml-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Удалить</button>
+                    <div class="flex gap-2 mt-auto pt-3">
+                        <button class="edit-property flex-1 text-blue-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Изменить</button>
+                        <button class="delete-property flex-1 text-red-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Удалить</button>
                     </div>
                 `;
                 propertiesList.appendChild(propertyDiv);
@@ -653,31 +653,33 @@
                 agent.properties_count = exactCount;
 
                 const agentDiv = document.createElement('div');
-                agentDiv.className = 'p-3 bg-gray-800 rounded-lg flex flex-col';
+                agentDiv.className = 'p-4 bg-gray-800 rounded-lg flex flex-col h-full';
                 agentDiv.innerHTML = `
                     <div class="flex-grow">
-                        <div class="flex items-center mb-3">
-                            <img src="${agent.photo}" alt="${agent.name}" class="w-12 h-12 rounded-full object-cover mr-3">
-                            <div>
-                                <h4 class="font-semibold text-sm">${agent.name}</h4>
-                                <p class="text-xs text-gray-400">${agent.position}</p>
+                        <div class="flex items-center mb-4">
+                            <img src="${agent.photo}" alt="${agent.name}" class="w-14 h-14 rounded-full object-cover mr-3 flex-shrink-0">
+                            <div class="min-w-0 flex-1">
+                                <h4 class="font-semibold text-sm truncate">${agent.name}</h4>
+                                <p class="text-xs text-gray-400 truncate">${agent.position}</p>
                             </div>
                         </div>
-                        <div class="flex justify-between text-xs mb-3">
-                            <div class="bg-gray-700 px-2 py-1 rounded">
-                                <i class="fas fa-phone mr-1"></i> ${agent.phone}
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="bg-gray-700 px-2 py-2 rounded text-center">
+                                <div class="text-xs text-gray-400"><i class="fas fa-phone mr-1"></i>Телефон</div>
+                                <div class="text-xs break-all">${agent.phone || '-'}</div>
                             </div>
-                            <div class="bg-gray-700 px-2 py-1 rounded">
-                                <i class="fas fa-envelope mr-1"></i> ${agent.email}
+                            <div class="bg-gray-700 px-2 py-2 rounded text-center">
+                                <div class="text-xs text-gray-400">Объектов</div>
+                                <div class="text-xs font-bold">${exactCount}</div>
                             </div>
                         </div>
-                        <div class="text-center bg-gray-700 rounded py-1">
-                            <span class="text-xs">Объектов: <span class="font-bold">${exactCount}</span></span>
+                        <div class="text-center bg-gray-700 rounded py-2">
+                            <span class="text-xs text-gray-300">${agent.email || 'Email не указан'}</span>
                         </div>
                     </div>
-                    <div class="flex justify-between mt-auto pt-2">
-                        <button class="edit-agent flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Изменить</button>
-                        <button class="delete-agent flex-1 text-red-500 py-1 text-sm ml-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Удалить</button>
+                    <div class="flex gap-2 mt-auto pt-3">
+                        <button class="edit-agent flex-1 text-blue-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Изменить</button>
+                        <button class="delete-agent flex-1 text-red-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Удалить</button>
                     </div>
                 `;
                 agentsList.appendChild(agentDiv);

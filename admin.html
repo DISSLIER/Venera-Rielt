@@ -82,16 +82,16 @@
         }
 
         .admin-sidebar {
-            width: 92px;
+            width: 68px;
             flex-shrink: 0;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-right: 1px solid rgba(255, 215, 0, 0.25);
-            padding: 1rem 0.7rem;
+            padding: 0.8rem 0.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.6rem;
             position: sticky;
             top: 0;
             height: 100vh;
@@ -100,8 +100,8 @@
 
         .admin-sidebar-logo {
             width: 100%;
-            max-width: 56px;
-            height: 48px;
+            max-width: 48px;
+            height: 40px;
             object-fit: contain;
             margin: 0 auto;
             filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.35));
@@ -116,40 +116,41 @@
 
         .admin-nav-btn {
             width: 100%;
-            border-radius: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.04);
-            color: #f7f7f7;
-            padding: 0.9rem 0;
+            border-radius: 0.5rem;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 0.75rem 0;
             text-align: center;
-            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+            transition: color 0.2s ease, transform 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            cursor: pointer;
         }
 
         .admin-nav-btn i {
-            font-size: 1.05rem;
-            transition: transform 0.2s ease;
+            font-size: 1.4rem;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
 
         .admin-nav-btn:hover {
-            border-color: rgba(255, 215, 0, 0.5);
-            transform: translateY(-1px);
+            color: rgba(255, 215, 0, 0.7);
+            transform: scale(1.1);
         }
 
         .admin-nav-btn.active {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 196, 0, 0.1));
-            border-color: rgba(255, 215, 0, 0.75);
-            color: #ffe085;
-            box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.25), 0 8px 20px rgba(255, 194, 10, 0.25);
+            background: transparent;
+            border: none;
+            color: #ffd700;
         }
 
         .admin-nav-btn.active i {
-            transform: scale(1.12);
+            color: #ffd700;
+            transform: scale(1.25);
             animation: navPulse 1.4s ease;
         }
 
@@ -170,19 +171,20 @@
 
         .admin-exit-btn {
             width: 100%;
-            border-radius: 0.75rem;
-            border: 1px solid rgba(255, 108, 108, 0.35);
-            background: rgba(157, 22, 22, 0.22);
-            color: #ffc9c9;
-            padding: 0.9rem 0;
+            border-radius: 0.5rem;
+            border: none;
+            background: transparent;
+            color: rgba(255, 80, 80, 0.7);
+            padding: 0.75rem 0;
             text-align: center;
             transition: all 0.2s ease;
+            font-size: 1.4rem;
+            cursor: pointer;
         }
 
         .admin-exit-btn:hover {
-            background: rgba(157, 22, 22, 0.4);
-            border-color: rgba(255, 133, 133, 0.65);
-            color: #ffe0e0;
+            color: #ff5555;
+            transform: scale(1.15);
         }
 
         .admin-view.hidden {
@@ -200,8 +202,9 @@
 
         .admin-list-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.2rem;
+            auto-rows: max-content;
         }
 
         @keyframes adminViewIn {
@@ -221,39 +224,52 @@
             100% { transform: scale(1.12); }
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
+            .admin-list-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
             .admin-sidebar {
-                width: 82px;
-                padding: 0.8rem 0.55rem;
+                width: 64px;
+                padding: 0.7rem 0.4rem;
             }
 
             .admin-sidebar-logo {
                 max-width: 42px;
-                height: 42px;
+                height: 36px;
             }
 
             .admin-content {
-                padding: 1.1rem;
+                padding: 1rem;
             }
 
             .admin-list-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 1rem;
             }
         }
 
         @media (max-width: 560px) {
             .admin-sidebar {
-                width: 72px;
-                padding: 0.75rem 0.45rem;
+                width: 60px;
+                padding: 0.65rem 0.35rem;
+                gap: 0.5rem;
             }
 
             .admin-sidebar-logo {
                 max-width: 36px;
-                height: 36px;
+                height: 32px;
             }
 
             .admin-content {
-                padding: 0.85rem;
+                padding: 0.75rem;
+            }
+
+            .admin-list-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
             }
         }
     </style>
@@ -841,11 +857,9 @@
                     </button>
                 </nav>
 
-                <div class="admin-exit-wrap">
-                    <button id="close-admin-panel" class="admin-exit-btn" title="Выход" aria-label="Выйти из админ-панели">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                </div>
+                <button id="close-admin-panel" class="admin-exit-btn" style="margin-top: auto;" title="Выход" aria-label="Выйти из админ-панели">
+                    <i class="fas fa-power-off"></i>
+                </button>
             </aside>
 
             <main class="admin-content">
