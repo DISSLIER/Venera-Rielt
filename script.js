@@ -570,6 +570,10 @@
 
             // Close admin panel
             closeAdminPanel.addEventListener('click', function() {
+                if (document.body.classList.contains('admin-standalone')) {
+                    window.location.href = 'index.html';
+                    return;
+                }
                 adminPanel.classList.add('hidden');
                 document.body.style.overflow = 'auto';
             });

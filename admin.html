@@ -16,8 +16,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Venera Rielt">
-    <title>Venera Rielt | Premium Real Estate Moldova</title>
-    <script src="seo.js" defer></script>
+    <title>Venera Rielt | Админ-панель</title>
     <!-- Внешние библиотеки интерфейса, карт и отправки формы -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,6 +49,32 @@
     </script>
     <!-- Локальные стили проекта -->
         <link rel="stylesheet" href="styles.css">
+    <style>
+        body.admin-standalone {
+            background: #000;
+        }
+
+        body.admin-standalone > header,
+        body.admin-standalone > section,
+        body.admin-standalone > footer,
+        body.admin-standalone > #app-splash,
+        body.admin-standalone > #admin-auth-modal,
+        body.admin-standalone > #map-overlay,
+        body.admin-standalone > #property-overlay,
+        body.admin-standalone > #image-lightbox {
+            display: none !important;
+        }
+
+        body.admin-standalone #admin-panel {
+            position: static !important;
+            inset: auto !important;
+            display: block !important;
+            min-height: 100vh;
+            overflow: visible !important;
+            background: #000;
+            padding-top: 2rem;
+        }
+    </style>
 </head>
 <body class="antialiased">
     <div id="app-splash" class="app-splash" aria-hidden="true">
@@ -559,10 +584,10 @@
             <div class="flex flex-col items-center">
                 <div class="text-center w-full mb-4">
                     <h2 class="text-3xl font-bold gold-text">Venera Rielt</h2>
-                    <a class="logo-container relative inline-block mx-auto cursor-pointer" href="admin.html" aria-label="Открыть страницу админ-панели">
+                    <div class="logo-container relative inline-block mx-auto cursor-pointer" onclick="openAdminPanelWithAuth()">
                         <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="h-32 mx-auto mb-2 logo-image">
                         <div class="logo-glow absolute inset-0 rounded-full mx-auto"></div>
-                    </a>
+                    </div>
                     <p class="text-gray-400 mt-2">REAL ESTATE MOLDOVA</p>
                 </div>
                 
@@ -977,7 +1002,16 @@
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
         <script src="script.js"></script>
         <script src="admin.js"></script>
-        <script src="pwa.js?v=8"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.classList.add('admin-standalone');
+                const adminPanel = document.getElementById('admin-panel');
+                if (adminPanel) {
+                    adminPanel.classList.remove('hidden');
+                }
+                document.body.style.overflow = 'auto';
+            });
+        </script>
     </body>
 </html>
 
