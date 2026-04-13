@@ -13,6 +13,327 @@
     - Галерея overlay строится из mainPhoto + photos.
     */
 
+        const ANALYTICS_STORAGE_KEY = 'venera_analytics_events_v1';
+        const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+
+        function getAnalyticsStore() {
+            try {
+                const raw = localStorage.getItem(ANALYTICS_STORAGE_KEY);
+                if (!raw) {
+                    return { events: [] };
+                }
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.events)) {
+                    return { events: [] };
+                }
+                return parsed;
+            } catch (_) {
+                return { events: [] };
+            }
+        }
+
+        function saveAnalyticsStore(store) {
+            try {
+                localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(store));
+            } catch (_) {
+                // ignore storage quota errors
+            }
+        }
+
+        function pushAnalyticsEvent(type, payload = {}) {
+            const store = getAnalyticsStore();
+            const now = Date.now();
+            const event = {
+                id: `${type}_${now}_${Math.random().toString(36).slice(2, 8)}`,
+                type,
+                ts: now,
+                payload
+            };
+            store.events.push(event);
+
+            // Keep analytics storage bounded.
+            if (store.events.length > 20000) {
+                store.events = store.events.slice(-20000);
+            }
+
+            saveAnalyticsStore(store);
+        }
+
+        function detectTrafficSource(referrer) {
+            if (!referrer) return 'Прямой переход';
+
+            const value = String(referrer).toLowerCase();
+            if (value.includes('facebook.com') || value.includes('fb.com')) return 'Facebook';
+            if (value.includes('instagram.com')) return 'Instagram';
+            if (value.includes('tiktok.com')) return 'TikTok';
+            if (value.includes('youtube.com') || value.includes('youtu.be')) return 'YouTube';
+            if (value.includes('t.me') || value.includes('telegram')) return 'Telegram';
+            if (value.includes('wa.me') || value.includes('whatsapp')) return 'WhatsApp';
+            if (value.includes('viber')) return 'Viber';
+            if (value.includes('google.')) return 'Google';
+            return 'Другие источники';
+        }
+
+        function trackVisitEvent() {
+            const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
+            if (isAdminPage) return;
+
+            const todayKey = new Date().toISOString().slice(0, 10);
+            const sessionKey = `venera_visit_logged_${todayKey}`;
+
+            try {
+                if (sessionStorage.getItem(sessionKey) === '1') {
+                    return;
+                }
+                sessionStorage.setItem(sessionKey, '1');
+            } catch (_) {
+                // If sessionStorage unavailable, still track the visit.
+            }
+
+            pushAnalyticsEvent('visit', {
+                source: detectTrafficSource(document.referrer || '')
+            });
+        }
+
+        function recordSearchAnalytics(criteria) {
+            pushAnalyticsEvent('search', {
+                district: String(criteria.district || '').trim() || 'Все районы',
+                city: String(criteria.city || '').trim() || 'Все города',
+                listingMode: String(criteria.listingMode || '').trim() || 'all'
+            });
+        }
+
+        function recordPropertyViewAnalytics(payload) {
+            pushAnalyticsEvent('property_view', {
+                propertyId: String(payload.propertyId || '').trim(),
+                rieltorId: String(payload.rieltorId || '').trim(),
+                agentName: String(payload.agentName || '').trim() || 'Не указан',
+                propertyTitle: String(payload.propertyTitle || '').trim()
+            });
+        }
+
+        function buildAnalyticsSummary(days) {
+            const safeDays = Math.max(1, Number(days) || 30);
+            const now = Date.now();
+            const startTs = now - safeDays * ANALYTICS_DAY_MS;
+            const store = getAnalyticsStore();
+            const events = store.events.filter(item => Number(item.ts) >= startTs);
+
+            const sourceCounts = {};
+            const districtCounts = {};
+            const agentCounts = {};
+            const dailyMap = {};
+
+            for (let offset = safeDays - 1; offset >= 0; offset -= 1) {
+                const date = new Date(now - offset * ANALYTICS_DAY_MS);
+                const key = date.toISOString().slice(0, 10);
+                dailyMap[key] = { visits: 0, searches: 0, views: 0 };
+            }
+
+            events.forEach(event => {
+                const type = String(event.type || '');
+                const payload = event.payload || {};
+                const dayKey = new Date(event.ts).toISOString().slice(0, 10);
+                if (!dailyMap[dayKey]) {
+                    dailyMap[dayKey] = { visits: 0, searches: 0, views: 0 };
+                }
+
+                if (type === 'visit') {
+                    const source = String(payload.source || 'Другие источники');
+                    sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+                    dailyMap[dayKey].visits += 1;
+                }
+
+                if (type === 'search') {
+                    const district = String(payload.district || 'Все районы');
+                    districtCounts[district] = (districtCounts[district] || 0) + 1;
+                    dailyMap[dayKey].searches += 1;
+                }
+
+                if (type === 'property_view') {
+                    const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
+                    agentCounts[agentName] = (agentCounts[agentName] || 0) + 1;
+                    dailyMap[dayKey].views += 1;
+                }
+            });
+
+            const toSortedArray = (obj) => Object.entries(obj)
+                .map(([label, value]) => ({ label, value }))
+                .sort((a, b) => b.value - a.value);
+
+            const totalVisits = events.filter(e => e.type === 'visit').length;
+            const totalSearches = events.filter(e => e.type === 'search').length;
+            const totalViews = events.filter(e => e.type === 'property_view').length;
+
+            return {
+                days: safeDays,
+                totalVisits,
+                totalSearches,
+                totalViews,
+                sources: toSortedArray(sourceCounts),
+                districts: toSortedArray(districtCounts),
+                agents: toSortedArray(agentCounts),
+                daily: Object.entries(dailyMap)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([date, value]) => ({ date, ...value }))
+            };
+        }
+
+        function renderAdminAnalyticsDashboard(days) {
+            if (typeof Chart === 'undefined') {
+                return;
+            }
+
+            const root = document.getElementById('admin-analytics-view');
+            if (!root) {
+                return;
+            }
+
+            const summary = buildAnalyticsSummary(days);
+            const fmtNum = (num) => Number(num || 0).toLocaleString('ru-RU');
+
+            const visitsEl = document.getElementById('analytics-total-visits');
+            const searchesEl = document.getElementById('analytics-total-searches');
+            const viewsEl = document.getElementById('analytics-total-views');
+            const updatedEl = document.getElementById('analytics-updated-at');
+
+            if (visitsEl) visitsEl.textContent = fmtNum(summary.totalVisits);
+            if (searchesEl) searchesEl.textContent = fmtNum(summary.totalSearches);
+            if (viewsEl) viewsEl.textContent = fmtNum(summary.totalViews);
+            if (updatedEl) updatedEl.textContent = new Date().toLocaleString('ru-RU');
+
+            const chartState = window.__veneraAdminCharts || {};
+            window.__veneraAdminCharts = chartState;
+
+            function setChart(chartKey, canvasId, config) {
+                if (chartState[chartKey]) {
+                    chartState[chartKey].destroy();
+                }
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                chartState[chartKey] = new Chart(canvas, config);
+            }
+
+            const sourceLabels = summary.sources.length ? summary.sources.map(item => item.label) : ['Нет данных'];
+            const sourceValues = summary.sources.length ? summary.sources.map(item => item.value) : [0];
+
+            setChart('sources', 'analytics-sources-chart', {
+                type: 'doughnut',
+                data: {
+                    labels: sourceLabels,
+                    datasets: [{
+                        data: sourceValues,
+                        backgroundColor: ['#FFD700', '#00D1FF', '#F97316', '#22C55E', '#EF4444', '#A78BFA', '#14B8A6', '#64748B']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            const districtTop = summary.districts.slice(0, 8);
+            const districtLabels = districtTop.length ? districtTop.map(item => item.label) : ['Нет данных'];
+            const districtValues = districtTop.length ? districtTop.map(item => item.value) : [0];
+
+            setChart('districts', 'analytics-districts-chart', {
+                type: 'bar',
+                data: {
+                    labels: districtLabels,
+                    datasets: [{
+                        label: 'Поисков',
+                        data: districtValues,
+                        backgroundColor: '#FFD700'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            const agentTop = summary.agents.slice(0, 8);
+            const agentLabels = agentTop.length ? agentTop.map(item => item.label) : ['Нет данных'];
+            const agentValues = agentTop.length ? agentTop.map(item => item.value) : [0];
+
+            setChart('agents', 'analytics-agents-chart', {
+                type: 'bar',
+                data: {
+                    labels: agentLabels,
+                    datasets: [{
+                        label: 'Просмотров объектов',
+                        data: agentValues,
+                        backgroundColor: '#F59E0B'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            const dailyLabels = summary.daily.map(item => item.date.slice(5));
+            setChart('activity', 'analytics-activity-chart', {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [
+                        {
+                            label: 'Визиты',
+                            data: summary.daily.map(item => item.visits),
+                            borderColor: '#22C55E',
+                            backgroundColor: 'rgba(34,197,94,0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Поиски',
+                            data: summary.daily.map(item => item.searches),
+                            borderColor: '#38BDF8',
+                            backgroundColor: 'rgba(56,189,248,0.18)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Просмотры объектов',
+                            data: summary.daily.map(item => item.views),
+                            borderColor: '#F59E0B',
+                            backgroundColor: 'rgba(245,158,11,0.18)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.12)' } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.12)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+        }
+
+        window.VENERA_ANALYTICS = {
+            recordSearchAnalytics,
+            recordPropertyViewAnalytics,
+            buildAnalyticsSummary,
+            renderAdminAnalyticsDashboard
+        };
+
         // Справочник типов недвижимости для бейджей и data-атрибутов карточки.
         function getPropertyTypeMeta(typeValue) {
             const normalized = String(typeValue || '').trim().toLowerCase();
@@ -2410,6 +2731,7 @@
 
         // Initialize main map when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            trackVisitEvent();
             syncCityDistrictCatalog();
             populateSearchCitySelect();
             populateCitySelect();
@@ -2564,6 +2886,13 @@
         // Property search functionality
         document.getElementById('search-form').addEventListener('submit', function(e) {
             e.preventDefault();
+            if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.recordSearchAnalytics === 'function') {
+                window.VENERA_ANALYTICS.recordSearchAnalytics({
+                    city: document.getElementById('city') ? document.getElementById('city').value : 'Все города',
+                    district: document.getElementById('district') ? document.getElementById('district').value : 'Все районы',
+                    listingMode: document.getElementById('listing-category') ? document.getElementById('listing-category').value : 'all'
+                });
+            }
             applyPropertyFilters({ scrollToResults: true, showNoMatchesAlert: true });
             setAdvancedSearchExpanded(false);
         });
@@ -2879,6 +3208,15 @@
             const propertyType = propertyCard.querySelector('.type-tag').textContent;
             const overlayRentBadge = document.getElementById('property-overlay-rent-badge');
             const isRentalListing = normalizeListingMode(propertyData.listingMode, propertyData.type) === 'rent';
+
+            if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.recordPropertyViewAnalytics === 'function') {
+                window.VENERA_ANALYTICS.recordPropertyViewAnalytics({
+                    propertyId: propertyData.id || '',
+                    rieltorId: propertyData.rieltorId || '',
+                    agentName: agentName || '',
+                    propertyTitle: propertyCard.querySelector('h3') ? propertyCard.querySelector('h3').textContent : ''
+                });
+            }
 
             if (overlayRentBadge) {
                 overlayRentBadge.classList.toggle('hidden', !isRentalListing);
