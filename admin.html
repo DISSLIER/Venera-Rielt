@@ -294,53 +294,6 @@
             font-size: 0.85rem;
         }
 
-        .analytics-agent-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .analytics-agent-card {
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 0.75rem;
-            padding: 0.65rem;
-            display: flex;
-            gap: 0.65rem;
-            align-items: center;
-        }
-
-        .analytics-agent-photo {
-            width: 56px;
-            height: 56px;
-            border-radius: 9999px;
-            object-fit: cover;
-            border: 2px solid rgba(255, 215, 0, 0.4);
-            flex-shrink: 0;
-        }
-
-        .analytics-agent-body {
-            min-width: 0;
-        }
-
-        .analytics-agent-name {
-            color: #f9fafb;
-            font-weight: 600;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .analytics-agent-views {
-            color: #cbd5e1;
-            font-size: 0.8rem;
-        }
-
-        .analytics-agent-views span {
-            color: #ffd700;
-            font-weight: 700;
-        }
 
         @keyframes adminViewIn {
             from {
@@ -1071,8 +1024,8 @@
                             <div class="analytics-chart-wrap"><canvas id="analytics-districts-chart"></canvas></div>
                         </div>
                         <div class="analytics-chart-card">
-                            <h4>Просмотры по риелторам</h4>
-                            <div class="analytics-chart-wrap"><canvas id="analytics-agents-chart"></canvas></div>
+                            <h4>Динамика активности</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-activity-chart"></canvas></div>
                         </div>
                         <div class="analytics-chart-card">
                             <h4>Районы по выбранному городу</h4>
@@ -1082,14 +1035,13 @@
                             <div class="analytics-chart-wrap"><canvas id="analytics-city-districts-chart"></canvas></div>
                         </div>
                         <div class="analytics-chart-card">
-                            <h4>Динамика активности</h4>
-                            <div class="analytics-chart-wrap"><canvas id="analytics-activity-chart"></canvas></div>
+                            <h4>Просмотры по риелторам</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-agents-chart"></canvas></div>
                         </div>
-                    </div>
-
-                    <div class="analytics-chart-card mt-4">
-                        <h4>Детально по риелторам: просмотры объектов</h4>
-                        <div id="analytics-agent-cards" class="analytics-agent-list"></div>
+                        <div class="analytics-chart-card">
+                            <h4>Добавления объектов риелторами (взял в оборот)</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-agent-additions-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
             </div>

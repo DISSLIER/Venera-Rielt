@@ -297,6 +297,15 @@ function updatePropertySaveHandler() {
                         if (openPropertyOverlay) openPropertyOverlay(this);
                     });
                 }
+
+                if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.recordPropertyAddedAnalytics === 'function') {
+                    const linkedAgent = (Array.isArray(agents) ? agents : []).find(a => String(a.rieltor_id) === String(normalized.rieltorId));
+                    window.VENERA_ANALYTICS.recordPropertyAddedAnalytics({
+                        propertyId: appendResult.propertyId || '',
+                        rieltorId: normalized.rieltorId || '',
+                        agentName: linkedAgent ? linkedAgent.name : ''
+                    });
+                }
             }
         } else {
             const card = document.querySelector(`.property-card[data-id="${cardId}"]`);

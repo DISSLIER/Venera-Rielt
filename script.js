@@ -112,6 +112,14 @@
             });
         }
 
+        function recordPropertyAddedAnalytics(payload) {
+            pushAnalyticsEvent('property_added', {
+                propertyId: String(payload.propertyId || '').trim(),
+                rieltorId: String(payload.rieltorId || '').trim(),
+                agentName: String(payload.agentName || '').trim() || 'Не указан'
+            });
+        }
+
         function buildAnalyticsSummary(days) {
             const safeDays = Math.max(1, Number(days) || 30);
             const now = Date.now();
@@ -124,7 +132,8 @@
             const sourceCounts = {};
             const districtCounts = {};
             const districtByCity = {};
-            const agentCounts = {};
+            const agentViewCounts = {};
+            const agentAddedCounts = {};
             const dailyMap = {};
             const hourlyMap = {};
 
@@ -175,9 +184,16 @@
                     const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
                     const agentId = String(payload.rieltorId || '').trim();
                     const key = `${agentId}::${agentName}`;
-                    agentCounts[key] = (agentCounts[key] || 0) + 1;
+                    agentViewCounts[key] = (agentViewCounts[key] || 0) + 1;
                     dailyMap[dayKey].views += 1;
                     if (hourlyMap[hourKey]) hourlyMap[hourKey].views += 1;
+                }
+
+                if (type === 'property_added') {
+                    const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
+                    const agentId = String(payload.rieltorId || '').trim();
+                    const key = `${agentId}::${agentName}`;
+                    agentAddedCounts[key] = (agentAddedCounts[key] || 0) + 1;
                 }
             });
 
@@ -199,7 +215,7 @@
                 // ignore missing global agents
             }
 
-            const agentEntries = Object.entries(agentCounts)
+            const buildAgentEntries = (counterObject) => Object.entries(counterObject)
                 .map(([compoundKey, value]) => {
                     const [rieltorId, fallbackName] = compoundKey.split('::');
                     const meta = agentMeta[String(rieltorId || '').trim()] || {};
@@ -211,6 +227,9 @@
                     };
                 })
                 .sort((a, b) => b.value - a.value);
+
+            const agentViewEntries = buildAgentEntries(agentViewCounts);
+            const agentAddedEntries = buildAgentEntries(agentAddedCounts);
 
             const totalVisits = events.filter(e => e.type === 'visit').length;
             const totalSearches = events.filter(e => e.type === 'search').length;
@@ -232,7 +251,8 @@
                 sources: toSortedArray(sourceCounts),
                 districts: toSortedArray(districtCounts),
                 districtByCity,
-                agents: agentEntries,
+                agents: agentViewEntries,
+                agentAdded: agentAddedEntries,
                 daily,
                 hourly
             };
@@ -354,6 +374,31 @@
                 }
             });
 
+            const agentAddedTop = summary.agentAdded.slice(0, 8);
+            const agentAddedLabels = agentAddedTop.length ? agentAddedTop.map(item => item.label) : ['Нет данных'];
+            const agentAddedValues = agentAddedTop.length ? agentAddedTop.map(item => item.value) : [0];
+
+            setChart('agentAdditions', 'analytics-agent-additions-chart', {
+                type: 'bar',
+                data: {
+                    labels: agentAddedLabels,
+                    datasets: [{
+                        label: 'Добавленных объектов',
+                        data: agentAddedValues,
+                        backgroundColor: '#22C55E'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
             const citySelect = document.getElementById('analytics-city-select');
             const cityNames = Object.keys(summary.districtByCity || {}).sort((a, b) => a.localeCompare(b, 'ru'));
             const normalizedCityOptions = cityNames.length ? cityNames : ['Все города'];
@@ -450,26 +495,12 @@
                 }
             });
 
-            const agentCardsRoot = document.getElementById('analytics-agent-cards');
-            if (agentCardsRoot) {
-                const topAgents = summary.agents.slice(0, 12);
-                agentCardsRoot.innerHTML = topAgents.length
-                    ? topAgents.map(agent => `
-                        <div class="analytics-agent-card">
-                            <img src="${agent.photo || 'https://via.placeholder.com/64x64?text=VR'}" alt="${agent.label}" class="analytics-agent-photo">
-                            <div class="analytics-agent-body">
-                                <div class="analytics-agent-name">${agent.label}</div>
-                                <div class="analytics-agent-views">Просмотров объектов: <span>${agent.value}</span></div>
-                            </div>
-                        </div>
-                    `).join('')
-                    : '<div class="text-sm text-gray-400">Пока нет данных по просмотрам объектов риелторов за выбранный период.</div>';
-            }
         }
 
         window.VENERA_ANALYTICS = {
             recordSearchAnalytics,
             recordPropertyViewAnalytics,
+            recordPropertyAddedAnalytics,
             buildAnalyticsSummary,
             renderAdminAnalyticsDashboard
         };
