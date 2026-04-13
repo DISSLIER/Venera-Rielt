@@ -404,11 +404,19 @@
             const normalizedCityOptions = cityNames.length ? cityNames : ['Все города'];
 
             if (citySelect) {
-                const currentCityValue = citySelect.value || normalizedCityOptions[0];
+                const PREFERRED_CITY = '\u041a\u0438\u0448\u0438\u043d\u0435\u0432';
+                const prevValue = citySelect.value;
                 citySelect.innerHTML = normalizedCityOptions
                     .map(city => `<option value="${city}">${city}</option>`)
                     .join('');
-                citySelect.value = normalizedCityOptions.includes(currentCityValue) ? currentCityValue : normalizedCityOptions[0];
+                // Prefer previously selected, then Кишинев/Кишинёв, then first option
+                let defaultCity = prevValue && normalizedCityOptions.includes(prevValue) ? prevValue : null;
+                if (!defaultCity) {
+                    defaultCity = normalizedCityOptions.find(c =>
+                        c.toLowerCase().replace('\u0451', '\u0435') === PREFERRED_CITY.toLowerCase()
+                    ) || normalizedCityOptions[0];
+                }
+                citySelect.value = defaultCity;
 
                 if (!citySelect.dataset.bound) {
                     citySelect.addEventListener('change', function() {
@@ -452,7 +460,10 @@
             const activityRows = summary.days === 1 ? summary.hourly : summary.daily;
             const activityLabels = summary.days === 1
                 ? activityRows.map(item => `${item.hour}:00`)
-                : activityRows.map(item => item.date.slice(5));
+                : activityRows.map(item => {
+                    const d = new Date(item.date + 'T00:00:00');
+                    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+                });
             setChart('activity', 'analytics-activity-chart', {
                 type: 'line',
                 data: {
@@ -497,12 +508,236 @@
 
         }
 
+        // ─── Campaign / tracking links ──────────────────────────────────────────────
+        const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
+
+        function getCampaignStore() {
+            try {
+                const raw = localStorage.getItem(CAMPAIGN_STORAGE_KEY);
+                const data = raw ? JSON.parse(raw) : null;
+                if (data && Array.isArray(data.links)) return data;
+            } catch (_) {}
+            return { links: [] };
+        }
+
+        function saveCampaignStore(store) {
+            try { localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(store)); } catch (_) {}
+        }
+
+        function generateCampaignId() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        }
+
+        function buildCampaignUrl(vid, source, medium, campaignName, baseUrl) {
+            const base = String(baseUrl || window.location.origin + window.location.pathname).split('?')[0];
+            const params = new URLSearchParams({
+                utm_source: source,
+                utm_medium: medium,
+                utm_campaign: encodeURIComponent(campaignName),
+                vid
+            });
+            return `${base}?${params.toString()}`;
+        }
+
+        function createCampaignLink(name, source, medium, baseUrl) {
+            const store = getCampaignStore();
+            const vid = generateCampaignId();
+            const link = {
+                id: vid,
+                name: String(name || '').trim(),
+                source: String(source || '').trim(),
+                medium: String(medium || '').trim(),
+                createdAt: Date.now(),
+                url: buildCampaignUrl(vid, source, medium, name, baseUrl)
+            };
+            store.links.push(link);
+            saveCampaignStore(store);
+            return link;
+        }
+
+        function deleteCampaignLink(id) {
+            const store = getCampaignStore();
+            store.links = store.links.filter(l => l.id !== id);
+            saveCampaignStore(store);
+        }
+
+        function trackCampaignClick() {
+            const params = new URLSearchParams(window.location.search);
+            const vid = params.get('vid');
+            if (!vid) return;
+            const store = getCampaignStore();
+            const link = store.links.find(l => l.id === vid);
+            pushAnalyticsEvent('campaign_click', {
+                vid,
+                campaignName: link ? link.name : '',
+                source: link ? link.source : (params.get('utm_source') || ''),
+                medium: link ? link.medium : (params.get('utm_medium') || '')
+            });
+        }
+
+        function renderCampaignLinksAdmin() {
+            const store = getCampaignStore();
+            const links = store.links;
+            const container = document.getElementById('campaign-links-list');
+            if (!container) return;
+
+            // Load click counts from analytics
+            const analyticsStore = getAnalyticsStore();
+            const clickCounts = {};
+            analyticsStore.events.forEach(ev => {
+                if (ev.type === 'campaign_click') {
+                    const v = String((ev.payload || {}).vid || '');
+                    if (v) clickCounts[v] = (clickCounts[v] || 0) + 1;
+                }
+            });
+
+            if (!links.length) {
+                container.innerHTML = '<div class="text-gray-500 text-sm py-2">Ссылок пока нет. Создайте первую выше.</div>';
+                return;
+            }
+
+            container.innerHTML = links.slice().reverse().map(link => {
+                const clicks = clickCounts[link.id] || 0;
+                const created = new Date(link.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+                const safeUrl = String(link.url || '').replace(/"/g, '&quot;');
+                const safeName = String(link.name || '').replace(/</g, '&lt;');
+                const safeSource = String(link.source || '').replace(/</g, '&lt;');
+                const safeMedium = String(link.medium || '').replace(/</g, '&lt;');
+                return `
+                <div class="campaign-link-row" data-campaign-id="${link.id}">
+                    <div class="campaign-link-info">
+                        <div class="campaign-link-name">${safeName}</div>
+                        <div class="campaign-link-meta">${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
+                        <div class="campaign-link-url-wrap">
+                            <input class="campaign-link-url" readonly value="${safeUrl}">
+                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать">&#128203;</button>
+                        </div>
+                    </div>
+                    <div class="campaign-link-stats">
+                        <div class="campaign-click-count">${clicks}</div>
+                        <div class="text-xs text-gray-400">кликов</div>
+                    </div>
+                    <button type="button" class="campaign-delete-btn" data-delete-id="${link.id}" title="Удалить">&times;</button>
+                </div>`;
+            }).join('');
+
+            // bind copy buttons
+            container.querySelectorAll('.campaign-copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const text = this.dataset.copy;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(text).then(() => {
+                            this.textContent = '✓';
+                            setTimeout(() => { this.textContent = '📋'; }, 1500);
+                        });
+                    } else {
+                        const el = document.createElement('textarea');
+                        el.value = text;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(el);
+                    }
+                });
+            });
+
+            // bind delete buttons
+            container.querySelectorAll('.campaign-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.deleteId;
+                    if (confirm('Удалить трекинговую ссылку?')) {
+                        deleteCampaignLink(id);
+                        renderCampaignLinksAdmin();
+                        renderCampaignChart();
+                    }
+                });
+            });
+        }
+
+        function renderCampaignChart() {
+            if (typeof Chart === 'undefined') return;
+            const store = getCampaignStore();
+            const analyticsStore = getAnalyticsStore();
+            const clickCounts = {};
+            analyticsStore.events.forEach(ev => {
+                if (ev.type === 'campaign_click') {
+                    const v = String((ev.payload || {}).vid || '');
+                    if (v) clickCounts[v] = (clickCounts[v] || 0) + 1;
+                }
+            });
+
+            const entries = store.links
+                .map(l => ({ label: l.name || l.id, value: clickCounts[l.id] || 0 }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 12);
+
+            const chartState = window.__veneraAdminCharts || {};
+            window.__veneraAdminCharts = chartState;
+
+            if (chartState.campaign) { chartState.campaign.destroy(); }
+            const canvas = document.getElementById('analytics-campaign-chart');
+            if (!canvas) return;
+
+            if (!entries.length) {
+                canvas.parentElement.innerHTML = '<div class="text-gray-500 text-sm py-2 text-center">Нет данных</div>';
+                return;
+            }
+
+            chartState.campaign = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: entries.map(e => e.label),
+                    datasets: [{
+                        label: 'Кликов',
+                        data: entries.map(e => e.value),
+                        backgroundColor: '#FFD700'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+        }
+
+        function initCampaignLinksUI() {
+            const form = document.getElementById('campaign-create-form');
+            if (!form || form.dataset.bound) return;
+            form.dataset.bound = '1';
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = document.getElementById('campaign-name').value.trim();
+                const source = document.getElementById('campaign-source').value.trim();
+                const medium = document.getElementById('campaign-medium').value.trim();
+                const base = document.getElementById('campaign-base-url').value.trim();
+                if (!name || !source || !medium) {
+                    alert('Заполните название, источник и тип трафика.');
+                    return;
+                }
+                createCampaignLink(name, source, medium, base);
+                form.reset();
+                renderCampaignLinksAdmin();
+                renderCampaignChart();
+            });
+            renderCampaignLinksAdmin();
+            renderCampaignChart();
+        }
+
         window.VENERA_ANALYTICS = {
             recordSearchAnalytics,
             recordPropertyViewAnalytics,
             recordPropertyAddedAnalytics,
             buildAnalyticsSummary,
-            renderAdminAnalyticsDashboard
+            renderAdminAnalyticsDashboard,
+            initCampaignLinksUI,
+            renderCampaignLinksAdmin,
+            renderCampaignChart,
+            trackCampaignClick
         };
 
         // Справочник типов недвижимости для бейджей и data-атрибутов карточки.
@@ -2903,6 +3138,7 @@
         // Initialize main map when page loads
         document.addEventListener('DOMContentLoaded', function() {
             trackVisitEvent();
+            trackCampaignClick();
             syncCityDistrictCatalog();
             populateSearchCitySelect();
             populateCitySelect();

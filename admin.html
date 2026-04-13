@@ -294,6 +294,148 @@
             font-size: 0.85rem;
         }
 
+        /* Campaign links */
+        .campaign-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+        }
+
+        .campaign-form {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.8rem;
+            padding: 1rem;
+        }
+
+        .campaign-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .campaign-input {
+            width: 100%;
+            background: #1f2937;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 0.45rem 0.65rem;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .campaign-input:focus {
+            border-color: #ffd700;
+        }
+
+        .campaign-create-btn {
+            background: #ffd700;
+            color: #111;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .campaign-create-btn:hover {
+            background: #ffe94d;
+        }
+
+        .campaign-links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .campaign-link-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.7rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .campaign-link-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .campaign-link-name {
+            font-weight: 600;
+            color: #f3f4f6;
+            font-size: 0.9rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .campaign-link-meta {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 0.35rem;
+        }
+
+        .campaign-link-url-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .campaign-link-url {
+            flex: 1;
+            background: #111827;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            border-radius: 0.4rem;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.75rem;
+            font-family: monospace;
+            cursor: text;
+            min-width: 0;
+        }
+
+        .campaign-copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.2rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .campaign-copy-btn:hover { opacity: 1; }
+
+        .campaign-link-stats {
+            text-align: center;
+            min-width: 52px;
+        }
+
+        .campaign-click-count {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .campaign-delete-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.3rem;
+            transition: background 0.15s;
+        }
+
+        .campaign-delete-btn:hover {
+            background: rgba(239,68,68,0.15);
+        }
+
 
         @keyframes adminViewIn {
             from {
@@ -1043,6 +1185,46 @@
                             <div class="analytics-chart-wrap"><canvas id="analytics-agent-additions-chart"></canvas></div>
                         </div>
                     </div>
+
+                    <!-- Campaign / tracking links -->
+                    <div class="campaign-section mt-6">
+                        <h4 class="text-lg font-semibold gold-text mb-3">Трекинговые ссылки для рекламных кампаний</h4>
+
+                        <form id="campaign-create-form" class="campaign-form mb-4">
+                            <div class="campaign-form-grid">
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Название кампании</label>
+                                    <input id="campaign-name" type="text" placeholder="Например: Акция июль 2025" required
+                                        class="campaign-input">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Источник (utm_source)</label>
+                                    <input id="campaign-source" type="text" placeholder="instagram, facebook, telegram" required
+                                        class="campaign-input">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Тип трафика (utm_medium)</label>
+                                    <input id="campaign-medium" type="text" placeholder="cpc, post, story, bio" required
+                                        class="campaign-input">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Базовый URL (необязательно)</label>
+                                    <input id="campaign-base-url" type="url" placeholder="https://venera-rielt.com/"
+                                        class="campaign-input">
+                                </div>
+                            </div>
+                            <button type="submit" class="campaign-create-btn mt-3">Создать ссылку</button>
+                        </form>
+
+                        <div class="analytics-chart-card mb-4">
+                            <h4>Клики по кампаниям</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-campaign-chart"></canvas></div>
+                        </div>
+
+                        <div id="campaign-links-list" class="campaign-links-list">
+                            <div class="text-gray-500 text-sm py-2">Ссылок пока нет. Создайте первую выше.</div>
+                        </div>
+                    </div>
                 </section>
             </div>
         </div>
@@ -1410,6 +1592,9 @@
 
                     if (targetId === 'admin-analytics-view') {
                         renderAnalytics(currentAnalyticsDays);
+                        if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.initCampaignLinksUI === 'function') {
+                            window.VENERA_ANALYTICS.initCampaignLinksUI();
+                        }
                     }
                 }
 
