@@ -51,7 +51,7 @@
         <link rel="stylesheet" href="styles.css">
     <style>
         body.admin-standalone {
-            background: #000;
+            background: radial-gradient(circle at 15% 20%, #1b1b1b 0%, #090909 45%, #000000 100%);
         }
 
         body.admin-standalone > header,
@@ -71,8 +71,113 @@
             display: block !important;
             min-height: 100vh;
             overflow: visible !important;
-            background: #000;
-            padding-top: 2rem;
+            background: transparent;
+            padding-top: 0;
+        }
+
+        .admin-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            background: rgba(7, 7, 7, 0.92);
+            border-right: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .admin-brand {
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .admin-nav-btn {
+            width: 100%;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: #f7f7f7;
+            padding: 0.85rem 0.9rem;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-weight: 600;
+        }
+
+        .admin-nav-btn:hover {
+            border-color: rgba(255, 215, 0, 0.5);
+            transform: translateX(2px);
+        }
+
+        .admin-nav-btn.active {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 196, 0, 0.1));
+            border-color: rgba(255, 215, 0, 0.75);
+            color: #ffe085;
+        }
+
+        .admin-nav-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 1.5rem;
+        }
+
+        .admin-view.hidden {
+            display: none;
+        }
+
+        .admin-list-scroll {
+            max-height: calc(100vh - 21rem);
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .admin-shell {
+                flex-direction: column;
+            }
+
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: 0;
+                border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            }
+
+            .admin-nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .admin-nav-btn {
+                width: auto;
+                flex: 1 1 240px;
+            }
+
+            .admin-list-scroll {
+                max-height: none;
+            }
         }
     </style>
 </head>
@@ -642,41 +747,70 @@
         </div>
     </div>
 
-    <!-- Admin Panel: модальное окно управления объектами и риелторами -->
+    <!-- Admin Panel: полноэкранная страница управления -->
     <div id="admin-panel" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden overflow-auto">
-        <div class="container mx-auto px-4 py-8">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold gold-text">Админ-панель</h2>
-                <button id="close-admin-panel" class="text-white text-2xl">&times;</button>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Properties Management -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h3 class="text-2xl font-semibold mb-4 gold-text">Объекты недвижимости</h3>
-                    <div class="mb-4">
-                        <input type="text" id="admin-property-search" 
-                               class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" 
-                               placeholder="Поиск по объектам (название, город, район, адрес)">
-                    </div>
-                    <div id="properties-list" class="mb-6 max-h-96 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Properties will be populated here -->
-                    </div>
-                    <button id="add-property" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Добавить объект
-                    </button>
+        <div class="admin-shell">
+            <aside class="admin-sidebar">
+                <div class="admin-brand">
+                    <h2 class="text-2xl font-bold gold-text">Venera Admin</h2>
+                    <p class="text-sm text-gray-300 mt-2">Панель управления данными</p>
                 </div>
-                
-                <!-- Agents Management -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h3 class="text-2xl font-semibold mb-4 gold-text">Риелторы</h3>
-                    <div id="agents-list" class="mb-6 max-h-96 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Agents will be populated here -->
-                    </div>
-                    <button id="add-agent" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Добавить риелтора
+                <a href="index.html" class="block text-sm text-gray-300 hover:text-yellow-300 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Вернуться на сайт
+                </a>
+                <button id="close-admin-panel" class="text-left text-sm text-gray-300 hover:text-red-300 transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Выйти из админки
+                </button>
+                <nav class="admin-nav" aria-label="Разделы админ-панели">
+                    <button type="button" class="admin-nav-btn active" data-admin-view-target="admin-properties-view" aria-selected="true">
+                        <i class="fas fa-building"></i>
+                        <span>Редактирование объектов</span>
                     </button>
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-agents-view" aria-selected="false">
+                        <i class="fas fa-users"></i>
+                        <span>Редактирование агентов</span>
+                    </button>
+                    <button type="button" class="admin-nav-btn" disabled>
+                        <i class="fas fa-layer-group"></i>
+                        <span>Доп. разделы (скоро)</span>
+                    </button>
+                </nav>
+            </aside>
+
+            <main class="admin-content">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold gold-text">Админ-панель</h1>
+                    <p class="text-gray-300 mt-1">Выберите раздел в меню слева и работайте с данными на всю страницу.</p>
                 </div>
+
+                <section id="admin-properties-view" class="admin-view">
+                    <div class="glass-effect rounded-xl p-6">
+                        <h3 class="text-2xl font-semibold mb-4 gold-text">Объекты недвижимости</h3>
+                        <div class="mb-4">
+                            <input type="text" id="admin-property-search"
+                                   class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"
+                                   placeholder="Поиск по объектам (название, город, район, адрес)">
+                        </div>
+                        <div id="properties-list" class="admin-list-scroll mb-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <!-- Properties will be populated here -->
+                        </div>
+                        <button id="add-property" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Добавить объект
+                        </button>
+                    </div>
+                </section>
+
+                <section id="admin-agents-view" class="admin-view hidden">
+                    <div class="glass-effect rounded-xl p-6">
+                        <h3 class="text-2xl font-semibold mb-4 gold-text">Риелторы</h3>
+                        <div id="agents-list" class="admin-list-scroll mb-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <!-- Agents will be populated here -->
+                        </div>
+                        <button id="add-agent" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Добавить риелтора
+                        </button>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -1010,6 +1144,32 @@
                     adminPanel.classList.remove('hidden');
                 }
                 document.body.style.overflow = 'auto';
+
+                const navButtons = Array.from(document.querySelectorAll('[data-admin-view-target]'));
+                const views = Array.from(document.querySelectorAll('.admin-view'));
+
+                function switchAdminView(targetId) {
+                    views.forEach(function (view) {
+                        view.classList.toggle('hidden', view.id !== targetId);
+                    });
+
+                    navButtons.forEach(function (btn) {
+                        const isActive = btn.getAttribute('data-admin-view-target') === targetId;
+                        btn.classList.toggle('active', isActive);
+                        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    });
+                }
+
+                navButtons.forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const targetId = btn.getAttribute('data-admin-view-target');
+                        if (targetId) {
+                            switchAdminView(targetId);
+                        }
+                    });
+                });
+
+                switchAdminView('admin-properties-view');
             });
         </script>
     </body>
