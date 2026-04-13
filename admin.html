@@ -98,21 +98,14 @@
             box-shadow: 6px 0 18px rgba(0, 0, 0, 0.2);
         }
 
-        .admin-brand {
-            border: 1px solid rgba(255, 215, 0, 0.25);
-            border-radius: 0.75rem;
-            padding: 0.8rem 0.35rem;
-            background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 255, 255, 0.04));
-            text-align: center;
-        }
-
-        .admin-brand-logo {
+        .admin-sidebar-logo {
             width: 100%;
-            max-width: 48px;
+            max-width: 56px;
             height: 48px;
             object-fit: contain;
             margin: 0 auto;
             filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.35));
+            display: block;
         }
 
         .admin-nav {
@@ -234,7 +227,7 @@
                 padding: 0.8rem 0.55rem;
             }
 
-            .admin-brand-logo {
+            .admin-sidebar-logo {
                 max-width: 42px;
                 height: 42px;
             }
@@ -254,11 +247,7 @@
                 padding: 0.75rem 0.45rem;
             }
 
-            .admin-brand {
-                padding: 0.6rem 0.25rem;
-            }
-
-            .admin-brand-logo {
+            .admin-sidebar-logo {
                 max-width: 36px;
                 height: 36px;
             }
@@ -839,9 +828,7 @@
     <div id="admin-panel" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden overflow-auto">
         <div class="admin-shell">
             <aside class="admin-sidebar">
-                <div class="admin-brand">
-                    <img src="image/components/AppIcon.png" alt="Venera Rielt" class="admin-brand-logo">
-                </div>
+                <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="admin-sidebar-logo">
                 <nav class="admin-nav" aria-label="Разделы админ-панели">
                     <button type="button" class="admin-nav-btn active" data-admin-view-target="admin-properties-view" aria-selected="true" title="Объекты" aria-label="Редактирование объектов">
                         <i class="fas fa-building"></i>

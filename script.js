@@ -627,7 +627,7 @@
                         </div>
                     </div>
                     <div class="flex justify-between mt-auto pt-2">
-                        <button class="edit-property flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Редактировать</button>
+                        <button class="edit-property flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Изменить</button>
                         <button class="delete-property flex-1 text-red-500 py-1 text-sm ml-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Удалить</button>
                     </div>
                 `;
@@ -664,7 +664,7 @@
                         </div>
                     </div>
                     <div class="flex justify-between mt-auto pt-2">
-                        <button class="edit-agent flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Редактировать</button>
+                        <button class="edit-agent flex-1 text-blue-500 py-1 text-sm mr-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Изменить</button>
                         <button class="delete-agent flex-1 text-red-500 py-1 text-sm ml-1 bg-gray-700 rounded hover:bg-gray-600" data-index="${index}">Удалить</button>
                     </div>
                 `;
@@ -689,7 +689,7 @@
             
             if (index !== null) {
                 // Edit existing property
-                title.textContent = 'Редактировать объект';
+                title.textContent = 'Изменить объект';
                 const card = document.querySelectorAll('.property-card')[index];
                 const data = card.dataset;
                 
@@ -1130,7 +1130,7 @@
             
             if (index !== null) {
                 // Edit existing agent
-                title.textContent = 'Редактировать риелтора';
+                title.textContent = 'Изменить риелтора';
                 const agent = agents[index];
                 
                 document.getElementById('agent-id').value = agent.id || '';
