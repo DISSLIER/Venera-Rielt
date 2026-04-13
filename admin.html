@@ -78,13 +78,16 @@
         .admin-shell {
             display: flex;
             min-height: 100vh;
+            align-items: stretch;
         }
 
         .admin-sidebar {
             width: 92px;
             flex-shrink: 0;
-            background: rgba(7, 7, 7, 0.92);
-            border-right: 1px solid rgba(255, 215, 0, 0.2);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(255, 215, 0, 0.25);
             padding: 1rem 0.7rem;
             display: flex;
             flex-direction: column;
@@ -92,14 +95,24 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            box-shadow: 6px 0 18px rgba(0, 0, 0, 0.2);
         }
 
         .admin-brand {
             border: 1px solid rgba(255, 215, 0, 0.25);
             border-radius: 0.75rem;
             padding: 0.8rem 0.35rem;
-            background: rgba(255, 215, 0, 0.05);
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 255, 255, 0.04));
             text-align: center;
+        }
+
+        .admin-brand-logo {
+            width: 100%;
+            max-width: 48px;
+            height: 48px;
+            object-fit: contain;
+            margin: 0 auto;
+            filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.35));
         }
 
         .admin-nav {
@@ -116,15 +129,18 @@
             color: #f7f7f7;
             padding: 0.9rem 0;
             text-align: center;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
+            position: relative;
+            overflow: hidden;
         }
 
         .admin-nav-btn i {
             font-size: 1.05rem;
+            transition: transform 0.2s ease;
         }
 
         .admin-nav-btn:hover {
@@ -136,6 +152,12 @@
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 196, 0, 0.1));
             border-color: rgba(255, 215, 0, 0.75);
             color: #ffe085;
+            box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.25), 0 8px 20px rgba(255, 194, 10, 0.25);
+        }
+
+        .admin-nav-btn.active i {
+            transform: scale(1.12);
+            animation: navPulse 1.4s ease;
         }
 
         .admin-nav-btn:disabled {
@@ -146,6 +168,7 @@
         .admin-content {
             flex: 1;
             padding: 1.5rem;
+            min-width: 0;
         }
 
         .admin-exit-wrap {
@@ -173,36 +196,75 @@
             display: none;
         }
 
+        .admin-view.animating {
+            animation: adminViewIn 0.28s ease;
+        }
+
         .admin-list-scroll {
-            max-height: calc(100vh - 21rem);
-            overflow-y: auto;
+            max-height: none;
+            overflow: visible;
+        }
+
+        .admin-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        @keyframes adminViewIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes navPulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1.12); }
         }
 
         @media (max-width: 1024px) {
-            .admin-shell {
-                flex-direction: column;
-            }
-
             .admin-sidebar {
-                width: 100%;
-                height: auto;
-                position: static;
-                border-right: 0;
-                border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+                width: 82px;
+                padding: 0.8rem 0.55rem;
             }
 
-            .admin-nav {
-                flex-direction: row;
-                flex-wrap: wrap;
+            .admin-brand-logo {
+                max-width: 42px;
+                height: 42px;
             }
 
-            .admin-nav-btn {
-                width: auto;
-                flex: 1 1 64px;
+            .admin-content {
+                padding: 1.1rem;
             }
 
-            .admin-list-scroll {
-                max-height: none;
+            .admin-list-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .admin-sidebar {
+                width: 72px;
+                padding: 0.75rem 0.45rem;
+            }
+
+            .admin-brand {
+                padding: 0.6rem 0.25rem;
+            }
+
+            .admin-brand-logo {
+                max-width: 36px;
+                height: 36px;
+            }
+
+            .admin-content {
+                padding: 0.85rem;
             }
         }
     </style>
@@ -778,7 +840,7 @@
         <div class="admin-shell">
             <aside class="admin-sidebar">
                 <div class="admin-brand">
-                    <h2 class="text-xl font-bold gold-text">VR</h2>
+                    <img src="image/components/AppIcon.png" alt="Venera Rielt" class="admin-brand-logo">
                 </div>
                 <nav class="admin-nav" aria-label="Разделы админ-панели">
                     <button type="button" class="admin-nav-btn active" data-admin-view-target="admin-properties-view" aria-selected="true" title="Объекты" aria-label="Редактирование объектов">
@@ -811,7 +873,7 @@
                                class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"
                                placeholder="Поиск по объектам (название, город, район, адрес)">
                     </div>
-                    <div id="properties-list" class="admin-list-scroll mb-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div id="properties-list" class="admin-list-scroll admin-list-grid mb-6">
                         <!-- Properties will be populated here -->
                     </div>
                     <button id="add-property" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
@@ -821,7 +883,7 @@
 
                 <section id="admin-agents-view" class="admin-view hidden">
                     <h3 class="text-2xl font-semibold mb-4 gold-text">Риелторы</h3>
-                    <div id="agents-list" class="admin-list-scroll mb-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div id="agents-list" class="admin-list-scroll admin-list-grid mb-6">
                         <!-- Agents will be populated here -->
                     </div>
                     <button id="add-agent" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
@@ -1167,7 +1229,15 @@
 
                 function switchAdminView(targetId) {
                     views.forEach(function (view) {
-                        view.classList.toggle('hidden', view.id !== targetId);
+                        const shouldShow = view.id === targetId;
+                        if (shouldShow) {
+                            view.classList.remove('hidden');
+                            view.classList.remove('animating');
+                            void view.offsetWidth;
+                            view.classList.add('animating');
+                        } else {
+                            view.classList.add('hidden');
+                        }
                     });
 
                     navButtons.forEach(function (btn) {
