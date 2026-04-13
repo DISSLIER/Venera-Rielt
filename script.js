@@ -115,14 +115,23 @@
         function buildAnalyticsSummary(days) {
             const safeDays = Math.max(1, Number(days) || 30);
             const now = Date.now();
-            const startTs = now - safeDays * ANALYTICS_DAY_MS;
+            const dayStart = new Date();
+            dayStart.setHours(0, 0, 0, 0);
+            const startTs = safeDays === 1 ? dayStart.getTime() : (now - safeDays * ANALYTICS_DAY_MS);
             const store = getAnalyticsStore();
             const events = store.events.filter(item => Number(item.ts) >= startTs);
 
             const sourceCounts = {};
             const districtCounts = {};
+            const districtByCity = {};
             const agentCounts = {};
             const dailyMap = {};
+            const hourlyMap = {};
+
+            for (let hour = 0; hour < 24; hour += 1) {
+                const key = String(hour).padStart(2, '0');
+                hourlyMap[key] = { visits: 0, searches: 0, views: 0 };
+            }
 
             for (let offset = safeDays - 1; offset >= 0; offset -= 1) {
                 const date = new Date(now - offset * ANALYTICS_DAY_MS);
@@ -133,7 +142,10 @@
             events.forEach(event => {
                 const type = String(event.type || '');
                 const payload = event.payload || {};
-                const dayKey = new Date(event.ts).toISOString().slice(0, 10);
+                const eventDate = new Date(event.ts);
+                const dayKey = eventDate.toISOString().slice(0, 10);
+                const hourKey = String(eventDate.getHours()).padStart(2, '0');
+
                 if (!dailyMap[dayKey]) {
                     dailyMap[dayKey] = { visits: 0, searches: 0, views: 0 };
                 }
@@ -142,18 +154,30 @@
                     const source = String(payload.source || 'Другие источники');
                     sourceCounts[source] = (sourceCounts[source] || 0) + 1;
                     dailyMap[dayKey].visits += 1;
+                    if (hourlyMap[hourKey]) hourlyMap[hourKey].visits += 1;
                 }
 
                 if (type === 'search') {
                     const district = String(payload.district || 'Все районы');
+                    const city = String(payload.city || 'Все города');
                     districtCounts[district] = (districtCounts[district] || 0) + 1;
+
+                    if (!districtByCity[city]) {
+                        districtByCity[city] = {};
+                    }
+                    districtByCity[city][district] = (districtByCity[city][district] || 0) + 1;
+
                     dailyMap[dayKey].searches += 1;
+                    if (hourlyMap[hourKey]) hourlyMap[hourKey].searches += 1;
                 }
 
                 if (type === 'property_view') {
                     const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
-                    agentCounts[agentName] = (agentCounts[agentName] || 0) + 1;
+                    const agentId = String(payload.rieltorId || '').trim();
+                    const key = `${agentId}::${agentName}`;
+                    agentCounts[key] = (agentCounts[key] || 0) + 1;
                     dailyMap[dayKey].views += 1;
+                    if (hourlyMap[hourKey]) hourlyMap[hourKey].views += 1;
                 }
             });
 
@@ -161,9 +185,44 @@
                 .map(([label, value]) => ({ label, value }))
                 .sort((a, b) => b.value - a.value);
 
+            const agentMeta = {};
+            try {
+                if (Array.isArray(agents)) {
+                    agents.forEach(agent => {
+                        agentMeta[String(agent.rieltor_id || '').trim()] = {
+                            name: String(agent.name || '').trim(),
+                            photo: String(agent.photo || '').trim()
+                        };
+                    });
+                }
+            } catch (_) {
+                // ignore missing global agents
+            }
+
+            const agentEntries = Object.entries(agentCounts)
+                .map(([compoundKey, value]) => {
+                    const [rieltorId, fallbackName] = compoundKey.split('::');
+                    const meta = agentMeta[String(rieltorId || '').trim()] || {};
+                    return {
+                        rieltorId,
+                        label: meta.name || fallbackName || 'Не указан',
+                        photo: meta.photo || '',
+                        value
+                    };
+                })
+                .sort((a, b) => b.value - a.value);
+
             const totalVisits = events.filter(e => e.type === 'visit').length;
             const totalSearches = events.filter(e => e.type === 'search').length;
             const totalViews = events.filter(e => e.type === 'property_view').length;
+
+            const daily = Object.entries(dailyMap)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([date, value]) => ({ date, ...value }));
+
+            const hourly = Object.entries(hourlyMap)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([hour, value]) => ({ hour, ...value }));
 
             return {
                 days: safeDays,
@@ -172,11 +231,22 @@
                 totalViews,
                 sources: toSortedArray(sourceCounts),
                 districts: toSortedArray(districtCounts),
-                agents: toSortedArray(agentCounts),
-                daily: Object.entries(dailyMap)
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([date, value]) => ({ date, ...value }))
+                districtByCity,
+                agents: agentEntries,
+                daily,
+                hourly
             };
+        }
+
+        function getSourceColor(label) {
+            const key = String(label || '').toLowerCase();
+            if (key === 'прямой переход') return '#FFD700';
+            if (key === 'facebook') return '#1B4F9C';
+            if (key === 'instagram') return '#FF4FA1';
+            if (key === 'tiktok') return '#FFFFFF';
+            if (key === 'telegram') return '#38BDF8';
+            if (key === 'youtube') return '#FF0000';
+            return '#64748B';
         }
 
         function renderAdminAnalyticsDashboard(days) {
@@ -216,6 +286,7 @@
 
             const sourceLabels = summary.sources.length ? summary.sources.map(item => item.label) : ['Нет данных'];
             const sourceValues = summary.sources.length ? summary.sources.map(item => item.value) : [0];
+            const sourceColors = summary.sources.length ? summary.sources.map(item => getSourceColor(item.label)) : ['#64748B'];
 
             setChart('sources', 'analytics-sources-chart', {
                 type: 'doughnut',
@@ -223,7 +294,7 @@
                     labels: sourceLabels,
                     datasets: [{
                         data: sourceValues,
-                        backgroundColor: ['#FFD700', '#00D1FF', '#F97316', '#22C55E', '#EF4444', '#A78BFA', '#14B8A6', '#64748B']
+                        backgroundColor: sourceColors
                     }]
                 },
                 options: {
@@ -283,15 +354,68 @@
                 }
             });
 
-            const dailyLabels = summary.daily.map(item => item.date.slice(5));
+            const citySelect = document.getElementById('analytics-city-select');
+            const cityNames = Object.keys(summary.districtByCity || {}).sort((a, b) => a.localeCompare(b, 'ru'));
+            const normalizedCityOptions = cityNames.length ? cityNames : ['Все города'];
+
+            if (citySelect) {
+                const currentCityValue = citySelect.value || normalizedCityOptions[0];
+                citySelect.innerHTML = normalizedCityOptions
+                    .map(city => `<option value="${city}">${city}</option>`)
+                    .join('');
+                citySelect.value = normalizedCityOptions.includes(currentCityValue) ? currentCityValue : normalizedCityOptions[0];
+
+                if (!citySelect.dataset.bound) {
+                    citySelect.addEventListener('change', function() {
+                        renderAdminAnalyticsDashboard(days);
+                    });
+                    citySelect.dataset.bound = '1';
+                }
+            }
+
+            const selectedCity = citySelect ? citySelect.value : normalizedCityOptions[0];
+            const cityDistrictMap = summary.districtByCity[selectedCity] || {};
+            const cityDistrictTop = Object.entries(cityDistrictMap)
+                .map(([label, value]) => ({ label, value }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 12);
+
+            const cityDistrictLabels = cityDistrictTop.length ? cityDistrictTop.map(item => item.label) : ['Нет данных'];
+            const cityDistrictValues = cityDistrictTop.length ? cityDistrictTop.map(item => item.value) : [0];
+
+            setChart('districtsByCity', 'analytics-city-districts-chart', {
+                type: 'bar',
+                data: {
+                    labels: cityDistrictLabels,
+                    datasets: [{
+                        label: `Поисков (${selectedCity})`,
+                        data: cityDistrictValues,
+                        backgroundColor: '#38BDF8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            const activityRows = summary.days === 1 ? summary.hourly : summary.daily;
+            const activityLabels = summary.days === 1
+                ? activityRows.map(item => `${item.hour}:00`)
+                : activityRows.map(item => item.date.slice(5));
             setChart('activity', 'analytics-activity-chart', {
                 type: 'line',
                 data: {
-                    labels: dailyLabels,
+                    labels: activityLabels,
                     datasets: [
                         {
                             label: 'Визиты',
-                            data: summary.daily.map(item => item.visits),
+                            data: activityRows.map(item => item.visits),
                             borderColor: '#22C55E',
                             backgroundColor: 'rgba(34,197,94,0.2)',
                             fill: true,
@@ -299,7 +423,7 @@
                         },
                         {
                             label: 'Поиски',
-                            data: summary.daily.map(item => item.searches),
+                            data: activityRows.map(item => item.searches),
                             borderColor: '#38BDF8',
                             backgroundColor: 'rgba(56,189,248,0.18)',
                             fill: true,
@@ -307,7 +431,7 @@
                         },
                         {
                             label: 'Просмотры объектов',
-                            data: summary.daily.map(item => item.views),
+                            data: activityRows.map(item => item.views),
                             borderColor: '#F59E0B',
                             backgroundColor: 'rgba(245,158,11,0.18)',
                             fill: true,
@@ -325,6 +449,22 @@
                     plugins: { legend: { labels: { color: '#e5e7eb' } } }
                 }
             });
+
+            const agentCardsRoot = document.getElementById('analytics-agent-cards');
+            if (agentCardsRoot) {
+                const topAgents = summary.agents.slice(0, 12);
+                agentCardsRoot.innerHTML = topAgents.length
+                    ? topAgents.map(agent => `
+                        <div class="analytics-agent-card">
+                            <img src="${agent.photo || 'https://via.placeholder.com/64x64?text=VR'}" alt="${agent.label}" class="analytics-agent-photo">
+                            <div class="analytics-agent-body">
+                                <div class="analytics-agent-name">${agent.label}</div>
+                                <div class="analytics-agent-views">Просмотров объектов: <span>${agent.value}</span></div>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<div class="text-sm text-gray-400">Пока нет данных по просмотрам объектов риелторов за выбранный период.</div>';
+            }
         }
 
         window.VENERA_ANALYTICS = {
