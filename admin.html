@@ -1292,7 +1292,10 @@
                 <section id="admin-messages-view" class="admin-view hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                         <h3 class="text-2xl font-semibold gold-text">Заявки с сайта</h3>
-                        <button id="admin-messages-clear-read" onclick="window.deleteReadMessages()" class="px-4 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Удалить прочитанные</button>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="if(typeof window.renderMessagesAdmin==='function')window.renderMessagesAdmin()" class="px-4 py-2 text-sm bg-blue-900 text-blue-200 rounded-lg hover:bg-blue-800 transition"><i class="fas fa-sync-alt mr-1"></i>Обновить</button>
+                            <button id="admin-messages-clear-read" onclick="window.deleteReadMessages()" class="px-4 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Удалить прочитанные</button>
+                        </div>
                     </div>
                     <div id="admin-messages-list">
                         <div class="text-gray-500 text-sm py-4">Заявок пока нет.</div>

@@ -4407,6 +4407,7 @@
             };
 
             // Всегда сохраняем в админку (до попытки отправки email)
+            var savedOk = false;
             try {
                 var msgs = JSON.parse(localStorage.getItem('venera_contact_messages_v1') || '[]');
                 msgs.unshift({
@@ -4419,8 +4420,11 @@
                     read: false
                 });
                 localStorage.setItem('venera_contact_messages_v1', JSON.stringify(msgs));
+                savedOk = true;
                 window._updateMessagesBadge && window._updateMessagesBadge();
-            } catch(e) {}
+            } catch(e) {
+                console.error('Venera: ошибка сохранения заявки в localStorage:', e);
+            }
 
             showStatus('✓ Сообщение отправлено! Мы свяжемся с вами в ближайшее время.', 'text-green-400');
             form.reset();
@@ -4516,5 +4520,18 @@ window.deleteReadMessages = function() {
 // Обновляем бейдж при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     window._updateMessagesBadge && window._updateMessagesBadge();
+});
+
+
+// Автообновление заявок при сохранении из другой вкладки (index.html → admin.html)
+window.addEventListener('storage', function(e) {
+    if (e.key === 'venera_contact_messages_v1') {
+        window._updateMessagesBadge && window._updateMessagesBadge();
+        // Если сейчас открыта вкладка «Заявки» — обновляем список сразу
+        var messagesView = document.getElementById('admin-messages-view');
+        if (messagesView && !messagesView.classList.contains('hidden')) {
+            if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
+        }
+    }
 });
 
