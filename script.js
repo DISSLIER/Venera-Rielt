@@ -100,23 +100,24 @@
             const vid = params.get('vid') || '';
             const sourceLabel = detectTrafficSource(document.referrer || '', utmSource);
 
-            const todayKey = new Date().toISOString().slice(0, 10);
-            const sessionKey = `venera_visit_logged_${todayKey}_${sourceLabel}_${vid || 'no_vid'}`;
-
-            try {
-                if (sessionStorage.getItem(sessionKey) === '1') {
-                    return;
-                }
-                sessionStorage.setItem(sessionKey, '1');
-            } catch (_) {
-                // If sessionStorage unavailable, still track the visit.
-            }
-
             pushAnalyticsEvent('visit', {
                 source: sourceLabel,
                 utmSource: String(utmSource).trim(),
                 vid: String(vid).trim()
             });
+
+            // Fallback: if campaign params exist, also log campaign click here.
+            if (vid) {
+                const utmMedium = params.get('utm_medium') || '';
+                const utmCampaign = params.get('utm_campaign') || '';
+                pushAnalyticsEvent('campaign_click', {
+                    vid,
+                    campaignName: String(utmCampaign).trim(),
+                    source: sourceLabel,
+                    medium: String(utmMedium).trim()
+                });
+                window.__venera_campaign_click_logged_for_vid = vid;
+            }
         }
 
         function recordSearchAnalytics(criteria) {
@@ -680,6 +681,15 @@
             const vid = params.get('vid');
             if (!vid) return;
 
+            const hasCampaignClickInThisLoad = (() => {
+                try {
+                    return window.__venera_campaign_click_logged_for_vid === vid;
+                } catch (_) {
+                    return false;
+                }
+            })();
+            if (hasCampaignClickInThisLoad) return;
+
             const store = getCampaignStore();
             const link = store.links.find(l => l.id === vid);
             pushAnalyticsEvent('campaign_click', {
@@ -688,6 +698,8 @@
                 source: normalizeSourceLabel(link ? link.source : (params.get('utm_source') || '')),
                 medium: link ? link.medium : (params.get('utm_medium') || '')
             });
+
+            window.__venera_campaign_click_logged_for_vid = vid;
         }
 
         function renderCampaignLinksAdmin() {
