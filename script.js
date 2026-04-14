@@ -595,6 +595,8 @@
 
         // ─── Campaign / tracking links ──────────────────────────────────────────────
         const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
+        const CAMPAIGN_LANDING_URL = 'https://venera-rielt.vercel.app/';
+        const CAMPAIGN_TRACKED_SESSION_KEY = 'venera_campaign_tracked_vids_v1';
 
         function getCampaignStore() {
             try {
@@ -614,26 +616,22 @@
         }
 
         function getMainLandingUrl() {
-            try {
-                const current = new URL(window.location.href);
-                if (current.protocol === 'http:' || current.protocol === 'https:') {
-                    let path = current.pathname;
-                    if (/\/admin\.html$/i.test(path)) {
-                        path = path.replace(/\/admin\.html$/i, '/index.html');
-                    } else if (/\/index\.html$/i.test(path)) {
-                        // already main page
-                    } else if (path.endsWith('/')) {
-                        path = `${path}index.html`;
-                    } else {
-                        path = path.replace(/\/[^/]*$/, '/index.html');
-                    }
-                    return `${current.origin}${path}`;
-                }
-            } catch (_) {
-                // fallback below
-            }
+            return CAMPAIGN_LANDING_URL;
+        }
 
-            return 'index.html';
+        function getTrackedCampaignVids() {
+            try {
+                const raw = sessionStorage.getItem(CAMPAIGN_TRACKED_SESSION_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                if (Array.isArray(parsed)) return parsed;
+            } catch (_) {}
+            return [];
+        }
+
+        function saveTrackedCampaignVids(vids) {
+            try {
+                sessionStorage.setItem(CAMPAIGN_TRACKED_SESSION_KEY, JSON.stringify(vids));
+            } catch (_) {}
         }
 
         function buildCampaignUrl(vid, source, medium, campaignName) {
@@ -673,6 +671,11 @@
             const params = new URLSearchParams(window.location.search);
             const vid = params.get('vid');
             if (!vid) return;
+
+            // Count one click per session for each vid to avoid duplicates on refresh.
+            const trackedVids = getTrackedCampaignVids();
+            if (trackedVids.includes(vid)) return;
+
             const store = getCampaignStore();
             const link = store.links.find(l => l.id === vid);
             pushAnalyticsEvent('campaign_click', {
@@ -681,6 +684,9 @@
                 source: link ? link.source : (params.get('utm_source') || ''),
                 medium: link ? link.medium : (params.get('utm_medium') || '')
             });
+
+            trackedVids.push(vid);
+            saveTrackedCampaignVids(trackedVids);
         }
 
         function renderCampaignLinksAdmin() {
