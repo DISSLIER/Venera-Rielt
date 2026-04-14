@@ -4533,5 +4533,120 @@ window.addEventListener('storage', function(e) {
             if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
         }
     }
+    if (e.key === 'venera_clients_db_v1') {
+        var clientsView = document.getElementById('admin-clients-view');
+        if (clientsView && !clientsView.classList.contains('hidden')) {
+            if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+        }
+    }
+});
+
+// ====================== БАЗА КЛИЕНТОВ ======================
+var CLIENTS_STORAGE_KEY = 'venera_clients_db_v1';
+
+function _getClients() {
+    try { return JSON.parse(localStorage.getItem(CLIENTS_STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function _saveClients(items) {
+    localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(items));
+}
+
+function _clientStatusMeta(status) {
+    if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
+    if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
+    return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };
+}
+
+window.renderClientsAdmin = function() {
+    var list = document.getElementById('admin-clients-list');
+    if (!list) return;
+    var items = _getClients();
+
+    if (items.length === 0) {
+        list.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-gray-500">Клиентов пока нет.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = items.map(function(item) {
+        var meta = _clientStatusMeta(item.status);
+        return '<tr class="border-t border-gray-800">' +
+            '<td class="px-3 py-3">' +
+                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" class="inline-flex items-center gap-2 px-2 py-1 rounded bg-black/30 hover:bg-black/50 transition" title="Сменить статус">' +
+                    '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
+                    '<span class="text-gray-300 text-xs">' + meta.label + '</span>' +
+                '</button>' +
+            '</td>' +
+            '<td class="px-3 py-3 text-white">' + _escMsg(item.fullName) + '</td>' +
+            '<td class="px-3 py-3 text-gray-200">' + _escMsg(item.phone) + '</td>' +
+            '<td class="px-3 py-3 text-gray-200">' + (item.email ? _escMsg(item.email) : '<span class="text-gray-500">-</span>') + '</td>' +
+            '<td class="px-3 py-3 text-gray-300" style="white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
+            '<td class="px-3 py-3">' +
+                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+};
+
+window.cycleClientStatus = function(id) {
+    var order = ['pending', 'success', 'reject'];
+    var items = _getClients();
+    items = items.map(function(item) {
+        if (item.id !== id) return item;
+        var idx = order.indexOf(item.status);
+        var next = order[(idx + 1) % order.length];
+        return Object.assign({}, item, { status: next });
+    });
+    _saveClients(items);
+    window.renderClientsAdmin();
+};
+
+window.deleteClient = function(id) {
+    var items = _getClients().filter(function(item) { return item.id !== id; });
+    _saveClients(items);
+    window.renderClientsAdmin();
+};
+
+window.initClientsAdmin = function() {
+    var form = document.getElementById('admin-clients-form');
+    if (!form || form.dataset.bound === '1') return;
+    form.dataset.bound = '1';
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var fullName = (document.getElementById('client-fullname') || {}).value || '';
+        var phone = (document.getElementById('client-phone') || {}).value || '';
+        var email = (document.getElementById('client-email') || {}).value || '';
+        var note = (document.getElementById('client-note') || {}).value || '';
+        var status = ((document.getElementById('client-status') || {}).value || 'pending');
+
+        fullName = fullName.trim();
+        phone = phone.trim();
+        email = email.trim();
+        note = note.trim();
+
+        if (!fullName || !phone || !note) return;
+
+        var items = _getClients();
+        items.unshift({
+            id: 'client_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+            fullName: fullName,
+            phone: phone,
+            email: email,
+            note: note,
+            status: status,
+            createdAt: Date.now()
+        });
+        _saveClients(items);
+        form.reset();
+        var statusSelect = document.getElementById('client-status');
+        if (statusSelect) statusSelect.value = 'pending';
+        window.renderClientsAdmin();
+    });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    window.initClientsAdmin && window.initClientsAdmin();
+    window.renderClientsAdmin && window.renderClientsAdmin();
 });
 

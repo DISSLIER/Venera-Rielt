@@ -1132,6 +1132,9 @@
                         <i class="fas fa-envelope"></i>
                         <span id="admin-messages-badge" class="hidden" style="position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>
                     </button>
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-clients-view" aria-selected="false" title="База клиентов" aria-label="База клиентов">
+                        <i class="fas fa-user-check"></i>
+                    </button>
                 </nav>
 
                 <button id="close-admin-panel" class="admin-exit-btn" style="margin-top: auto;" title="Выход" aria-label="Выйти из админ-панели">
@@ -1299,6 +1302,42 @@
                     </div>
                     <div id="admin-messages-list">
                         <div class="text-gray-500 text-sm py-4">Заявок пока нет.</div>
+                    </div>
+                </section>
+
+                <section id="admin-clients-view" class="admin-view hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <h3 class="text-2xl font-semibold gold-text">База клиентов</h3>
+                    </div>
+
+                    <form id="admin-clients-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mb-5">
+                        <input id="client-fullname" type="text" required placeholder="ФИО" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="client-phone" type="text" required placeholder="Номер телефона" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="client-email" type="email" placeholder="Email (если есть)" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="client-note" type="text" required placeholder="Заметка: что ищет" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none xl:col-span-2">
+
+                        <select id="client-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="pending">⏳ В ожидании</option>
+                            <option value="success">✅ Сделка/готов</option>
+                            <option value="reject">❌ Отказ</option>
+                        </select>
+                        <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition md:col-span-2 xl:col-span-1">Добавить клиента</button>
+                    </form>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left border border-gray-800 rounded-lg overflow-hidden">
+                            <thead class="bg-gray-900 text-gray-300">
+                                <tr>
+                                    <th class="px-3 py-3">Статус</th>
+                                    <th class="px-3 py-3">ФИО</th>
+                                    <th class="px-3 py-3">Телефон</th>
+                                    <th class="px-3 py-3">Email</th>
+                                    <th class="px-3 py-3">Заметка</th>
+                                    <th class="px-3 py-3">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-clients-list" class="bg-[#0f172a]"></tbody>
+                        </table>
                     </div>
                 </section>
             </div>
@@ -1692,6 +1731,9 @@
                     }
                     if (targetId === 'admin-messages-view') {
                         if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
+                    }
+                    if (targetId === 'admin-clients-view') {
+                        if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
                     }
                 }
 
