@@ -1308,21 +1308,32 @@
                 <section id="admin-clients-view" class="admin-view hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                         <h3 class="text-2xl font-semibold gold-text">База клиентов</h3>
+                        <button id="open-client-modal-btn" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Добавить покупателя
+                        </button>
                     </div>
 
-                    <form id="admin-clients-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mb-5">
-                        <input id="client-fullname" type="text" required placeholder="ФИО" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="client-phone" type="text" required placeholder="Номер телефона" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="client-email" type="email" placeholder="Email (если есть)" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="client-note" type="text" required placeholder="Заметка: что ищет" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none xl:col-span-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mb-5">
+                        <input id="clients-filter-fio" type="text" placeholder="Фильтр: ФИО" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-phone" type="text" placeholder="Фильтр: телефон" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-email" type="text" placeholder="Фильтр: email" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-city" type="text" placeholder="Фильтр: город" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-district" type="text" placeholder="Фильтр: район" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
 
-                        <select id="client-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                            <option value="pending">⏳ В ожидании</option>
-                            <option value="success">✅ Сделка/готов</option>
-                            <option value="reject">❌ Отказ</option>
+                        <input id="clients-filter-rooms" type="text" placeholder="Фильтр: комнаты" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-condition" type="text" placeholder="Фильтр: состояние" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-price-from" type="number" min="0" placeholder="Цена от" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input id="clients-filter-price-to" type="number" min="0" placeholder="Цена до" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <select id="clients-filter-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="all">Статус: все</option>
+                            <option value="pending">Только в ожидании</option>
+                            <option value="success">Только сделка/готов</option>
+                            <option value="reject">Только отказ</option>
                         </select>
-                        <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition md:col-span-2 xl:col-span-1">Добавить клиента</button>
-                    </form>
+
+                        <input id="clients-filter-note" type="text" placeholder="Фильтр: заметка" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none xl:col-span-3">
+                        <button id="clients-filter-reset" type="button" class="w-full px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition xl:col-span-2">Сбросить фильтры</button>
+                    </div>
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm text-left border border-gray-800 rounded-lg overflow-hidden">
@@ -1332,6 +1343,7 @@
                                     <th class="px-3 py-3">ФИО</th>
                                     <th class="px-3 py-3">Телефон</th>
                                     <th class="px-3 py-3">Email</th>
+                                    <th class="px-3 py-3">Параметры</th>
                                     <th class="px-3 py-3">Заметка</th>
                                     <th class="px-3 py-3">Действия</th>
                                 </tr>
@@ -1341,6 +1353,75 @@
                     </div>
                 </section>
             </div>
+        </div>
+    </div>
+
+    <div id="client-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[55] hidden flex items-center justify-center p-4">
+        <div class="glass-effect rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="client-modal-title" class="text-2xl font-bold gold-text">Добавить покупателя</h3>
+                <button id="close-client-modal" class="text-white text-2xl">&times;</button>
+            </div>
+
+            <form id="admin-clients-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input id="client-edit-id" type="hidden">
+
+                <div>
+                    <label for="client-fullname" class="block text-gray-400 mb-2">ФИО *</label>
+                    <input id="client-fullname" type="text" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-phone" class="block text-gray-400 mb-2">Номер телефона *</label>
+                    <input id="client-phone" type="text" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-email" class="block text-gray-400 mb-2">Email</label>
+                    <input id="client-email" type="email" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-status" class="block text-gray-400 mb-2">Статус</label>
+                    <select id="client-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="pending">⏳ В ожидании</option>
+                        <option value="success">✅ Сделка/готов</option>
+                        <option value="reject">❌ Отказ</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="client-rooms" class="block text-gray-400 mb-2">Комнаты</label>
+                    <input id="client-rooms" type="text" placeholder="1, 2, 3, студия" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-city" class="block text-gray-400 mb-2">Город</label>
+                    <input id="client-city" type="text" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-district" class="block text-gray-400 mb-2">Район</label>
+                    <input id="client-district" type="text" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-condition" class="block text-gray-400 mb-2">Состояние</label>
+                    <input id="client-condition" type="text" placeholder="Новострой / Вторичка / Под ремонт" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-price-from" class="block text-gray-400 mb-2">Цена от</label>
+                    <input id="client-price-from" type="number" min="0" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="client-price-to" class="block text-gray-400 mb-2">Цена до</label>
+                    <input id="client-price-to" type="number" min="0" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="client-note" class="block text-gray-400 mb-2">Заметка (что искал)</label>
+                    <textarea id="client-note" rows="3" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="md:col-span-2 flex gap-3 pt-2">
+                    <button type="button" id="cancel-client-modal" class="px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition">Отмена</button>
+                    <button type="submit" id="save-client-btn" class="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Сохранить</button>
+                </div>
+            </form>
         </div>
     </div>
 

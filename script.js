@@ -4552,24 +4552,158 @@ function _saveClients(items) {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(items));
 }
 
+function _toClientNumber(v) {
+    if (v === null || v === undefined || v === '') return null;
+    var n = Number(v);
+    return Number.isFinite(n) ? n : null;
+}
+
 function _clientStatusMeta(status) {
     if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
     if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
     return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };
 }
 
+function _getClientFilterValues() {
+    var getVal = function(id) {
+        var el = document.getElementById(id);
+        return el ? String(el.value || '').trim().toLowerCase() : '';
+    };
+
+    return {
+        fio: getVal('clients-filter-fio'),
+        phone: getVal('clients-filter-phone'),
+        email: getVal('clients-filter-email'),
+        city: getVal('clients-filter-city'),
+        district: getVal('clients-filter-district'),
+        rooms: getVal('clients-filter-rooms'),
+        condition: getVal('clients-filter-condition'),
+        note: getVal('clients-filter-note'),
+        priceFrom: _toClientNumber(getVal('clients-filter-price-from')),
+        priceTo: _toClientNumber(getVal('clients-filter-price-to')),
+        status: getVal('clients-filter-status') || 'all'
+    };
+}
+
+function _isClientMatchFilters(item, f) {
+    var includes = function(source, value) {
+        if (!value) return true;
+        return String(source || '').toLowerCase().indexOf(value) !== -1;
+    };
+
+    if (f.status !== 'all' && (item.status || 'pending') !== f.status) return false;
+    if (!includes(item.fullName, f.fio)) return false;
+    if (!includes(item.phone, f.phone)) return false;
+    if (!includes(item.email, f.email)) return false;
+    if (!includes(item.city, f.city)) return false;
+    if (!includes(item.district, f.district)) return false;
+    if (!includes(item.rooms, f.rooms)) return false;
+    if (!includes(item.condition, f.condition)) return false;
+    if (!includes(item.note, f.note)) return false;
+
+    var itemPriceFrom = _toClientNumber(item.priceFrom);
+    var itemPriceTo = _toClientNumber(item.priceTo);
+    if (f.priceFrom !== null && (itemPriceTo === null || itemPriceTo < f.priceFrom)) return false;
+    if (f.priceTo !== null && (itemPriceFrom === null || itemPriceFrom > f.priceTo)) return false;
+
+    return true;
+}
+
+function _collectClientFormData() {
+    var getVal = function(id) {
+        var el = document.getElementById(id);
+        return el ? String(el.value || '').trim() : '';
+    };
+
+    return {
+        fullName: getVal('client-fullname'),
+        phone: getVal('client-phone'),
+        email: getVal('client-email'),
+        note: getVal('client-note'),
+        rooms: getVal('client-rooms'),
+        city: getVal('client-city'),
+        district: getVal('client-district'),
+        condition: getVal('client-condition'),
+        priceFrom: _toClientNumber(getVal('client-price-from')),
+        priceTo: _toClientNumber(getVal('client-price-to')),
+        status: getVal('client-status') || 'pending'
+    };
+}
+
+function _setClientFormData(item) {
+    var setVal = function(id, value) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.value = value === null || value === undefined ? '' : value;
+    };
+
+    setVal('client-fullname', item ? item.fullName : '');
+    setVal('client-phone', item ? item.phone : '');
+    setVal('client-email', item ? item.email : '');
+    setVal('client-note', item ? item.note : '');
+    setVal('client-rooms', item ? item.rooms : '');
+    setVal('client-city', item ? item.city : '');
+    setVal('client-district', item ? item.district : '');
+    setVal('client-condition', item ? item.condition : '');
+    setVal('client-price-from', item && item.priceFrom !== null && item.priceFrom !== undefined ? item.priceFrom : '');
+    setVal('client-price-to', item && item.priceTo !== null && item.priceTo !== undefined ? item.priceTo : '');
+    setVal('client-status', item ? (item.status || 'pending') : 'pending');
+}
+
+window.openClientModal = function(mode, id) {
+    var modal = document.getElementById('client-modal');
+    var titleEl = document.getElementById('client-modal-title');
+    var editIdEl = document.getElementById('client-edit-id');
+    var saveBtn = document.getElementById('save-client-btn');
+    if (!modal || !titleEl || !editIdEl || !saveBtn) return;
+
+    if (mode === 'edit' && id) {
+        var target = _getClients().find(function(item) { return item.id === id; });
+        if (!target) return;
+        editIdEl.value = id;
+        titleEl.textContent = 'Изменить покупателя';
+        saveBtn.textContent = 'Сохранить изменения';
+        _setClientFormData(target);
+    } else {
+        editIdEl.value = '';
+        titleEl.textContent = 'Добавить покупателя';
+        saveBtn.textContent = 'Сохранить';
+        _setClientFormData(null);
+    }
+
+    modal.classList.remove('hidden');
+};
+
+window.closeClientModal = function() {
+    var modal = document.getElementById('client-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+};
+
 window.renderClientsAdmin = function() {
     var list = document.getElementById('admin-clients-list');
     if (!list) return;
     var items = _getClients();
+    var filters = _getClientFilterValues();
+    var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
-    if (items.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-gray-500">Клиентов пока нет.</td></tr>';
+    if (filteredItems.length === 0) {
+        list.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-gray-500">По текущим фильтрам клиентов нет.</td></tr>';
         return;
     }
 
-    list.innerHTML = items.map(function(item) {
+    list.innerHTML = filteredItems.map(function(item) {
         var meta = _clientStatusMeta(item.status);
+        var params = [
+            item.rooms ? ('Комнаты: ' + _escMsg(item.rooms)) : null,
+            item.city ? ('Город: ' + _escMsg(item.city)) : null,
+            item.district ? ('Район: ' + _escMsg(item.district)) : null,
+            item.condition ? ('Состояние: ' + _escMsg(item.condition)) : null,
+            (item.priceFrom !== null && item.priceFrom !== undefined) || (item.priceTo !== null && item.priceTo !== undefined)
+                ? ('Цена: ' + _escMsg(item.priceFrom || '0') + ' - ' + _escMsg(item.priceTo || '0'))
+                : null
+        ].filter(function(v) { return !!v; }).join('<br>');
+
         return '<tr class="border-t border-gray-800">' +
             '<td class="px-3 py-3">' +
                 '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" class="inline-flex items-center gap-2 px-2 py-1 rounded bg-black/30 hover:bg-black/50 transition" title="Сменить статус">' +
@@ -4580,9 +4714,10 @@ window.renderClientsAdmin = function() {
             '<td class="px-3 py-3 text-white">' + _escMsg(item.fullName) + '</td>' +
             '<td class="px-3 py-3 text-gray-200">' + _escMsg(item.phone) + '</td>' +
             '<td class="px-3 py-3 text-gray-200">' + (item.email ? _escMsg(item.email) : '<span class="text-gray-500">-</span>') + '</td>' +
+            '<td class="px-3 py-3 text-gray-300">' + (params || '<span class="text-gray-500">-</span>') + '</td>' +
             '<td class="px-3 py-3 text-gray-300" style="white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
             '<td class="px-3 py-3">' +
-                '<button onclick="window.editClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition mr-2">Редактировать</button>' +
+                '<button onclick="window.editClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition mr-2">Изменить</button>' +
                 '<button onclick="window.deleteClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
             '</td>' +
         '</tr>';
@@ -4609,87 +4744,101 @@ window.deleteClient = function(id) {
 };
 
 window.editClient = function(id) {
-    var items = _getClients();
-    var target = items.find(function(item) { return item.id === id; });
-    if (!target) return;
-
-    var fullName = prompt('ФИО:', target.fullName || '');
-    if (fullName === null) return;
-    fullName = fullName.trim();
-    if (!fullName) return;
-
-    var phone = prompt('Телефон:', target.phone || '');
-    if (phone === null) return;
-    phone = phone.trim();
-    if (!phone) return;
-
-    var email = prompt('Email (можно пусто):', target.email || '');
-    if (email === null) return;
-    email = email.trim();
-
-    var note = prompt('Заметка (что ищет):', target.note || '');
-    if (note === null) return;
-    note = note.trim();
-    if (!note) return;
-
-    var statusInput = prompt('Статус: pending / success / reject', target.status || 'pending');
-    if (statusInput === null) return;
-    var status = (statusInput || '').trim().toLowerCase();
-    if (status !== 'pending' && status !== 'success' && status !== 'reject') {
-        status = target.status || 'pending';
-    }
-
-    var updated = items.map(function(item) {
-        if (item.id !== id) return item;
-        return Object.assign({}, item, {
-            fullName: fullName,
-            phone: phone,
-            email: email,
-            note: note,
-            status: status
-        });
-    });
-
-    _saveClients(updated);
-    window.renderClientsAdmin();
+    window.openClientModal('edit', id);
 };
 
 window.initClientsAdmin = function() {
     var form = document.getElementById('admin-clients-form');
+    var openBtn = document.getElementById('open-client-modal-btn');
+    var closeBtn = document.getElementById('close-client-modal');
+    var cancelBtn = document.getElementById('cancel-client-modal');
+    var resetBtn = document.getElementById('clients-filter-reset');
     if (!form || form.dataset.bound === '1') return;
     form.dataset.bound = '1';
 
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
+            window.openClientModal('create');
+        });
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', window.closeClientModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', window.closeClientModal);
+
+    var modal = document.getElementById('client-modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) window.closeClientModal();
+        });
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        var fullName = (document.getElementById('client-fullname') || {}).value || '';
-        var phone = (document.getElementById('client-phone') || {}).value || '';
-        var email = (document.getElementById('client-email') || {}).value || '';
-        var note = (document.getElementById('client-note') || {}).value || '';
-        var status = ((document.getElementById('client-status') || {}).value || 'pending');
+        var data = _collectClientFormData();
+        if (!data.fullName || !data.phone) return;
 
-        fullName = fullName.trim();
-        phone = phone.trim();
-        email = email.trim();
-        note = note.trim();
-
-        if (!fullName || !phone || !note) return;
+        var editIdEl = document.getElementById('client-edit-id');
+        var editId = editIdEl ? String(editIdEl.value || '').trim() : '';
 
         var items = _getClients();
-        items.unshift({
-            id: 'client_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-            fullName: fullName,
-            phone: phone,
-            email: email,
-            note: note,
-            status: status,
-            createdAt: Date.now()
-        });
+        if (editId) {
+            items = items.map(function(item) {
+                if (item.id !== editId) return item;
+                return Object.assign({}, item, data);
+            });
+        } else {
+            items.unshift(Object.assign({
+                id: 'client_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                createdAt: Date.now()
+            }, data));
+        }
+
         _saveClients(items);
         form.reset();
         var statusSelect = document.getElementById('client-status');
         if (statusSelect) statusSelect.value = 'pending';
+        if (editIdEl) editIdEl.value = '';
+        window.closeClientModal();
         window.renderClientsAdmin();
     });
+
+    var filterIds = [
+        'clients-filter-fio',
+        'clients-filter-phone',
+        'clients-filter-email',
+        'clients-filter-city',
+        'clients-filter-district',
+        'clients-filter-rooms',
+        'clients-filter-condition',
+        'clients-filter-price-from',
+        'clients-filter-price-to',
+        'clients-filter-status',
+        'clients-filter-note'
+    ];
+
+    filterIds.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var evName = el.tagName === 'SELECT' ? 'change' : 'input';
+        el.addEventListener(evName, function() {
+            window.renderClientsAdmin();
+        });
+    });
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            filterIds.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                if (id === 'clients-filter-status') {
+                    el.value = 'all';
+                } else {
+                    el.value = '';
+                }
+            });
+            window.renderClientsAdmin();
+        });
+    }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
