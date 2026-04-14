@@ -4409,6 +4409,21 @@
             emailjs.send('service_2tli96l', 'template_x0ddy0m', formData)
                 .then(function() {
                     showStatus('✓ Сообщение отправлено! Мы свяжемся с вами в ближайшее время.', 'text-green-400');
+                    // Сохраняем заявку в localStorage для отображения в админке
+                    try {
+                        var msgs = JSON.parse(localStorage.getItem('venera_contact_messages_v1') || '[]');
+                        msgs.unshift({
+                            id: 'msg_' + Date.now(),
+                            name: nameVal,
+                            phone: phoneVal,
+                            email: emailVal,
+                            message: messageVal,
+                            timestamp: Date.now(),
+                            read: false
+                        });
+                        localStorage.setItem('venera_contact_messages_v1', JSON.stringify(msgs));
+                        window._updateMessagesBadge && window._updateMessagesBadge();
+                    } catch(e) {}
                     form.reset();
                     restore();
                 }, function(error) {
@@ -4417,4 +4432,83 @@
                     restore();
                 });
         });
+
+// ====================== ЗАЯВКИ С САЙТА ======================
+var MESSAGES_STORAGE_KEY = 'venera_contact_messages_v1';
+
+function _getMessages() {
+    try { return JSON.parse(localStorage.getItem(MESSAGES_STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveMessages(msgs) {
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(msgs));
+}
+
+window._updateMessagesBadge = function() {
+    var badge = document.getElementById('admin-messages-badge');
+    if (!badge) return;
+    var unread = _getMessages().filter(function(m) { return !m.read; }).length;
+    if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+};
+
+window.renderMessagesAdmin = function() {
+    var list = document.getElementById('admin-messages-list');
+    if (!list) return;
+    var msgs = _getMessages();
+
+    // Помечаем все как прочитанные
+    var changed = false;
+    msgs.forEach(function(m) { if (!m.read) { m.read = true; changed = true; } });
+    if (changed) { _saveMessages(msgs); window._updateMessagesBadge(); }
+
+    if (msgs.length === 0) {
+        list.innerHTML = '<div class="text-gray-500 text-sm py-4">Заявок пока нет.</div>';
+        return;
+    }
+
+    list.innerHTML = msgs.map(function(m) {
+        var date = new Date(m.timestamp);
+        var dateStr = date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+        return '<div class="rounded-xl p-4 mb-3" style="background:#1a1a2e;border:1px solid #2a2a3e;" id="msg-card-' + m.id + '">' +
+            '<div class="flex justify-between items-start gap-2 mb-2">' +
+            '<span class="font-semibold text-white text-base">' + _escMsg(m.name) + '</span>' +
+            '<span class="text-gray-500 text-xs shrink-0">' + dateStr + '</span>' +
+            '</div>' +
+            (m.phone ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-phone mr-2 text-yellow-400"></i>' + _escMsg(m.phone) + '</div>' : '') +
+            (m.email ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-envelope mr-2 text-yellow-400"></i>' + _escMsg(m.email) + '</div>' : '') +
+            (m.message ? '<div class="text-sm text-gray-400 mt-2 leading-relaxed" style="white-space:pre-wrap;">' + _escMsg(m.message) + '</div>' : '') +
+            '<div class="mt-3 flex gap-2">' +
+            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '</div>' +
+            '</div>';
+    }).join('');
+};
+
+function _escMsg(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window.deleteMessage = function(id) {
+    var msgs = _getMessages().filter(function(m) { return m.id !== id; });
+    _saveMessages(msgs);
+    window.renderMessagesAdmin();
+    window._updateMessagesBadge();
+};
+
+window.deleteReadMessages = function() {
+    var msgs = _getMessages().filter(function(m) { return !m.read; });
+    _saveMessages(msgs);
+    window.renderMessagesAdmin();
+    window._updateMessagesBadge();
+};
+
+// Обновляем бейдж при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    window._updateMessagesBadge && window._updateMessagesBadge();
+});
 

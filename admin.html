@@ -1128,6 +1128,10 @@
                     <button type="button" class="admin-nav-btn" data-admin-view-target="admin-analytics-view" aria-selected="false" title="Аналитика" aria-label="Аналитика сайта">
                         <i class="fas fa-chart-line"></i>
                     </button>
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-messages-view" aria-selected="false" title="Заявки" aria-label="Заявки с сайта" style="position:relative;">
+                        <i class="fas fa-envelope"></i>
+                        <span id="admin-messages-badge" class="hidden" style="position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>
+                    </button>
                 </nav>
 
                 <button id="close-admin-panel" class="admin-exit-btn" style="margin-top: auto;" title="Выход" aria-label="Выйти из админ-панели">
@@ -1281,6 +1285,17 @@
                         <div id="campaign-links-list" class="campaign-links-list">
                             <div class="text-gray-500 text-sm py-2">Ссылок пока нет. Создайте первую выше.</div>
                         </div>
+                    </div>
+                </section>
+
+                <!-- ЗАЯВКИ С САЙТА -->
+                <section id="admin-messages-view" class="admin-view hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <h3 class="text-2xl font-semibold gold-text">Заявки с сайта</h3>
+                        <button id="admin-messages-clear-read" onclick="window.deleteReadMessages()" class="px-4 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Удалить прочитанные</button>
+                    </div>
+                    <div id="admin-messages-list">
+                        <div class="text-gray-500 text-sm py-4">Заявок пока нет.</div>
                     </div>
                 </section>
             </div>
@@ -1671,6 +1686,9 @@
                         if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.initCampaignLinksUI === 'function') {
                             window.VENERA_ANALYTICS.initCampaignLinksUI();
                         }
+                    }
+                    if (targetId === 'admin-messages-view') {
+                        if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
                     }
                 }
 
