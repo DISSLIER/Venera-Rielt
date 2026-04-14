@@ -120,14 +120,60 @@
             });
         }
 
-        function buildAnalyticsSummary(days) {
-            const safeDays = Math.max(1, Number(days) || 30);
+        function normalizeAnalyticsPeriod(periodInput) {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (periodInput && typeof periodInput === 'object' && periodInput.mode === 'custom') {
+                const startRaw = String(periodInput.startDate || '').trim();
+                const endRaw = String(periodInput.endDate || '').trim();
+                const startDate = new Date(`${startRaw}T00:00:00`);
+                const endDate = new Date(`${endRaw}T00:00:00`);
+
+                if (Number.isFinite(startDate.getTime()) && Number.isFinite(endDate.getTime())) {
+                    const normalizedStart = startDate <= endDate ? startDate : endDate;
+                    const normalizedEnd = endDate >= startDate ? endDate : startDate;
+                    const endOfDay = new Date(normalizedEnd);
+                    endOfDay.setHours(23, 59, 59, 999);
+                    const daySpan = Math.max(1, Math.floor((normalizedEnd.getTime() - normalizedStart.getTime()) / ANALYTICS_DAY_MS) + 1);
+
+                    return {
+                        mode: 'custom',
+                        startDate: normalizedStart,
+                        endDate: normalizedEnd,
+                        startTs: normalizedStart.getTime(),
+                        endTs: endOfDay.getTime(),
+                        days: daySpan
+                    };
+                }
+            }
+
+            const safeDays = Math.max(1, Number(periodInput) || 30);
+            const startTs = safeDays === 1
+                ? todayStart.getTime()
+                : (now.getTime() - safeDays * ANALYTICS_DAY_MS);
+
+            return {
+                mode: 'preset',
+                startDate: new Date(startTs),
+                endDate: now,
+                startTs,
+                endTs: now.getTime(),
+                days: safeDays
+            };
+        }
+
+        function buildAnalyticsSummary(periodInput) {
+            const period = normalizeAnalyticsPeriod(periodInput);
+            const safeDays = period.days;
             const now = Date.now();
-            const dayStart = new Date();
-            dayStart.setHours(0, 0, 0, 0);
-            const startTs = safeDays === 1 ? dayStart.getTime() : (now - safeDays * ANALYTICS_DAY_MS);
+            const startTs = period.startTs;
+            const endTs = period.endTs;
             const store = getAnalyticsStore();
-            const events = store.events.filter(item => Number(item.ts) >= startTs);
+            const events = store.events.filter(item => {
+                const ts = Number(item.ts);
+                return ts >= startTs && ts <= endTs;
+            });
 
             const sourceCounts = {};
             const districtCounts = {};
@@ -144,7 +190,7 @@
             }
 
             for (let offset = safeDays - 1; offset >= 0; offset -= 1) {
-                const date = new Date(now - offset * ANALYTICS_DAY_MS);
+                const date = new Date(period.endDate.getTime() - offset * ANALYTICS_DAY_MS);
                 const key = date.toISOString().slice(0, 10);
                 dailyMap[key] = { visits: 0, searches: 0, views: 0 };
             }
@@ -252,6 +298,9 @@
 
             return {
                 days: safeDays,
+                mode: period.mode,
+                startDate: period.startDate.toISOString().slice(0, 10),
+                endDate: period.endDate.toISOString().slice(0, 10),
                 totalVisits,
                 totalSearches,
                 totalViews,
@@ -564,8 +613,31 @@
             return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         }
 
+        function getMainLandingUrl() {
+            try {
+                const current = new URL(window.location.href);
+                if (current.protocol === 'http:' || current.protocol === 'https:') {
+                    let path = current.pathname;
+                    if (/\/admin\.html$/i.test(path)) {
+                        path = path.replace(/\/admin\.html$/i, '/index.html');
+                    } else if (/\/index\.html$/i.test(path)) {
+                        // already main page
+                    } else if (path.endsWith('/')) {
+                        path = `${path}index.html`;
+                    } else {
+                        path = path.replace(/\/[^/]*$/, '/index.html');
+                    }
+                    return `${current.origin}${path}`;
+                }
+            } catch (_) {
+                // fallback below
+            }
+
+            return 'index.html';
+        }
+
         function buildCampaignUrl(vid, source, medium, campaignName) {
-            const base = new URL('/', window.location.origin).toString();
+            const base = getMainLandingUrl();
             const params = new URLSearchParams({
                 utm_source: source,
                 utm_medium: medium,
@@ -613,9 +685,23 @@
 
         function renderCampaignLinksAdmin() {
             const store = getCampaignStore();
-            const links = store.links;
+            const links = Array.isArray(store.links) ? store.links : [];
             const container = document.getElementById('campaign-links-list');
             if (!container) return;
+
+            // Migrate older links to the current valid landing URL format.
+            let hasUrlUpdates = false;
+            links.forEach(link => {
+                const expectedUrl = buildCampaignUrl(link.id, link.source, link.medium, link.name);
+                if (String(link.url || '') !== expectedUrl) {
+                    link.url = expectedUrl;
+                    hasUrlUpdates = true;
+                }
+            });
+            if (hasUrlUpdates) {
+                store.links = links;
+                saveCampaignStore(store);
+            }
 
             // Load click counts from analytics
             const analyticsStore = getAnalyticsStore();
@@ -684,9 +770,8 @@
                     if (confirm('Удалить трекинговую ссылку?')) {
                         deleteCampaignLink(id);
                         renderCampaignLinksAdmin();
-                        const activePeriodBtn = document.querySelector('[data-analytics-days].active');
-                        const days = activePeriodBtn ? Number(activePeriodBtn.getAttribute('data-analytics-days')) || 7 : 7;
-                        renderAdminAnalyticsDashboard(days);
+                        const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
+                        renderAdminAnalyticsDashboard(currentPeriod);
                     }
                 });
             });
@@ -708,9 +793,8 @@
                 createCampaignLink(name, source, medium);
                 form.reset();
                 renderCampaignLinksAdmin();
-                const activePeriodBtn = document.querySelector('[data-analytics-days].active');
-                const days = activePeriodBtn ? Number(activePeriodBtn.getAttribute('data-analytics-days')) || 7 : 7;
-                renderAdminAnalyticsDashboard(days);
+                const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
+                renderAdminAnalyticsDashboard(currentPeriod);
             });
             renderCampaignLinksAdmin();
         }
