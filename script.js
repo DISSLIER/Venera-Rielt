@@ -4582,6 +4582,7 @@ window.renderClientsAdmin = function() {
             '<td class="px-3 py-3 text-gray-200">' + (item.email ? _escMsg(item.email) : '<span class="text-gray-500">-</span>') + '</td>' +
             '<td class="px-3 py-3 text-gray-300" style="white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
             '<td class="px-3 py-3">' +
+                '<button onclick="window.editClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition mr-2">Редактировать</button>' +
                 '<button onclick="window.deleteClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
             '</td>' +
         '</tr>';
@@ -4604,6 +4605,52 @@ window.cycleClientStatus = function(id) {
 window.deleteClient = function(id) {
     var items = _getClients().filter(function(item) { return item.id !== id; });
     _saveClients(items);
+    window.renderClientsAdmin();
+};
+
+window.editClient = function(id) {
+    var items = _getClients();
+    var target = items.find(function(item) { return item.id === id; });
+    if (!target) return;
+
+    var fullName = prompt('ФИО:', target.fullName || '');
+    if (fullName === null) return;
+    fullName = fullName.trim();
+    if (!fullName) return;
+
+    var phone = prompt('Телефон:', target.phone || '');
+    if (phone === null) return;
+    phone = phone.trim();
+    if (!phone) return;
+
+    var email = prompt('Email (можно пусто):', target.email || '');
+    if (email === null) return;
+    email = email.trim();
+
+    var note = prompt('Заметка (что ищет):', target.note || '');
+    if (note === null) return;
+    note = note.trim();
+    if (!note) return;
+
+    var statusInput = prompt('Статус: pending / success / reject', target.status || 'pending');
+    if (statusInput === null) return;
+    var status = (statusInput || '').trim().toLowerCase();
+    if (status !== 'pending' && status !== 'success' && status !== 'reject') {
+        status = target.status || 'pending';
+    }
+
+    var updated = items.map(function(item) {
+        if (item.id !== id) return item;
+        return Object.assign({}, item, {
+            fullName: fullName,
+            phone: phone,
+            email: email,
+            note: note,
+            status: status
+        });
+    });
+
+    _saveClients(updated);
     window.renderClientsAdmin();
 };
 
