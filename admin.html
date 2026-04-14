@@ -1154,6 +1154,10 @@
                             <div class="text-xs text-gray-400">Просмотры объектов</div>
                             <div id="analytics-total-views" class="text-2xl font-bold text-white">0</div>
                         </div>
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Клики по кампаниям</div>
+                            <div id="analytics-total-campaign-clicks" class="text-2xl font-bold text-white">0</div>
+                        </div>
                     </div>
 
                     <div class="analytics-chart-grid">
@@ -1184,6 +1188,10 @@
                             <h4>Добавления объектов риелторами (взял в оборот)</h4>
                             <div class="analytics-chart-wrap"><canvas id="analytics-agent-additions-chart"></canvas></div>
                         </div>
+                        <div class="analytics-chart-card">
+                            <h4>Клики по кампаниям</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-campaign-chart"></canvas></div>
+                        </div>
                     </div>
 
                     <!-- Campaign / tracking links -->
@@ -1199,27 +1207,25 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Источник (utm_source)</label>
-                                    <input id="campaign-source" type="text" placeholder="instagram, facebook, telegram" required
-                                        class="campaign-input">
+                                    <select id="campaign-source" required class="campaign-input">
+                                        <option value="">Выберите источник</option>
+                                        <option value="facebook">Facebook</option>
+                                        <option value="instagram">Instagram</option>
+                                        <option value="tiktok">TikTok</option>
+                                        <option value="telegram">Telegram</option>
+                                        <option value="youtube">YouTube</option>
+                                        <option value="whatsapp">WhatsApp</option>
+                                        <option value="viber">Viber</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Тип трафика (utm_medium)</label>
                                     <input id="campaign-medium" type="text" placeholder="cpc, post, story, bio" required
                                         class="campaign-input">
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Базовый URL (необязательно)</label>
-                                    <input id="campaign-base-url" type="url" placeholder="https://venera-rielt.com/"
-                                        class="campaign-input">
-                                </div>
                             </div>
                             <button type="submit" class="campaign-create-btn mt-3">Создать ссылку</button>
                         </form>
-
-                        <div class="analytics-chart-card mb-4">
-                            <h4>Клики по кампаниям</h4>
-                            <div class="analytics-chart-wrap"><canvas id="analytics-campaign-chart"></canvas></div>
-                        </div>
 
                         <div id="campaign-links-list" class="campaign-links-list">
                             <div class="text-gray-500 text-sm py-2">Ссылок пока нет. Создайте первую выше.</div>

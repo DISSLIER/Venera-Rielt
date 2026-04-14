@@ -134,6 +134,7 @@
             const districtByCity = {};
             const agentViewCounts = {};
             const agentAddedCounts = {};
+            const campaignClickCounts = {};
             const dailyMap = {};
             const hourlyMap = {};
 
@@ -195,6 +196,11 @@
                     const key = `${agentId}::${agentName}`;
                     agentAddedCounts[key] = (agentAddedCounts[key] || 0) + 1;
                 }
+
+                if (type === 'campaign_click') {
+                    const campaignLabel = String(payload.campaignName || payload.vid || 'Без названия');
+                    campaignClickCounts[campaignLabel] = (campaignClickCounts[campaignLabel] || 0) + 1;
+                }
             });
 
             const toSortedArray = (obj) => Object.entries(obj)
@@ -234,6 +240,7 @@
             const totalVisits = events.filter(e => e.type === 'visit').length;
             const totalSearches = events.filter(e => e.type === 'search').length;
             const totalViews = events.filter(e => e.type === 'property_view').length;
+            const totalCampaignClicks = events.filter(e => e.type === 'campaign_click').length;
 
             const daily = Object.entries(dailyMap)
                 .sort((a, b) => a[0].localeCompare(b[0]))
@@ -248,11 +255,13 @@
                 totalVisits,
                 totalSearches,
                 totalViews,
+                totalCampaignClicks,
                 sources: toSortedArray(sourceCounts),
                 districts: toSortedArray(districtCounts),
                 districtByCity,
                 agents: agentViewEntries,
                 agentAdded: agentAddedEntries,
+                campaignClicks: toSortedArray(campaignClickCounts),
                 daily,
                 hourly
             };
@@ -285,11 +294,13 @@
             const visitsEl = document.getElementById('analytics-total-visits');
             const searchesEl = document.getElementById('analytics-total-searches');
             const viewsEl = document.getElementById('analytics-total-views');
+            const campaignClicksEl = document.getElementById('analytics-total-campaign-clicks');
             const updatedEl = document.getElementById('analytics-updated-at');
 
             if (visitsEl) visitsEl.textContent = fmtNum(summary.totalVisits);
             if (searchesEl) searchesEl.textContent = fmtNum(summary.totalSearches);
             if (viewsEl) viewsEl.textContent = fmtNum(summary.totalViews);
+            if (campaignClicksEl) campaignClicksEl.textContent = fmtNum(summary.totalCampaignClicks);
             if (updatedEl) updatedEl.textContent = new Date().toLocaleString('ru-RU');
 
             const chartState = window.__veneraAdminCharts || {};
@@ -394,6 +405,31 @@
                     scales: {
                         x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
                         y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            const campaignTop = summary.campaignClicks.slice(0, 12);
+            const campaignLabels = campaignTop.length ? campaignTop.map(item => item.label) : ['Нет данных'];
+            const campaignValues = campaignTop.length ? campaignTop.map(item => item.value) : [0];
+
+            setChart('campaign', 'analytics-campaign-chart', {
+                type: 'bar',
+                data: {
+                    labels: campaignLabels,
+                    datasets: [{
+                        label: 'Кликов',
+                        data: campaignValues,
+                        backgroundColor: '#FFD700'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
                     },
                     plugins: { legend: { labels: { color: '#e5e7eb' } } }
                 }
@@ -528,18 +564,18 @@
             return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         }
 
-        function buildCampaignUrl(vid, source, medium, campaignName, baseUrl) {
-            const base = String(baseUrl || window.location.origin + window.location.pathname).split('?')[0];
+        function buildCampaignUrl(vid, source, medium, campaignName) {
+            const base = new URL('/', window.location.origin).toString();
             const params = new URLSearchParams({
                 utm_source: source,
                 utm_medium: medium,
-                utm_campaign: encodeURIComponent(campaignName),
+                utm_campaign: campaignName,
                 vid
             });
             return `${base}?${params.toString()}`;
         }
 
-        function createCampaignLink(name, source, medium, baseUrl) {
+        function createCampaignLink(name, source, medium) {
             const store = getCampaignStore();
             const vid = generateCampaignId();
             const link = {
@@ -548,7 +584,7 @@
                 source: String(source || '').trim(),
                 medium: String(medium || '').trim(),
                 createdAt: Date.now(),
-                url: buildCampaignUrl(vid, source, medium, name, baseUrl)
+                url: buildCampaignUrl(vid, source, medium, name)
             };
             store.links.push(link);
             saveCampaignStore(store);
@@ -648,60 +684,11 @@
                     if (confirm('Удалить трекинговую ссылку?')) {
                         deleteCampaignLink(id);
                         renderCampaignLinksAdmin();
-                        renderCampaignChart();
+                        const activePeriodBtn = document.querySelector('[data-analytics-days].active');
+                        const days = activePeriodBtn ? Number(activePeriodBtn.getAttribute('data-analytics-days')) || 7 : 7;
+                        renderAdminAnalyticsDashboard(days);
                     }
                 });
-            });
-        }
-
-        function renderCampaignChart() {
-            if (typeof Chart === 'undefined') return;
-            const store = getCampaignStore();
-            const analyticsStore = getAnalyticsStore();
-            const clickCounts = {};
-            analyticsStore.events.forEach(ev => {
-                if (ev.type === 'campaign_click') {
-                    const v = String((ev.payload || {}).vid || '');
-                    if (v) clickCounts[v] = (clickCounts[v] || 0) + 1;
-                }
-            });
-
-            const entries = store.links
-                .map(l => ({ label: l.name || l.id, value: clickCounts[l.id] || 0 }))
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 12);
-
-            const chartState = window.__veneraAdminCharts || {};
-            window.__veneraAdminCharts = chartState;
-
-            if (chartState.campaign) { chartState.campaign.destroy(); }
-            const canvas = document.getElementById('analytics-campaign-chart');
-            if (!canvas) return;
-
-            if (!entries.length) {
-                canvas.parentElement.innerHTML = '<div class="text-gray-500 text-sm py-2 text-center">Нет данных</div>';
-                return;
-            }
-
-            chartState.campaign = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: entries.map(e => e.label),
-                    datasets: [{
-                        label: 'Кликов',
-                        data: entries.map(e => e.value),
-                        backgroundColor: '#FFD700'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
-                        y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
-                    },
-                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
-                }
             });
         }
 
@@ -714,18 +701,18 @@
                 const name = document.getElementById('campaign-name').value.trim();
                 const source = document.getElementById('campaign-source').value.trim();
                 const medium = document.getElementById('campaign-medium').value.trim();
-                const base = document.getElementById('campaign-base-url').value.trim();
                 if (!name || !source || !medium) {
                     alert('Заполните название, источник и тип трафика.');
                     return;
                 }
-                createCampaignLink(name, source, medium, base);
+                createCampaignLink(name, source, medium);
                 form.reset();
                 renderCampaignLinksAdmin();
-                renderCampaignChart();
+                const activePeriodBtn = document.querySelector('[data-analytics-days].active');
+                const days = activePeriodBtn ? Number(activePeriodBtn.getAttribute('data-analytics-days')) || 7 : 7;
+                renderAdminAnalyticsDashboard(days);
             });
             renderCampaignLinksAdmin();
-            renderCampaignChart();
         }
 
         window.VENERA_ANALYTICS = {
@@ -736,7 +723,6 @@
             renderAdminAnalyticsDashboard,
             initCampaignLinksUI,
             renderCampaignLinksAdmin,
-            renderCampaignChart,
             trackCampaignClick
         };
 
