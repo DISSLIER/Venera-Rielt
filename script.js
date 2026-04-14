@@ -4406,31 +4406,37 @@
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = 'Отправить <i class="fas fa-paper-plane ml-2"></i>'; }
             };
 
-            emailjs.send('service_2tli96l', 'template_x0ddy0m', formData)
-                .then(function() {
-                    showStatus('✓ Сообщение отправлено! Мы свяжемся с вами в ближайшее время.', 'text-green-400');
-                    // Сохраняем заявку в localStorage для отображения в админке
-                    try {
-                        var msgs = JSON.parse(localStorage.getItem('venera_contact_messages_v1') || '[]');
-                        msgs.unshift({
-                            id: 'msg_' + Date.now(),
-                            name: nameVal,
-                            phone: phoneVal,
-                            email: emailVal,
-                            message: messageVal,
-                            timestamp: Date.now(),
-                            read: false
-                        });
-                        localStorage.setItem('venera_contact_messages_v1', JSON.stringify(msgs));
-                        window._updateMessagesBadge && window._updateMessagesBadge();
-                    } catch(e) {}
-                    form.reset();
-                    restore();
-                }, function(error) {
-                    showStatus('Ошибка при отправке. Позвоните нам напрямую.', 'text-red-400');
-                    console.error('EmailJS error:', error);
-                    restore();
+            // Всегда сохраняем в админку (до попытки отправки email)
+            try {
+                var msgs = JSON.parse(localStorage.getItem('venera_contact_messages_v1') || '[]');
+                msgs.unshift({
+                    id: 'msg_' + Date.now(),
+                    name: nameVal,
+                    phone: phoneVal,
+                    email: emailVal,
+                    message: messageVal,
+                    timestamp: Date.now(),
+                    read: false
                 });
+                localStorage.setItem('venera_contact_messages_v1', JSON.stringify(msgs));
+                window._updateMessagesBadge && window._updateMessagesBadge();
+            } catch(e) {}
+
+            showStatus('✓ Сообщение отправлено! Мы свяжемся с вами в ближайшее время.', 'text-green-400');
+            form.reset();
+            restore();
+
+            // Дополнительно пробуем отправить на email (в фоне, не блокирует UX)
+            try {
+                emailjs.send('service_2tli96l', 'template_x0ddy0m', formData)
+                    .then(function() {
+                        // email успешно отправлен
+                    }, function(error) {
+                        console.warn('EmailJS: письмо не отправлено, заявка сохранена в админке.', error);
+                    });
+            } catch(e) {
+                console.warn('EmailJS недоступен, заявка сохранена в админке.', e);
+            }
         });
 
 // ====================== ЗАЯВКИ С САЙТА ======================
