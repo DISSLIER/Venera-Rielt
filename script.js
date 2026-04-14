@@ -59,7 +59,24 @@
             saveAnalyticsStore(store);
         }
 
-        function detectTrafficSource(referrer) {
+        function normalizeSourceLabel(sourceRaw) {
+            const value = String(sourceRaw || '').toLowerCase().trim();
+            if (!value) return '';
+            if (value.includes('facebook') || value === 'fb') return 'Facebook';
+            if (value.includes('instagram') || value === 'ig') return 'Instagram';
+            if (value.includes('tiktok') || value === 'tt') return 'TikTok';
+            if (value.includes('youtube') || value.includes('youtu')) return 'YouTube';
+            if (value.includes('telegram') || value === 'tg') return 'Telegram';
+            if (value.includes('whatsapp') || value === 'wa') return 'WhatsApp';
+            if (value.includes('viber')) return 'Viber';
+            if (value.includes('google')) return 'Google';
+            return value.charAt(0).toUpperCase() + value.slice(1);
+        }
+
+        function detectTrafficSource(referrer, utmSource) {
+            const utmLabel = normalizeSourceLabel(utmSource);
+            if (utmLabel) return utmLabel;
+
             if (!referrer) return 'Прямой переход';
 
             const value = String(referrer).toLowerCase();
@@ -78,8 +95,13 @@
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
+            const params = new URLSearchParams(window.location.search);
+            const utmSource = params.get('utm_source') || '';
+            const vid = params.get('vid') || '';
+            const sourceLabel = detectTrafficSource(document.referrer || '', utmSource);
+
             const todayKey = new Date().toISOString().slice(0, 10);
-            const sessionKey = `venera_visit_logged_${todayKey}`;
+            const sessionKey = `venera_visit_logged_${todayKey}_${sourceLabel}_${vid || 'no_vid'}`;
 
             try {
                 if (sessionStorage.getItem(sessionKey) === '1') {
@@ -91,7 +113,9 @@
             }
 
             pushAnalyticsEvent('visit', {
-                source: detectTrafficSource(document.referrer || '')
+                source: sourceLabel,
+                utmSource: String(utmSource).trim(),
+                vid: String(vid).trim()
             });
         }
 
@@ -596,7 +620,6 @@
         // ─── Campaign / tracking links ──────────────────────────────────────────────
         const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
         const CAMPAIGN_LANDING_URL = 'https://venera-rielt.vercel.app/';
-        const CAMPAIGN_TRACKED_SESSION_KEY = 'venera_campaign_tracked_vids_v1';
 
         function getCampaignStore() {
             try {
@@ -617,21 +640,6 @@
 
         function getMainLandingUrl() {
             return CAMPAIGN_LANDING_URL;
-        }
-
-        function getTrackedCampaignVids() {
-            try {
-                const raw = sessionStorage.getItem(CAMPAIGN_TRACKED_SESSION_KEY);
-                const parsed = raw ? JSON.parse(raw) : [];
-                if (Array.isArray(parsed)) return parsed;
-            } catch (_) {}
-            return [];
-        }
-
-        function saveTrackedCampaignVids(vids) {
-            try {
-                sessionStorage.setItem(CAMPAIGN_TRACKED_SESSION_KEY, JSON.stringify(vids));
-            } catch (_) {}
         }
 
         function buildCampaignUrl(vid, source, medium, campaignName) {
@@ -672,21 +680,14 @@
             const vid = params.get('vid');
             if (!vid) return;
 
-            // Count one click per session for each vid to avoid duplicates on refresh.
-            const trackedVids = getTrackedCampaignVids();
-            if (trackedVids.includes(vid)) return;
-
             const store = getCampaignStore();
             const link = store.links.find(l => l.id === vid);
             pushAnalyticsEvent('campaign_click', {
                 vid,
                 campaignName: link ? link.name : '',
-                source: link ? link.source : (params.get('utm_source') || ''),
+                source: normalizeSourceLabel(link ? link.source : (params.get('utm_source') || '')),
                 medium: link ? link.medium : (params.get('utm_medium') || '')
             });
-
-            trackedVids.push(vid);
-            saveTrackedCampaignVids(trackedVids);
         }
 
         function renderCampaignLinksAdmin() {
