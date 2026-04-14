@@ -15,6 +15,29 @@
 
         const ANALYTICS_STORAGE_KEY = 'venera_analytics_events_v1';
         const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+        const CAMPAIGN_SOURCE_CODE_MAP = {
+            facebook: 'fb',
+            instagram: 'ig',
+            tiktok: 'tt',
+            telegram: 'tg',
+            youtube: 'yt',
+            whatsapp: 'wa',
+            viber: 'vb',
+            google: 'gg',
+            other: 'ot'
+        };
+
+        const CAMPAIGN_CODE_SOURCE_MAP = {
+            fb: 'Facebook',
+            ig: 'Instagram',
+            tt: 'TikTok',
+            tg: 'Telegram',
+            yt: 'YouTube',
+            wa: 'WhatsApp',
+            vb: 'Viber',
+            gg: 'Google',
+            ot: 'Другие источники'
+        };
 
         function getAnalyticsStore() {
             try {
@@ -91,19 +114,57 @@
             return 'Другие источники';
         }
 
+        function getCampaignSourceCode(sourceRaw) {
+            const label = normalizeSourceLabel(sourceRaw).toLowerCase();
+            if (label === 'facebook') return CAMPAIGN_SOURCE_CODE_MAP.facebook;
+            if (label === 'instagram') return CAMPAIGN_SOURCE_CODE_MAP.instagram;
+            if (label === 'tiktok') return CAMPAIGN_SOURCE_CODE_MAP.tiktok;
+            if (label === 'telegram') return CAMPAIGN_SOURCE_CODE_MAP.telegram;
+            if (label === 'youtube') return CAMPAIGN_SOURCE_CODE_MAP.youtube;
+            if (label === 'whatsapp') return CAMPAIGN_SOURCE_CODE_MAP.whatsapp;
+            if (label === 'viber') return CAMPAIGN_SOURCE_CODE_MAP.viber;
+            if (label === 'google') return CAMPAIGN_SOURCE_CODE_MAP.google;
+            return CAMPAIGN_SOURCE_CODE_MAP.other;
+        }
+
+        function parseCampaignTrackingFromUrl(params) {
+            const compactCode = String(params.get('v') || '').trim();
+            if (compactCode) {
+                const match = compactCode.match(/^([a-z]{2})([a-z0-9]+)$/i);
+                if (match) {
+                    const sourceCode = match[1].toLowerCase();
+                    const vid = match[2];
+                    return {
+                        vid,
+                        compactCode,
+                        sourceLabel: CAMPAIGN_CODE_SOURCE_MAP[sourceCode] || ''
+                    };
+                }
+            }
+
+            const vid = String(params.get('vid') || '').trim();
+            return {
+                vid,
+                compactCode: '',
+                sourceLabel: normalizeSourceLabel(params.get('utm_source') || '')
+            };
+        }
+
         function trackVisitEvent() {
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
             const params = new URLSearchParams(window.location.search);
+            const parsedCampaign = parseCampaignTrackingFromUrl(params);
             const utmSource = params.get('utm_source') || '';
-            const vid = params.get('vid') || '';
-            const sourceLabel = detectTrafficSource(document.referrer || '', utmSource);
+            const vid = parsedCampaign.vid;
+            const sourceLabel = parsedCampaign.sourceLabel || detectTrafficSource(document.referrer || '', utmSource);
 
             pushAnalyticsEvent('visit', {
                 source: sourceLabel,
                 utmSource: String(utmSource).trim(),
-                vid: String(vid).trim()
+                vid: String(vid).trim(),
+                trackingCode: String(parsedCampaign.compactCode || '').trim()
             });
 
             // Fallback: if campaign params exist, also log campaign click here.
@@ -636,7 +697,9 @@
         }
 
         function generateCampaignId() {
-            return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+            const ts = Date.now().toString(36).slice(-4);
+            const rnd = Math.random().toString(36).slice(2, 7);
+            return `${ts}${rnd}`;
         }
 
         function getMainLandingUrl() {
@@ -645,12 +708,8 @@
 
         function buildCampaignUrl(vid, source, medium, campaignName) {
             const base = getMainLandingUrl();
-            const params = new URLSearchParams({
-                utm_source: source,
-                utm_medium: medium,
-                utm_campaign: campaignName,
-                vid
-            });
+            const sourceCode = getCampaignSourceCode(source);
+            const params = new URLSearchParams({ v: `${sourceCode}${vid}` });
             return `${base}?${params.toString()}`;
         }
 
@@ -678,7 +737,8 @@
 
         function trackCampaignClick() {
             const params = new URLSearchParams(window.location.search);
-            const vid = params.get('vid');
+            const parsedCampaign = parseCampaignTrackingFromUrl(params);
+            const vid = parsedCampaign.vid;
             if (!vid) return;
 
             const hasCampaignClickInThisLoad = (() => {
@@ -695,7 +755,7 @@
             pushAnalyticsEvent('campaign_click', {
                 vid,
                 campaignName: link ? link.name : '',
-                source: normalizeSourceLabel(link ? link.source : (params.get('utm_source') || '')),
+                source: normalizeSourceLabel(link ? link.source : parsedCampaign.sourceLabel),
                 medium: link ? link.medium : (params.get('utm_medium') || '')
             });
 
