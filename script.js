@@ -410,6 +410,8 @@
             if (key === 'tiktok') return '#FFFFFF';
             if (key === 'telegram') return '#38BDF8';
             if (key === 'youtube') return '#FF0000';
+            if (key === 'whatsapp') return '#25D366';
+            if (key === 'viber') return '#7360F2';
             return '#64748B';
         }
 
