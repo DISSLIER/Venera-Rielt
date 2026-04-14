@@ -4558,6 +4558,74 @@ function _toClientNumber(v) {
     return Number.isFinite(n) ? n : null;
 }
 
+function _getTypeOptions() {
+    var source = document.getElementById('property-type');
+    if (!source) return [];
+    return Array.from(source.options || [])
+        .filter(function(opt) { return opt.value; })
+        .map(function(opt) { return { value: opt.value, label: opt.textContent || opt.value }; });
+}
+
+function _getConditionOptions() {
+    var source = document.getElementById('property-condition');
+    if (!source) return [];
+    return Array.from(source.options || [])
+        .filter(function(opt) { return opt.value; })
+        .map(function(opt) { return { value: opt.value, label: opt.textContent || opt.value }; });
+}
+
+function _populateSelect(selectId, options, placeholder, keepValue) {
+    var el = document.getElementById(selectId);
+    if (!el) return;
+    var current = keepValue ? el.value : '';
+    el.innerHTML = '';
+    var base = document.createElement('option');
+    base.value = '';
+    base.textContent = placeholder;
+    el.appendChild(base);
+    options.forEach(function(opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.label;
+        el.appendChild(o);
+    });
+    if (current && Array.from(el.options).some(function(o) { return o.value === current; })) {
+        el.value = current;
+    }
+}
+
+function _getCityOptions() {
+    if (typeof syncCityDistrictCatalog === 'function') syncCityDistrictCatalog();
+    if (typeof cityDistricts === 'undefined' || !cityDistricts) return [];
+    return Object.keys(cityDistricts)
+        .filter(function(city) { return city && city !== 'Все города'; })
+        .sort(function(a, b) { return a.localeCompare(b, 'ru'); })
+        .map(function(city) { return { value: city, label: city }; });
+}
+
+function _getDistrictOptions(city) {
+    if (!city || typeof cityDistricts === 'undefined' || !cityDistricts[city]) return [];
+    return cityDistricts[city]
+        .filter(function(d) { return d && d !== 'Все районы'; })
+        .sort(function(a, b) { return a.localeCompare(b, 'ru'); })
+        .map(function(d) { return { value: d, label: d }; });
+}
+
+function _refreshClientCatalogSelects() {
+    _populateSelect('client-city', _getCityOptions(), '-- Выберите город --', true);
+    _populateSelect('clients-filter-city', _getCityOptions(), 'Фильтр: город (все)', true);
+    _populateSelect('client-condition', _getConditionOptions(), '-- Выберите состояние --', true);
+    _populateSelect('clients-filter-condition', _getConditionOptions(), 'Фильтр: состояние (все)', true);
+    _populateSelect('client-type', _getTypeOptions(), '-- Выберите тип --', true);
+    _populateSelect('clients-filter-type', _getTypeOptions(), 'Фильтр: тип (все)', true);
+
+    var cityForModal = (document.getElementById('client-city') || {}).value || '';
+    _populateSelect('client-district', _getDistrictOptions(cityForModal), '-- Выберите район --', true);
+
+    var cityForFilter = (document.getElementById('clients-filter-city') || {}).value || '';
+    _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), 'Фильтр: район (все)', true);
+}
+
 function _clientStatusMeta(status) {
     if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
     if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
@@ -4578,6 +4646,7 @@ function _getClientFilterValues() {
         district: getVal('clients-filter-district'),
         rooms: getVal('clients-filter-rooms'),
         condition: getVal('clients-filter-condition'),
+        type: getVal('clients-filter-type'),
         note: getVal('clients-filter-note'),
         priceFrom: _toClientNumber(getVal('clients-filter-price-from')),
         priceTo: _toClientNumber(getVal('clients-filter-price-to')),
@@ -4599,6 +4668,7 @@ function _isClientMatchFilters(item, f) {
     if (!includes(item.district, f.district)) return false;
     if (!includes(item.rooms, f.rooms)) return false;
     if (!includes(item.condition, f.condition)) return false;
+    if (!includes(item.type, f.type)) return false;
     if (!includes(item.note, f.note)) return false;
 
     var itemPriceFrom = _toClientNumber(item.priceFrom);
@@ -4624,6 +4694,7 @@ function _collectClientFormData() {
         city: getVal('client-city'),
         district: getVal('client-district'),
         condition: getVal('client-condition'),
+        type: getVal('client-type'),
         priceFrom: _toClientNumber(getVal('client-price-from')),
         priceTo: _toClientNumber(getVal('client-price-to')),
         status: getVal('client-status') || 'pending'
@@ -4645,6 +4716,7 @@ function _setClientFormData(item) {
     setVal('client-city', item ? item.city : '');
     setVal('client-district', item ? item.district : '');
     setVal('client-condition', item ? item.condition : '');
+    setVal('client-type', item ? item.type : '');
     setVal('client-price-from', item && item.priceFrom !== null && item.priceFrom !== undefined ? item.priceFrom : '');
     setVal('client-price-to', item && item.priceTo !== null && item.priceTo !== undefined ? item.priceTo : '');
     setVal('client-status', item ? (item.status || 'pending') : 'pending');
@@ -4657,6 +4729,8 @@ window.openClientModal = function(mode, id) {
     var saveBtn = document.getElementById('save-client-btn');
     if (!modal || !titleEl || !editIdEl || !saveBtn) return;
 
+    _refreshClientCatalogSelects();
+
     if (mode === 'edit' && id) {
         var target = _getClients().find(function(item) { return item.id === id; });
         if (!target) return;
@@ -4664,6 +4738,9 @@ window.openClientModal = function(mode, id) {
         titleEl.textContent = 'Изменить покупателя';
         saveBtn.textContent = 'Сохранить изменения';
         _setClientFormData(target);
+        _populateSelect('client-district', _getDistrictOptions(target.city || ''), '-- Выберите район --', false);
+        var districtEl = document.getElementById('client-district');
+        if (districtEl) districtEl.value = target.district || '';
     } else {
         editIdEl.value = '';
         titleEl.textContent = 'Добавить покупателя';
@@ -4696,6 +4773,7 @@ window.renderClientsAdmin = function() {
         var meta = _clientStatusMeta(item.status);
         var params = [
             item.rooms ? ('Комнаты: ' + _escMsg(item.rooms)) : null,
+            item.type ? ('Тип: ' + _escMsg(item.type)) : null,
             item.city ? ('Город: ' + _escMsg(item.city)) : null,
             item.district ? ('Район: ' + _escMsg(item.district)) : null,
             item.condition ? ('Состояние: ' + _escMsg(item.condition)) : null,
@@ -4772,6 +4850,21 @@ window.initClientsAdmin = function() {
         });
     }
 
+    var clientCitySelect = document.getElementById('client-city');
+    if (clientCitySelect) {
+        clientCitySelect.addEventListener('change', function() {
+            _populateSelect('client-district', _getDistrictOptions(clientCitySelect.value || ''), '-- Выберите район --', false);
+        });
+    }
+
+    var filterCitySelect = document.getElementById('clients-filter-city');
+    if (filterCitySelect) {
+        filterCitySelect.addEventListener('change', function() {
+            _populateSelect('clients-filter-district', _getDistrictOptions(filterCitySelect.value || ''), 'Фильтр: район (все)', false);
+            window.renderClientsAdmin();
+        });
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var data = _collectClientFormData();
@@ -4810,6 +4903,7 @@ window.initClientsAdmin = function() {
         'clients-filter-district',
         'clients-filter-rooms',
         'clients-filter-condition',
+        'clients-filter-type',
         'clients-filter-price-from',
         'clients-filter-price-to',
         'clients-filter-status',
@@ -4836,9 +4930,12 @@ window.initClientsAdmin = function() {
                     el.value = '';
                 }
             });
+            _populateSelect('clients-filter-district', [], 'Фильтр: район (все)', false);
             window.renderClientsAdmin();
         });
     }
+
+    _refreshClientCatalogSelects();
 };
 
 document.addEventListener('DOMContentLoaded', function() {

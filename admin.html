@@ -1317,11 +1317,20 @@
                         <input id="clients-filter-fio" type="text" placeholder="Фильтр: ФИО" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                         <input id="clients-filter-phone" type="text" placeholder="Фильтр: телефон" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                         <input id="clients-filter-email" type="text" placeholder="Фильтр: email" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="clients-filter-city" type="text" placeholder="Фильтр: город" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="clients-filter-district" type="text" placeholder="Фильтр: район" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <select id="clients-filter-city" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="">Фильтр: город (все)</option>
+                        </select>
+                        <select id="clients-filter-district" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="">Фильтр: район (все)</option>
+                        </select>
 
                         <input id="clients-filter-rooms" type="text" placeholder="Фильтр: комнаты" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
-                        <input id="clients-filter-condition" type="text" placeholder="Фильтр: состояние" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <select id="clients-filter-condition" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="">Фильтр: состояние (все)</option>
+                        </select>
+                        <select id="clients-filter-type" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                            <option value="">Фильтр: тип (все)</option>
+                        </select>
                         <input id="clients-filter-price-from" type="number" min="0" placeholder="Цена от" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                         <input id="clients-filter-price-to" type="number" min="0" placeholder="Цена до" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
                         <select id="clients-filter-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
@@ -1393,15 +1402,27 @@
                 </div>
                 <div>
                     <label for="client-city" class="block text-gray-400 mb-2">Город</label>
-                    <input id="client-city" type="text" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-city" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="">-- Выберите город --</option>
+                    </select>
                 </div>
                 <div>
                     <label for="client-district" class="block text-gray-400 mb-2">Район</label>
-                    <input id="client-district" type="text" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-district" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="">-- Выберите район --</option>
+                    </select>
                 </div>
                 <div>
                     <label for="client-condition" class="block text-gray-400 mb-2">Состояние</label>
-                    <input id="client-condition" type="text" placeholder="Новострой / Вторичка / Под ремонт" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-condition" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="">-- Выберите состояние --</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="client-type" class="block text-gray-400 mb-2">Тип</label>
+                    <select id="client-type" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="">-- Выберите тип --</option>
+                    </select>
                 </div>
                 <div>
                     <label for="client-price-from" class="block text-gray-400 mb-2">Цена от</label>
