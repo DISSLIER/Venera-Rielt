@@ -4943,3 +4943,359 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderClientsAdmin && window.renderClientsAdmin();
 });
 
+// ====================== КАЛЕНДАРЬ АДМИНКИ ======================
+var CALENDAR_STORAGE_KEY = 'venera_calendar_notes_v1';
+
+function _getCalendarNotes() {
+    try { return JSON.parse(localStorage.getItem(CALENDAR_STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function _saveCalendarNotes(items) {
+    localStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(items));
+}
+
+function _pad2(v) {
+    return String(v).padStart(2, '0');
+}
+
+function _dateToIso(d) {
+    return d.getFullYear() + '-' + _pad2(d.getMonth() + 1) + '-' + _pad2(d.getDate());
+}
+
+function _calendarState() {
+    if (!window.__VENERA_CALENDAR_STATE__) {
+        var now = new Date();
+        window.__VENERA_CALENDAR_STATE__ = {
+            year: now.getFullYear(),
+            month: now.getMonth(),
+            selectedDate: _dateToIso(now),
+            realtorFilter: 'all'
+        };
+    }
+    return window.__VENERA_CALENDAR_STATE__;
+}
+
+function _getCalendarRealtors() {
+    var map = {};
+
+    try {
+        var cfgAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+        cfgAgents.forEach(function(a) {
+            var id = String(a.rieltor_id || '').trim();
+            if (!id) return;
+            map[id] = String(a.name || id).trim();
+        });
+    } catch (_) {}
+
+    _getCalendarNotes().forEach(function(n) {
+        var id = String(n.realtorId || '').trim();
+        if (!id) return;
+        if (!map[id]) map[id] = String(n.realtorName || id).trim();
+    });
+
+    return Object.keys(map)
+        .map(function(id) { return { id: id, name: map[id] || id }; })
+        .sort(function(a, b) { return a.name.localeCompare(b.name, 'ru'); });
+}
+
+function _renderCalendarRealtorSelects() {
+    var realtors = _getCalendarRealtors();
+    var filter = document.getElementById('calendar-realtor-filter');
+    var modalSel = document.getElementById('calendar-note-realtor');
+    var st = _calendarState();
+
+    if (filter) {
+        var prev = filter.value || st.realtorFilter || 'all';
+        filter.innerHTML = '<option value="all">Все риелторы</option>' + realtors.map(function(r) {
+            return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
+        }).join('');
+        filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
+        st.realtorFilter = filter.value;
+    }
+
+    if (modalSel) {
+        var prevModal = modalSel.value || '';
+        modalSel.innerHTML = '<option value="">Не выбран</option>' + realtors.map(function(r) {
+            return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
+        }).join('');
+        if (prevModal && Array.from(modalSel.options).some(function(o) { return o.value === prevModal; })) {
+            modalSel.value = prevModal;
+        }
+    }
+}
+
+function _getFilteredCalendarNotes() {
+    var st = _calendarState();
+    var notes = _getCalendarNotes();
+    if (!st.realtorFilter || st.realtorFilter === 'all') return notes;
+    return notes.filter(function(n) { return String(n.realtorId || '') === String(st.realtorFilter); });
+}
+
+function _renderCalendarDayEntries() {
+    var st = _calendarState();
+    var list = document.getElementById('calendar-day-entries');
+    var title = document.getElementById('calendar-selected-date-title');
+    if (!list || !title) return;
+
+    var notes = _getFilteredCalendarNotes()
+        .filter(function(n) { return String(n.date || '') === st.selectedDate; })
+        .sort(function(a, b) { return String(a.time || '').localeCompare(String(b.time || '')); });
+
+    var d = new Date(st.selectedDate + 'T00:00:00');
+    title.textContent = 'Записи на ' + d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    if (!notes.length) {
+        list.innerHTML = '<div class="text-gray-500 text-sm">На эту дату записей нет.</div>';
+        return;
+    }
+
+    list.innerHTML = notes.map(function(n) {
+        var time = n.time ? _escMsg(n.time) : '--:--';
+        var realtor = n.realtorName ? _escMsg(n.realtorName) : 'Не назначен';
+        var type = _escMsg(n.type || 'Другое');
+        return '<div class="rounded-lg border border-gray-800 bg-black/20 p-3">' +
+            '<div class="flex flex-wrap justify-between gap-2 mb-1">' +
+                '<div class="text-sm text-gray-300"><span class="text-gold-400">' + time + '</span> • ' + type + '</div>' +
+                '<div class="text-xs text-gray-400">' + realtor + '</div>' +
+            '</div>' +
+            '<div class="text-white font-semibold">' + _escMsg(n.title || '') + '</div>' +
+            (n.note ? '<div class="text-sm text-gray-300 mt-1" style="white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
+            '<div class="mt-2 flex gap-2">' +
+                '<button onclick="window.editCalendarNote(\'' + n.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition">Изменить</button>' +
+                '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function _renderCalendarGrid() {
+    var st = _calendarState();
+    var grid = document.getElementById('admin-calendar-grid');
+    var monthLabel = document.getElementById('calendar-month-label');
+    if (!grid || !monthLabel) return;
+
+    var firstDay = new Date(st.year, st.month, 1);
+    var lastDay = new Date(st.year, st.month + 1, 0);
+    var daysInMonth = lastDay.getDate();
+    var startWeekday = (firstDay.getDay() + 6) % 7;
+
+    monthLabel.textContent = firstDay.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+
+    var weekNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    var notes = _getFilteredCalendarNotes();
+    var notesMap = {};
+    notes.forEach(function(n) {
+        var key = String(n.date || '');
+        if (!key) return;
+        notesMap[key] = (notesMap[key] || 0) + 1;
+    });
+
+    var cells = weekNames.map(function(n) {
+        return '<div class="text-center text-xs font-semibold text-gray-400 py-2">' + n + '</div>';
+    });
+
+    for (var i = 0; i < startWeekday; i++) {
+        cells.push('<div class="rounded-lg border border-gray-900 bg-gray-950/40 min-h-[72px]"></div>');
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+        var iso = st.year + '-' + _pad2(st.month + 1) + '-' + _pad2(day);
+        var isSelected = st.selectedDate === iso;
+        var hasNotes = !!notesMap[iso];
+        cells.push(
+            '<button type="button" data-calendar-date="' + iso + '" class="calendar-day-cell rounded-lg border min-h-[72px] p-2 text-left transition ' +
+            (isSelected ? 'border-yellow-400 bg-yellow-400/10' : 'border-gray-800 bg-gray-900/30 hover:bg-gray-800/50') + '">' +
+                '<div class="flex items-center justify-between">' +
+                    '<span class="text-sm ' + (isSelected ? 'text-yellow-300 font-bold' : 'text-gray-200') + '">' + day + '</span>' +
+                    (hasNotes ? '<span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">' + notesMap[iso] + '</span>' : '') +
+                '</div>' +
+                (hasNotes ? '<div class="mt-2 text-[11px] text-yellow-200">Есть записи</div>' : '<div class="mt-2 text-[11px] text-gray-500">-</div>') +
+            '</button>'
+        );
+    }
+
+    grid.innerHTML = cells.join('');
+
+    Array.from(grid.querySelectorAll('[data-calendar-date]')).forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            st.selectedDate = btn.getAttribute('data-calendar-date') || st.selectedDate;
+            _renderCalendarGrid();
+            _renderCalendarDayEntries();
+        });
+    });
+}
+
+window.renderCalendarAdmin = function() {
+    _renderCalendarRealtorSelects();
+    _renderCalendarGrid();
+    _renderCalendarDayEntries();
+};
+
+window.openCalendarNoteModal = function(dateIso, noteId) {
+    var modal = document.getElementById('calendar-note-modal');
+    if (!modal) return;
+
+    _renderCalendarRealtorSelects();
+    var idEl = document.getElementById('calendar-note-id');
+    var dateEl = document.getElementById('calendar-note-date');
+    var timeEl = document.getElementById('calendar-note-time');
+    var realtorEl = document.getElementById('calendar-note-realtor');
+    var typeEl = document.getElementById('calendar-note-type');
+    var titleEl = document.getElementById('calendar-note-title');
+    var textEl = document.getElementById('calendar-note-text');
+
+    var note = null;
+    if (noteId) {
+        note = _getCalendarNotes().find(function(n) { return n.id === noteId; }) || null;
+    }
+
+    idEl.value = note ? note.id : '';
+    dateEl.value = note ? (note.date || '') : (dateIso || _calendarState().selectedDate);
+    timeEl.value = note ? (note.time || '') : '';
+    realtorEl.value = note ? (note.realtorId || '') : '';
+    typeEl.value = note ? (note.type || 'Встреча') : 'Встреча';
+    titleEl.value = note ? (note.title || '') : '';
+    textEl.value = note ? (note.note || '') : '';
+
+    modal.classList.remove('hidden');
+};
+
+window.closeCalendarNoteModal = function() {
+    var modal = document.getElementById('calendar-note-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.editCalendarNote = function(id) {
+    window.openCalendarNoteModal('', id);
+};
+
+window.deleteCalendarNote = function(id) {
+    var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
+    _saveCalendarNotes(items);
+    window.renderCalendarAdmin();
+};
+
+window.initCalendarAdmin = function() {
+    var wrap = document.getElementById('admin-calendar-view');
+    if (!wrap || wrap.dataset.bound === '1') return;
+    wrap.dataset.bound = '1';
+
+    var st = _calendarState();
+    var filterEl = document.getElementById('calendar-realtor-filter');
+    var prevBtn = document.getElementById('calendar-prev-month');
+    var nextBtn = document.getElementById('calendar-next-month');
+    var addBtn = document.getElementById('calendar-add-note-btn');
+
+    if (filterEl) {
+        filterEl.addEventListener('change', function() {
+            st.realtorFilter = filterEl.value || 'all';
+            window.renderCalendarAdmin();
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            st.month -= 1;
+            if (st.month < 0) { st.month = 11; st.year -= 1; }
+            _renderCalendarGrid();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            st.month += 1;
+            if (st.month > 11) { st.month = 0; st.year += 1; }
+            _renderCalendarGrid();
+        });
+    }
+
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            window.openCalendarNoteModal(st.selectedDate);
+        });
+    }
+
+    var modal = document.getElementById('calendar-note-modal');
+    var closeBtn = document.getElementById('calendar-note-close');
+    var cancelBtn = document.getElementById('calendar-note-cancel');
+    var form = document.getElementById('calendar-note-form');
+
+    if (closeBtn) closeBtn.addEventListener('click', window.closeCalendarNoteModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', window.closeCalendarNoteModal);
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) window.closeCalendarNoteModal();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var id = (document.getElementById('calendar-note-id') || {}).value || '';
+            var date = (document.getElementById('calendar-note-date') || {}).value || '';
+            var time = (document.getElementById('calendar-note-time') || {}).value || '';
+            var realtorId = (document.getElementById('calendar-note-realtor') || {}).value || '';
+            var realtorName = '';
+            var realtorSel = document.getElementById('calendar-note-realtor');
+            if (realtorSel && realtorSel.selectedIndex >= 0) {
+                realtorName = realtorSel.options[realtorSel.selectedIndex].textContent || '';
+                if (realtorId === '') realtorName = '';
+            }
+            var type = (document.getElementById('calendar-note-type') || {}).value || 'Встреча';
+            var title = ((document.getElementById('calendar-note-title') || {}).value || '').trim();
+            var note = ((document.getElementById('calendar-note-text') || {}).value || '').trim();
+
+            if (!date || !title) return;
+
+            var items = _getCalendarNotes();
+            if (id) {
+                items = items.map(function(n) {
+                    if (n.id !== id) return n;
+                    return Object.assign({}, n, {
+                        date: date,
+                        time: time,
+                        realtorId: realtorId,
+                        realtorName: realtorName,
+                        type: type,
+                        title: title,
+                        note: note
+                    });
+                });
+            } else {
+                items.push({
+                    id: 'cal_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                    date: date,
+                    time: time,
+                    realtorId: realtorId,
+                    realtorName: realtorName,
+                    type: type,
+                    title: title,
+                    note: note,
+                    createdAt: Date.now()
+                });
+            }
+
+            _saveCalendarNotes(items);
+            st.selectedDate = date;
+            var dt = new Date(date + 'T00:00:00');
+            st.year = dt.getFullYear();
+            st.month = dt.getMonth();
+            window.closeCalendarNoteModal();
+            window.renderCalendarAdmin();
+        });
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    window.initCalendarAdmin && window.initCalendarAdmin();
+});
+
+window.addEventListener('storage', function(e) {
+    if (e.key === CALENDAR_STORAGE_KEY) {
+        var calendarView = document.getElementById('admin-calendar-view');
+        if (calendarView && !calendarView.classList.contains('hidden')) {
+            window.renderCalendarAdmin && window.renderCalendarAdmin();
+        }
+    }
+});
+

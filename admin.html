@@ -1135,6 +1135,9 @@
                     <button type="button" class="admin-nav-btn" data-admin-view-target="admin-clients-view" aria-selected="false" title="База клиентов" aria-label="База клиентов">
                         <i class="fas fa-user-check"></i>
                     </button>
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-calendar-view" aria-selected="false" title="Календарь" aria-label="Календарь встреч и показов">
+                        <i class="fas fa-calendar-alt"></i>
+                    </button>
                 </nav>
 
                 <button id="close-admin-panel" class="admin-exit-btn" style="margin-top: auto;" title="Выход" aria-label="Выйти из админ-панели">
@@ -1361,6 +1364,36 @@
                         </table>
                     </div>
                 </section>
+
+                <section id="admin-calendar-view" class="admin-view hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-2xl font-semibold gold-text">Календарь встреч и показов</h3>
+                        <button id="calendar-add-note-btn" type="button" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Добавить запись</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                        <div class="lg:col-span-1">
+                            <label for="calendar-realtor-filter" class="block text-xs text-gray-400 mb-1">Фильтр по риелтору</label>
+                            <select id="calendar-realtor-filter" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                                <option value="all">Все риелторы</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-2 flex items-end gap-2">
+                            <button id="calendar-prev-month" type="button" class="px-4 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition"><i class="fas fa-chevron-left"></i></button>
+                            <div id="calendar-month-label" class="flex-1 px-4 py-3 bg-gray-900 text-gray-100 rounded-lg border border-gray-800 text-center font-semibold">-</div>
+                            <button id="calendar-next-month" type="button" class="px-4 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="admin-calendar-grid" class="grid grid-cols-7 gap-2 mb-5"></div>
+
+                    <div class="rounded-xl border border-gray-800 bg-[#0f172a] p-4">
+                        <h4 id="calendar-selected-date-title" class="text-lg font-semibold text-gray-100 mb-3">Записи на дату</h4>
+                        <div id="calendar-day-entries" class="space-y-2">
+                            <div class="text-gray-500 text-sm">Выберите дату в календаре.</div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -1441,6 +1474,53 @@
                 <div class="md:col-span-2 flex gap-3 pt-2">
                     <button type="button" id="cancel-client-modal" class="px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition">Отмена</button>
                     <button type="submit" id="save-client-btn" class="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="calendar-note-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[56] hidden flex items-center justify-center p-4">
+        <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold gold-text">Запись в календарь</h3>
+                <button id="calendar-note-close" class="text-white text-2xl">&times;</button>
+            </div>
+            <form id="calendar-note-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input id="calendar-note-id" type="hidden">
+                <div>
+                    <label for="calendar-note-date" class="block text-gray-400 mb-2">Дата *</label>
+                    <input id="calendar-note-date" type="date" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
+                    <input id="calendar-note-time" type="time" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label for="calendar-note-realtor" class="block text-gray-400 mb-2">Риелтор</label>
+                    <select id="calendar-note-realtor" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="">Не выбран</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="calendar-note-type" class="block text-gray-400 mb-2">Тип записи</label>
+                    <select id="calendar-note-type" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <option value="Встреча">Встреча</option>
+                        <option value="Показ">Показ</option>
+                        <option value="Звонок">Звонок</option>
+                        <option value="Другое">Другое</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="calendar-note-title" class="block text-gray-400 mb-2">Заголовок *</label>
+                    <input id="calendar-note-title" type="text" required placeholder="Например: Показ квартиры на Рышкановке" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="calendar-note-text" class="block text-gray-400 mb-2">Заметка</label>
+                    <textarea id="calendar-note-text" rows="3" placeholder="Детали встречи/показа" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                </div>
+                <div class="md:col-span-2 flex gap-3 pt-2">
+                    <button type="button" id="calendar-note-cancel" class="px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition">Отмена</button>
+                    <button type="submit" class="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Сохранить запись</button>
                 </div>
             </form>
         </div>
@@ -1836,6 +1916,9 @@
                     }
                     if (targetId === 'admin-clients-view') {
                         if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+                    }
+                    if (targetId === 'admin-calendar-view') {
+                        if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
                     }
                 }
 
