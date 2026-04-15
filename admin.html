@@ -1729,8 +1729,10 @@
                     <div class="cal-time-group">
                         <input id="calendar-note-time" type="text" inputmode="numeric" placeholder="00:00" maxlength="5" class="cal-time-field"
                             oninput="(function(el){var s=el.value.replace(/\D/g,'');if(s.length>4)s=s.slice(0,4);if(s.length>=3)s=s.slice(0,2)+':'+s.slice(2);el.value=s;})(this)"
-                            onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)"
-                            onfocus="window._calTpOpen && window._calTpOpen()">
+                            onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)">
+                        <button type="button" onclick="window._calTpOpen && window._calTpOpen()" style="background:none;border:none;cursor:pointer;padding:0 12px 0 4px;color:rgba(255,255,255,0.45);font-size:0.9rem;flex-shrink:0;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">
+                            <i class="fas fa-clock"></i>
+                        </button>
                         <div id="cal-time-picker">
                             <div class="cal-tp-head"><span>Часы</span><span>Минуты</span></div>
                             <div class="cal-tp-cols">
