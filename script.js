@@ -623,16 +623,17 @@
                 }
             });
 
-            // Icon strip below campaign chart
+            // Icon strip below campaign chart (appended to card, not wrap)
             const campCanvas = document.getElementById('analytics-campaign-chart');
             if (campCanvas) {
                 const wrap = campCanvas.parentElement;
-                let iconRow = wrap.querySelector('.camp-icon-row');
+                const card = wrap.parentElement;
+                let iconRow = card.querySelector('.camp-icon-row');
                 if (!iconRow) {
                     iconRow = document.createElement('div');
                     iconRow.className = 'camp-icon-row';
-                    iconRow.style.cssText = 'display:flex;justify-content:space-around;align-items:flex-end;padding:6px 8px 2px;';
-                    wrap.appendChild(iconRow);
+                    iconRow.style.cssText = 'display:flex;justify-content:space-around;align-items:center;padding:6px 4px 0;margin-top:6px;';
+                    card.appendChild(iconRow);
                 }
                 iconRow.innerHTML = campaignBySrc.length
                     ? campaignBySrc.map(x => `<div style="text-align:center;flex:1;min-width:0;">

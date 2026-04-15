@@ -33,6 +33,10 @@
         "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1 ; if \\(\\$LASTEXITCODE -eq 0\\) \\{ git add -A ; git commit -m \"UI: copy btn - no container, fa-clone icon, gold color only\" ; git push \\}$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1 ; if \\(\\$LASTEXITCODE -eq 0\\) \\{ git add -A ; git commit -m \"Fix: chart cards fixed height 220px, icon row outside chart-wrap\" ; git push \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
