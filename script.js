@@ -369,9 +369,11 @@
                 // ignore missing global agents
             }
 
-            const buildAgentEntries = (counterObject) => Object.entries(counterObject)
-                .map(([compoundKey, value]) => {
-                    const [rieltorId, fallbackName] = compoundKey.split('::');
+            const buildAgentEntries = (counterObject) => {
+                const mapped = Object.entries(counterObject).map(([compoundKey, value]) => {
+                    const sepIdx = compoundKey.indexOf('::');
+                    const rieltorId = sepIdx >= 0 ? compoundKey.slice(0, sepIdx) : compoundKey;
+                    const fallbackName = sepIdx >= 0 ? compoundKey.slice(sepIdx + 2) : '';
                     const meta = agentMeta[String(rieltorId || '').trim()] || {};
                     return {
                         rieltorId,
@@ -379,8 +381,19 @@
                         photo: meta.photo || '',
                         value
                     };
-                })
-                .sort((a, b) => b.value - a.value);
+                });
+                // Deduplicate by rieltorId, summing values
+                const deduped = mapped.reduce((acc, entry) => {
+                    const existing = acc.find(e => e.rieltorId === entry.rieltorId);
+                    if (existing) {
+                        existing.value += entry.value;
+                    } else {
+                        acc.push({ ...entry });
+                    }
+                    return acc;
+                }, []);
+                return deduped.sort((a, b) => b.value - a.value);
+            };
 
             const agentViewEntries = buildAgentEntries(agentViewCounts);
             const agentAddedEntries = buildAgentEntries(agentAddedCounts);
@@ -1779,7 +1792,8 @@
                 // Add new property
                 title.textContent = 'Добавить объект';
                 document.getElementById('property-edit-form').reset();
-                document.getElementById('property-id').value = '';
+                // Show the next auto-assigned ID immediately
+                document.getElementById('property-id').value = getCurrentMaxPropertyIdNumber() + 1;
                 
                 // Reset realtor dropdown to first option
                 document.getElementById('property-rieltor-id').selectedIndex = 0;
@@ -2199,6 +2213,10 @@
                 title.textContent = 'Добавить риелтора';
                 document.getElementById('agent-edit-form').reset();
                 document.getElementById('agent-id').value = '';
+                // Auto-generate next rieltor_id
+                const nextRieltorId = getCurrentMaxAgentIdNumber(agents) + 1;
+                const rieltorIdField = document.getElementById('agent-rieltor-id');
+                if (rieltorIdField) rieltorIdField.value = nextRieltorId;
             }
             
             modal.classList.remove('hidden');
