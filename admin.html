@@ -587,18 +587,17 @@
         .cal-time-group {
             display: flex;
             align-items: center;
-            gap: 8px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,215,0,0.25);
             border-radius: 12px;
-            padding: 8px 14px;
+            padding: 0;
             transition: border-color 0.2s, box-shadow 0.2s;
+            position: relative;
         }
         .cal-time-group:focus-within {
             border-color: rgba(255,215,0,0.6);
             box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
         }
-        .cal-time-group i { color: rgba(255,215,0,0.5); font-size: 0.85rem; flex-shrink: 0; }
         .cal-time-field {
             flex: 1;
             background: transparent;
@@ -609,9 +608,93 @@
             font-family: 'Montserrat', sans-serif;
             font-variant-numeric: tabular-nums;
             letter-spacing: 0.08em;
+            padding: 10px 14px;
+            cursor: pointer;
             min-width: 0;
         }
         .cal-time-field::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 0.08em; }
+        /* Тайм-пикер попап */
+        #cal-time-picker {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            z-index: 9999;
+            background: rgba(10,15,30,0.97);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(16px);
+            width: 260px;
+        }
+        #cal-time-picker.open { display: block; }
+        .cal-tp-head { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,215,0,0.55); text-transform: uppercase; margin-bottom: 8px; display: flex; gap: 8px; }
+        .cal-tp-head span { flex: 1; text-align: center; }
+        .cal-tp-cols { display: flex; gap: 8px; }
+        .cal-tp-col { flex:1; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; scrollbar-width:thin; scrollbar-color:rgba(255,215,0,0.3) transparent; border-radius:8px; }
+        .cal-tp-col::-webkit-scrollbar { width: 4px; }
+        .cal-tp-col::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius:2px; }
+        .cal-tp-item { text-align:center; padding:5px 4px; border-radius:7px; font-size:0.875rem; font-family:'Montserrat',sans-serif; font-variant-numeric:tabular-nums; color:rgba(255,255,255,0.65); cursor:pointer; transition:background 0.15s,color 0.15s; }
+        .cal-tp-item:hover { background:rgba(255,215,0,0.12); color:#fff; }
+        .cal-tp-item.active { background:rgba(255,215,0,0.22); color:#ffd700; font-weight:700; border:1px solid rgba(255,215,0,0.4); }
+        /* Кастомный select */
+        .csel-wrap { position:relative; }
+        .csel-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            color: #fff;
+            padding: 10px 14px;
+            font-size: 0.875rem;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        .csel-btn:hover, .csel-btn.open { border-color: rgba(255,215,0,0.5); box-shadow: 0 0 0 2px rgba(255,215,0,0.08); }
+        .csel-btn .csel-val { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .csel-btn .csel-arrow { color:rgba(255,215,0,0.6); font-size:0.75rem; transition:transform 0.2s; flex-shrink:0; }
+        .csel-btn.open .csel-arrow { transform:rotate(180deg); }
+        .csel-drop {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            z-index: 9999;
+            background: rgba(10,15,30,0.97);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(16px);
+            max-height: 220px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,215,0,0.3) transparent;
+        }
+        .csel-drop::-webkit-scrollbar { width:4px; }
+        .csel-drop::-webkit-scrollbar-thumb { background:rgba(255,215,0,0.3); border-radius:2px; }
+        .csel-drop.open { display:block; }
+        .csel-opt {
+            padding: 10px 14px;
+            font-size: 0.875rem;
+            font-family: 'Montserrat', sans-serif;
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .csel-opt:hover { background: rgba(255,215,0,0.1); color:#fff; }
+        .csel-opt.active { background: rgba(255,215,0,0.18); color:#ffd700; font-weight:600; }
         /* Мобайл: тип+время вертикально, title на отдельной строке */
         .cal-entry-title-mob { display: none; }
         .cal-entry-title-desk { display: block; }
@@ -671,32 +754,9 @@
         }
         .cal-btn-primary:hover { background: linear-gradient(135deg,rgba(255,215,0,0.35),rgba(255,165,0,0.25)); box-shadow: 0 4px 16px rgba(255,215,0,0.15); }
 
-        /* Стилизованный select в стиле сайта */
+        /* Стилизованный select (фоллбэк) */
         .cal-select {
-            appearance: none;
-            -webkit-appearance: none;
-            background-color: rgba(255,255,255,0.05);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffd700' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            border: 1px solid rgba(255,215,0,0.25);
-            border-radius: 12px;
-            color: #fff;
-            padding: 10px 36px 10px 14px;
-            font-size: 0.875rem;
-            font-family: 'Montserrat', sans-serif;
-            cursor: pointer;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            width: 100%;
-        }
-        .cal-select:focus {
-            outline: none;
-            border-color: rgba(255,215,0,0.6);
-            box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
-        }
-        .cal-select option {
-            background: #0f172a;
-            color: #fff;
+            display: none !important;
         }
 
         /* Десктоп: показываем только desktop-раскладку ячеек */
@@ -1667,10 +1727,17 @@
                 <div>
                     <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
                     <div class="cal-time-group">
-                        <i class="fas fa-clock"></i>
                         <input id="calendar-note-time" type="text" inputmode="numeric" placeholder="00:00" maxlength="5" class="cal-time-field"
                             oninput="(function(el){var s=el.value.replace(/\D/g,'');if(s.length>4)s=s.slice(0,4);if(s.length>=3)s=s.slice(0,2)+':'+s.slice(2);el.value=s;})(this)"
-                            onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)">
+                            onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)"
+                            onfocus="window._calTpOpen && window._calTpOpen()">
+                        <div id="cal-time-picker">
+                            <div class="cal-tp-head"><span>Часы</span><span>Минуты</span></div>
+                            <div class="cal-tp-cols">
+                                <div class="cal-tp-col" id="cal-tp-hours"></div>
+                                <div class="cal-tp-col" id="cal-tp-mins"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -2160,6 +2227,196 @@
 
                 switchAdminView('admin-properties-view');
             });
+        </script>
+
+        <script>
+        /* ======= Custom Select ======= */
+        function _cselInit(selId) {
+            var sel = document.getElementById(selId);
+            if (!sel || sel._cselDone) return;
+            sel._cselDone = true;
+
+            var parent = sel.parentNode;
+            var wrap = document.createElement('div');
+            wrap.className = 'csel-wrap';
+            parent.insertBefore(wrap, sel);
+            wrap.appendChild(sel);
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'csel-btn';
+            btn.innerHTML = '<span class="csel-val"></span><i class="fas fa-chevron-down csel-arrow"></i>';
+            wrap.insertBefore(btn, sel);
+
+            var drop = document.createElement('div');
+            drop.className = 'csel-drop';
+            wrap.appendChild(drop);
+
+            function buildList() {
+                drop.innerHTML = '';
+                Array.from(sel.options).forEach(function(opt) {
+                    var d = document.createElement('div');
+                    d.className = 'csel-opt' + (opt.value === sel.value ? ' active' : '');
+                    d.textContent = opt.textContent;
+                    d.dataset.v = opt.value;
+                    d.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        sel.value = opt.value;
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        syncDisplay();
+                        closeList();
+                    });
+                    drop.appendChild(d);
+                });
+            }
+
+            function syncDisplay() {
+                var cur = sel.options[sel.selectedIndex];
+                btn.querySelector('.csel-val').textContent = cur ? cur.textContent : '';
+                Array.from(drop.querySelectorAll('.csel-opt')).forEach(function(d) {
+                    d.classList.toggle('active', d.dataset.v === sel.value);
+                });
+            }
+
+            function openList() {
+                document.querySelectorAll('.csel-drop.open').forEach(function(d) { d.classList.remove('open'); });
+                document.querySelectorAll('.csel-btn.open').forEach(function(b) { b.classList.remove('open'); });
+                buildList();
+                drop.classList.add('open');
+                btn.classList.add('open');
+            }
+
+            function closeList() {
+                drop.classList.remove('open');
+                btn.classList.remove('open');
+            }
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (drop.classList.contains('open')) closeList(); else openList();
+            });
+
+            document.addEventListener('click', closeList);
+
+            new MutationObserver(function() { syncDisplay(); }).observe(sel, { childList: true, subtree: true });
+
+            sel._cselSync = function() { buildList(); syncDisplay(); };
+            syncDisplay();
+        }
+
+        function _cselSync(selId) {
+            var sel = document.getElementById(selId);
+            if (sel && sel._cselSync) sel._cselSync();
+        }
+
+        /* ======= Time Picker ======= */
+        (function() {
+            var picker = null, hourCol = null, minCol = null, timeInput = null;
+
+            function build() {
+                picker = document.getElementById('cal-time-picker');
+                hourCol = document.getElementById('cal-tp-hours');
+                minCol = document.getElementById('cal-tp-mins');
+                timeInput = document.getElementById('calendar-note-time');
+                if (!picker || !hourCol || !minCol || !timeInput) return;
+
+                hourCol.innerHTML = '';
+                for (var h = 0; h < 24; h++) {
+                    (function(hh) {
+                        var el = document.createElement('div');
+                        el.className = 'cal-tp-item';
+                        el.textContent = String(hh).padStart(2, '0');
+                        el.addEventListener('click', function() { selectHour(hh); });
+                        hourCol.appendChild(el);
+                    })(h);
+                }
+
+                minCol.innerHTML = '';
+                for (var m = 0; m < 60; m += 5) {
+                    (function(mm) {
+                        var el = document.createElement('div');
+                        el.className = 'cal-tp-item';
+                        el.textContent = String(mm).padStart(2, '0');
+                        el.addEventListener('click', function() { selectMin(mm); });
+                        minCol.appendChild(el);
+                    })(m);
+                }
+            }
+
+            function getCurrent() {
+                var val = timeInput ? timeInput.value : '';
+                var m = val.match(/^(\d{1,2}):(\d{2})$/);
+                return m ? { h: parseInt(m[1]), m: parseInt(m[2]) } : { h: -1, m: -1 };
+            }
+
+            function syncHighlight() {
+                var cur = getCurrent();
+                Array.from(hourCol.children).forEach(function(el, i) {
+                    el.classList.toggle('active', i === cur.h);
+                });
+                Array.from(minCol.children).forEach(function(el, i) {
+                    el.classList.toggle('active', i * 5 === cur.m);
+                });
+                if (cur.h >= 0) {
+                    var active = hourCol.querySelector('.active');
+                    if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+            }
+
+            function selectHour(h) {
+                var cur = getCurrent();
+                var mm = cur.m >= 0 ? cur.m : 0;
+                timeInput.value = String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+                syncHighlight();
+            }
+
+            function selectMin(m) {
+                var cur = getCurrent();
+                var hh = cur.h >= 0 ? cur.h : 0;
+                timeInput.value = String(hh).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                syncHighlight();
+                setTimeout(function() { picker.classList.remove('open'); }, 150);
+            }
+
+            window._calTpOpen = function() {
+                if (!picker) build();
+                if (!picker) return;
+                picker.classList.add('open');
+                syncHighlight();
+            };
+
+            document.addEventListener('click', function(e) {
+                if (picker && !picker.contains(e.target) && e.target !== timeInput) {
+                    picker.classList.remove('open');
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function() { build(); });
+        })();
+
+        /* ======= Init custom selects after calendar ready ======= */
+        var _origRenderCalRealtorSelects = null;
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                _cselInit('calendar-realtor-filter');
+                _cselInit('calendar-note-realtor');
+                _cselInit('calendar-note-type');
+
+                var orig = window.renderCalendarAdmin;
+                window.renderCalendarAdmin = function() {
+                    orig && orig();
+                    _cselSync('calendar-realtor-filter');
+                    _cselSync('calendar-note-realtor');
+                };
+
+                var origOpen = window.openCalendarNoteModal;
+                window.openCalendarNoteModal = function(dateIso, noteId) {
+                    origOpen && origOpen(dateIso, noteId);
+                    _cselSync('calendar-note-realtor');
+                    _cselSync('calendar-note-type');
+                };
+            }, 600);
+        });
         </script>
     </body>
 </html>
