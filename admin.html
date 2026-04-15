@@ -564,6 +564,55 @@
                 grid-template-columns: 1fr;
                 gap: 0.8rem;
             }
+
+            /* Мобильный календарь: квадратные ячейки в стиле Android */
+            .calendar-day-cell {
+                min-height: 0 !important;
+                aspect-ratio: 1;
+                padding: 2px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .cal-desktop-row { display: none !important; }
+            .cal-desktop-dots { display: none !important; }
+            .cal-mobile-layout { display: flex !important; }
+        }
+
+        /* Скрываем AM/PM из поля времени — принудительный 24ч формат */
+        input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; }
+
+        /* Стилизованный select в стиле сайта */
+        .cal-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: rgba(255,255,255,0.05);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffd700' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            color: #fff;
+            padding: 10px 36px 10px 14px;
+            font-size: 0.875rem;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        .cal-select:focus {
+            outline: none;
+            border-color: rgba(255,215,0,0.6);
+            box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
+        }
+        .cal-select option {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        /* Десктоп: показываем только desktop-раскладку ячеек */
+        @media (min-width: 561px) {
+            .cal-mobile-layout { display: none !important; }
         }
     </style>
 </head>
@@ -1401,8 +1450,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-5">
                             <div class="lg:col-span-1">
                                 <label for="calendar-realtor-filter" class="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Фильтр по риелтору</label>
-                                <select id="calendar-realtor-filter" class="w-full text-white p-3 rounded-xl text-sm focus:outline-none"
-                                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,215,0,0.2);">
+                                <select id="calendar-realtor-filter" class="cal-select">
                                     <option value="all">Все риелторы</option>
                                 </select>
                             </div>
@@ -1515,7 +1563,7 @@
         </div>
     </div>
 
-    <div id="calendar-note-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[56] hidden flex items-center justify-center p-4">
+    <div id="calendar-note-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[201] hidden flex items-center justify-center p-4">
         <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-2xl font-bold gold-text">Запись в календарь</h3>
@@ -1533,13 +1581,13 @@
                 </div>
                 <div>
                     <label for="calendar-note-realtor" class="block text-gray-400 mb-2">Риелтор</label>
-                    <select id="calendar-note-realtor" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="calendar-note-realtor" class="cal-select">
                         <option value="">Не выбран</option>
                     </select>
                 </div>
                 <div>
                     <label for="calendar-note-type" class="block text-gray-400 mb-2">Тип записи</label>
-                    <select id="calendar-note-type" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="calendar-note-type" class="cal-select">
                         <option value="Встреча">Встреча</option>
                         <option value="Показ">Показ</option>
                         <option value="Звонок">Звонок</option>

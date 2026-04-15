@@ -5058,6 +5058,9 @@ function _renderCalendarDayEntries() {
         var type = _escMsg(n.type || 'Другое');
         var icon = typeIcons[n.type] || 'fa-bookmark';
         var color = typeColors[n.type] || '#fbbf24';
+        var cfgAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+        var agentObj = n.realtorId ? cfgAgents.find(function(a) { return String(a.rieltor_id) === String(n.realtorId); }) : null;
+        var agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
         return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
             'onmouseover="this.style.boxShadow=\'0 4px 24px rgba(255,215,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
             '<div class="flex items-center gap-3 mb-2">' +
@@ -5072,7 +5075,12 @@ function _renderCalendarDayEntries() {
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
                     '</div>' +
                 '</div>' +
-                '<div style="font-size:10px;color:rgba(255,255,255,0.35);text-align:right;flex-shrink:0;">' + realtor + '</div>' +
+                '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">' +
+                    (agentPhoto
+                        ? '<img src="' + agentPhoto + '" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,0.3);">'
+                        : '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
+                    '<span style="font-size:11px;color:rgba(255,255,255,0.7);text-align:center;max-width:72px;line-height:1.3;font-weight:500;">' + realtor + '</span>' +
+                '</div>' +
             '</div>' +
             (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
             '<div style="display:flex;gap:8px;margin-top:10px;">' +
@@ -5130,13 +5138,18 @@ function _renderCalendarGrid() {
                 ? 'background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.25);'
                 : 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);';
 
+        var dayColor = isSelected ? '#ffd700' : isToday ? '#ffe066' : 'rgba(255,255,255,0.8)';
         cells.push(
             '<button type="button" data-calendar-date="' + iso + '" class="calendar-day-cell rounded-xl min-h-[68px] p-2 text-left transition-all duration-200 hover:scale-[1.03]" style="' + cellBg + '">' +
-                '<div class="flex items-start justify-between">' +
-                    '<span class="text-sm font-semibold ' + (isSelected ? '' : isToday ? '' : '') + '" style="color:' + (isSelected ? '#ffd700' : isToday ? '#ffe066' : 'rgba(255,255,255,0.8)') + ';">' + day + '</span>' +
-                    (hasNotes ? '<span class="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold" style="background:#ffd700;color:#000;">' + count + '</span>' : '') +
+                '<div class="cal-desktop-row" style="display:flex;align-items:flex-start;justify-content:space-between;">' +
+                    '<span style="font-size:0.875rem;font-weight:600;color:' + dayColor + ';">' + day + '</span>' +
+                    (hasNotes ? '<span class="cal-cell-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;border-radius:999px;background:#ffd700;color:#000;font-size:10px;font-weight:700;">' + count + '</span>' : '') +
                 '</div>' +
-                (hasNotes ? '<div class="mt-2 flex gap-1 flex-wrap">' + Array(Math.min(count,3)).fill('<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;opacity:0.8;"></span>').join('') + '</div>' : '') +
+                (hasNotes ? '<div class="cal-desktop-dots" style="margin-top:8px;display:flex;gap:4px;">' + Array(Math.min(count,3)).fill('<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;opacity:0.8;"></span>').join('') + '</div>' : '') +
+                '<div class="cal-mobile-layout" style="display:none;flex-direction:column;align-items:center;gap:3px;">' +
+                    '<span style="font-size:0.875rem;font-weight:600;color:' + dayColor + ';">' + day + '</span>' +
+                    '<span style="width:4px;height:4px;border-radius:50%;background:#ffd700;' + (hasNotes ? '' : 'visibility:hidden;') + '"></span>' +
+                '</div>' +
             '</button>'
         );
     }
