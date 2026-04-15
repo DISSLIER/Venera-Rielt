@@ -49,6 +49,20 @@
                 if (!parsed || !Array.isArray(parsed.events)) {
                     return { events: [] };
                 }
+                // Deduplicate campaign_click events by vid — keep only the first occurrence
+                const seenVids = new Set();
+                const deduped = parsed.events.filter(ev => {
+                    if (ev.type === 'campaign_click') {
+                        const v = String((ev.payload || {}).vid || '');
+                        if (!v || seenVids.has(v)) return false;
+                        seenVids.add(v);
+                    }
+                    return true;
+                });
+                if (deduped.length !== parsed.events.length) {
+                    parsed.events = deduped;
+                    try { localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(parsed)); } catch (_) {}
+                }
                 return parsed;
             } catch (_) {
                 return { events: [] };
@@ -103,13 +117,17 @@
             if (!referrer) return 'Прямой переход';
 
             const value = String(referrer).toLowerCase();
+
+            // Self-referral (navigating within the same site) → direct
+            if (value.includes('venera-rielt.vercel.app') || value.includes('venera-rielt.ru')) return 'Прямой переход';
+
             if (value.includes('facebook.com') || value.includes('fb.com')) return 'Facebook';
             if (value.includes('instagram.com')) return 'Instagram';
             if (value.includes('tiktok.com')) return 'TikTok';
             if (value.includes('youtube.com') || value.includes('youtu.be')) return 'YouTube';
             if (value.includes('t.me') || value.includes('telegram')) return 'Telegram';
             if (value.includes('wa.me') || value.includes('whatsapp')) return 'WhatsApp';
-            if (value.includes('viber')) return 'Viber';
+            if (value.includes('viber.com')) return 'Viber';
             if (value.includes('google.')) return 'Google';
             return 'Другие источники';
         }
