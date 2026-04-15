@@ -154,6 +154,12 @@
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
+            // Dedup: only record one visit per browser tab session
+            try {
+                if (sessionStorage.getItem('__venera_visit_recorded')) return;
+                sessionStorage.setItem('__venera_visit_recorded', '1');
+            } catch (_) {}
+
             window.__visitStartTime = Date.now();
             window.addEventListener('beforeunload', function() {
                 if (window.__visitStartTime) {
@@ -188,6 +194,12 @@
                     medium: String(utmMedium).trim()
                 });
                 window.__venera_campaign_click_logged_for_vid = vid;
+
+                // Remove tracking params from URL so refresh doesn't re-record
+                try {
+                    const cleanUrl = window.location.pathname + window.location.hash;
+                    history.replaceState(null, '', cleanUrl);
+                } catch (_) {}
             }
         }
 
