@@ -5068,8 +5068,10 @@ function _renderCalendarDayEntries() {
                     '<i class="fas ' + icon + '" style="color:' + color + ';font-size:0.85rem;"></i>' +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
-                    '<div style="display:flex;flex-direction:column;gap:2px;">' +
+                    '<div class="cal-entry-title-desk font-semibold text-white text-sm truncate" style="margin-bottom:4px;">' + _escMsg(n.title || '') + '</div>' +
+                    '<div class="cal-entry-meta">' +
                         '<span style="font-size:11px;color:' + color + ';font-weight:600;">' + type + '</span>' +
+                        '<span class="cal-entry-title-desk" style="font-size:10px;color:rgba(255,255,255,0.25);">•</span>' +
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
                     '</div>' +
                 '</div>' +
@@ -5080,7 +5082,7 @@ function _renderCalendarDayEntries() {
                         : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
                 '</div>' +
             '</div>' +
-            '<div class="font-semibold text-white text-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' + _escMsg(n.title || '') + '</div>' +
+            '<div class="cal-entry-title-mob font-semibold text-white text-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' + _escMsg(n.title || '') + '</div>' +
             (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
             '<div style="display:flex;gap:8px;margin-top:10px;">' +
                 '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
@@ -5177,7 +5179,8 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
     _renderCalendarRealtorSelects();
     var idEl = document.getElementById('calendar-note-id');
     var dateEl = document.getElementById('calendar-note-date');
-    var timeEl = document.getElementById('calendar-note-time');
+    var hourEl = document.getElementById('calendar-note-hour');
+    var minEl = document.getElementById('calendar-note-minute');
     var realtorEl = document.getElementById('calendar-note-realtor');
     var typeEl = document.getElementById('calendar-note-type');
     var titleEl = document.getElementById('calendar-note-title');
@@ -5190,7 +5193,14 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
 
     idEl.value = note ? note.id : '';
     dateEl.value = note ? (note.date || '') : (dateIso || _calendarState().selectedDate);
-    timeEl.value = note ? (note.time || '') : '';
+    if (note && note.time) {
+        var tp = note.time.split(':');
+        hourEl.value = parseInt(tp[0], 10);
+        minEl.value = parseInt(tp[1] || '0', 10);
+    } else {
+        hourEl.value = '';
+        minEl.value = '';
+    }
     realtorEl.value = note ? (note.realtorId || '') : '';
     typeEl.value = note ? (note.type || 'Встреча') : 'Встреча';
     titleEl.value = note ? (note.title || '') : '';
@@ -5272,7 +5282,14 @@ window.initCalendarAdmin = function() {
             e.preventDefault();
             var id = (document.getElementById('calendar-note-id') || {}).value || '';
             var date = (document.getElementById('calendar-note-date') || {}).value || '';
-            var time = (document.getElementById('calendar-note-time') || {}).value || '';
+            var hv = parseInt((document.getElementById('calendar-note-hour') || {}).value || '', 10);
+            var mv = parseInt((document.getElementById('calendar-note-minute') || {}).value || '', 10);
+            var time = '';
+            if (!isNaN(hv) && (document.getElementById('calendar-note-hour') || {}).value !== '') {
+                hv = Math.min(23, Math.max(0, hv));
+                mv = isNaN(mv) ? 0 : Math.min(59, Math.max(0, mv));
+                time = String(hv).padStart(2, '0') + ':' + String(mv).padStart(2, '0');
+            }
             var realtorId = (document.getElementById('calendar-note-realtor') || {}).value || '';
             var realtorName = '';
             var realtorSel = document.getElementById('calendar-note-realtor');

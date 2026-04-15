@@ -583,10 +583,47 @@
             .cal-mobile-layout { display: flex !important; }
         }
 
-        /* Поле времени: скрываем AM/PM, форсируем 24ч */
-        input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; width: 0; }
-        input[type="time"]::-webkit-datetime-edit { padding: 0; }
-        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(2) hue-rotate(10deg); opacity: 0.8; cursor: pointer; }
+        /* Поле времени: два number-инпута HH / MM */
+        .cal-time-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            padding: 8px 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .cal-time-group:focus-within {
+            border-color: rgba(255,215,0,0.6);
+            box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
+        }
+        .cal-time-group i { color: rgba(255,215,0,0.6); font-size: 0.85rem; }
+        .cal-time-num {
+            width: 3ch;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 0.875rem;
+            font-family: 'Montserrat', sans-serif;
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+            -moz-appearance: textfield;
+        }
+        .cal-time-num::-webkit-outer-spin-button,
+        .cal-time-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .cal-time-num::placeholder { color: rgba(255,255,255,0.3); }
+        .cal-time-sep { color: rgba(255,215,0,0.7); font-size: 1rem; font-weight: 700; line-height: 1; }
+        /* Мобайл: тип+время вертикально, title на отдельной строке */
+        .cal-entry-title-mob { display: none; }
+        .cal-entry-title-desk { display: block; }
+        .cal-entry-meta { display: flex; align-items: center; gap: 8px; }
+        @media (max-width: 560px) {
+            .cal-entry-title-mob { display: block; }
+            .cal-entry-title-desk { display: none; }
+            .cal-entry-meta { flex-direction: column; align-items: flex-start; gap: 2px; }
+        }
 
         /* Стилизованный input/textarea в стиле сайта */
         .cal-input {
@@ -1631,8 +1668,13 @@
                     <input id="calendar-note-date" type="date" required class="cal-input">
                 </div>
                 <div>
-                    <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
-                    <input id="calendar-note-time" type="time" lang="en-GB" class="cal-input">
+                    <label class="block text-gray-400 mb-2">Время</label>
+                    <div class="cal-time-group">
+                        <i class="fas fa-clock"></i>
+                        <input id="calendar-note-hour" type="number" min="0" max="23" placeholder="ЧЧ" class="cal-time-num">
+                        <span class="cal-time-sep">:</span>
+                        <input id="calendar-note-minute" type="number" min="0" max="59" placeholder="ММ" class="cal-time-num">
+                    </div>
                 </div>
                 <div>
                     <label for="calendar-note-realtor" class="block text-gray-400 mb-2">Риелтор</label>
