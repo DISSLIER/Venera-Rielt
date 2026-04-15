@@ -583,8 +583,10 @@
             .cal-mobile-layout { display: flex !important; }
         }
 
-        /* Поле времени cal-time-input (type=text с маской HH:MM) */
-        .cal-time-input { font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+        /* Поле времени: скрываем AM/PM, форсируем 24ч */
+        input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; width: 0; }
+        input[type="time"]::-webkit-datetime-edit { padding: 0; }
+        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(2) hue-rotate(10deg); opacity: 0.8; cursor: pointer; }
 
         /* Стилизованный input/textarea в стиле сайта */
         .cal-input {
@@ -1629,9 +1631,8 @@
                     <input id="calendar-note-date" type="date" required class="cal-input">
                 </div>
                 <div>
-                    <label for="calendar-note-time" class="block text-gray-400 mb-2">Время (ЧЧ:ММ)</label>
-                    <input id="calendar-note-time" type="text" inputmode="numeric" placeholder="23:00" maxlength="5" class="cal-input cal-time-input"
-                        oninput="(function(el){var v=el.value.replace(/[^\d]/g,'');if(v.length>2)v=v.slice(0,2)+':'+v.slice(2,4);el.value=v;})(this)">
+                    <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
+                    <input id="calendar-note-time" type="time" lang="en-GB" class="cal-input">
                 </div>
                 <div>
                     <label for="calendar-note-realtor" class="block text-gray-400 mb-2">Риелтор</label>

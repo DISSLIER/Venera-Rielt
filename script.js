@@ -5068,9 +5068,8 @@ function _renderCalendarDayEntries() {
                     '<i class="fas ' + icon + '" style="color:' + color + ';font-size:0.85rem;"></i>' +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
-                    '<div class="flex items-center gap-2">' +
+                    '<div style="display:flex;flex-direction:column;gap:2px;">' +
                         '<span style="font-size:11px;color:' + color + ';font-weight:600;">' + type + '</span>' +
-                        '<span style="font-size:10px;color:rgba(255,255,255,0.25);">•</span>' +
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
                     '</div>' +
                 '</div>' +
