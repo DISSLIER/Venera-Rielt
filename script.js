@@ -890,7 +890,7 @@
                         <div class="campaign-link-meta"><i class="${srcIcon}" style="margin-right:5px;color:rgba(255,215,0,0.75);"></i>${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
                         <div class="campaign-link-url-wrap">
                             <input class="campaign-link-url" readonly value="${safeUrl}">
-                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать"><i class="fas fa-copy"></i></button>
+                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать"><i class="fas fa-clone"></i></button>
                         </div>
                     </div>
                     <div class="campaign-link-stats">
@@ -908,7 +908,7 @@
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(text).then(() => {
                             this.innerHTML = '<i class="fas fa-check"></i>';
-                            setTimeout(() => { this.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+                            setTimeout(() => { this.innerHTML = '<i class="fas fa-clone"></i>'; }, 1500);
                         });
                     } else {
                         const el = document.createElement('textarea');
