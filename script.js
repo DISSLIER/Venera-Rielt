@@ -4632,9 +4632,11 @@ function _refreshClientCatalogSelects() {
 
     var cityForFilter = (document.getElementById('clients-filter-city') || {}).value || '';
     _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), 'Фильтр: район (все)', true);
-}
 
-function _clientStatusMeta(status) {
+    if (typeof _cselSync === 'function') {
+        ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type'].forEach(function(id) { _cselSync(id); });
+    }
+}(status) {
     if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
     if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
     return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };
@@ -4773,7 +4775,7 @@ window.renderClientsAdmin = function() {
     var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
     if (filteredItems.length === 0) {
-        list.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-gray-500">По текущим фильтрам клиентов нет.</td></tr>';
+        list.innerHTML = '<tr><td colspan="7" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
         return;
     }
 
@@ -4790,21 +4792,21 @@ window.renderClientsAdmin = function() {
                 : null
         ].filter(function(v) { return !!v; }).join('<br>');
 
-        return '<tr class="border-t border-gray-800">' +
-            '<td class="px-3 py-3">' +
-                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" class="inline-flex items-center gap-2 px-2 py-1 rounded bg-black/30 hover:bg-black/50 transition" title="Сменить статус">' +
+        return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
+            '<td style="padding:10px 16px;">' +
+                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:background 0.2s;" title="Сменить статус">' +
                     '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
-                    '<span class="text-gray-300 text-xs">' + meta.label + '</span>' +
+                    '<span style="color:rgba(255,255,255,0.7);font-size:0.75rem;">' + meta.label + '</span>' +
                 '</button>' +
             '</td>' +
-            '<td class="px-3 py-3 text-white">' + _escMsg(item.fullName) + '</td>' +
-            '<td class="px-3 py-3 text-gray-200">' + _escMsg(item.phone) + '</td>' +
-            '<td class="px-3 py-3 text-gray-200">' + (item.email ? _escMsg(item.email) : '<span class="text-gray-500">-</span>') + '</td>' +
-            '<td class="px-3 py-3 text-gray-300">' + (params || '<span class="text-gray-500">-</span>') + '</td>' +
-            '<td class="px-3 py-3 text-gray-300" style="white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
-            '<td class="px-3 py-3">' +
-                '<button onclick="window.editClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition mr-2">Изменить</button>' +
-                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '<td style="padding:10px 16px;color:#fff;font-weight:500;">' + _escMsg(item.fullName) + '</td>' +
+            '<td style="padding:10px 16px;color:rgba(255,255,255,0.8);">' + _escMsg(item.phone) + '</td>' +
+            '<td style="padding:10px 16px;color:rgba(255,255,255,0.65);">' + (item.email ? _escMsg(item.email) : '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
+            '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;line-height:1.6;">' + (params || '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
+            '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
+            '<td style="padding:10px 16px;white-space:nowrap;">' +
+                '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="margin-right:6px;">Изменить</button>' +
+                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del">Удалить</button>' +
             '</td>' +
         '</tr>';
     }).join('');
@@ -4869,6 +4871,7 @@ window.initClientsAdmin = function() {
     if (filterCitySelect) {
         filterCitySelect.addEventListener('change', function() {
             _populateSelect('clients-filter-district', _getDistrictOptions(filterCitySelect.value || ''), 'Фильтр: район (все)', false);
+            if (typeof _cselSync === 'function') _cselSync('clients-filter-district');
             window.renderClientsAdmin();
         });
     }
@@ -4939,6 +4942,9 @@ window.initClientsAdmin = function() {
                 }
             });
             _populateSelect('clients-filter-district', [], 'Фильтр: район (все)', false);
+            if (typeof _cselSync === 'function') {
+                ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type', 'clients-filter-status'].forEach(function(id) { _cselSync(id); });
+            }
             window.renderClientsAdmin();
         });
     }
