@@ -264,6 +264,52 @@
             color: #ffe082;
         }
 
+        /* Campaign source custom dropdown */
+        .campaign-source-custom-wrap {
+            position: relative;
+        }
+        .campaign-source-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .campaign-source-btn:hover { border-color: rgba(255,215,0,0.5); }
+        .campaign-source-drop {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: rgba(10,10,10,0.97);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 10px;
+            overflow: hidden;
+            z-index: 300;
+            backdrop-filter: blur(12px);
+        }
+        .csd-opt {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .csd-opt:hover { background: rgba(255,215,0,0.1); }
+        .csd-opt.active { color: #ffd700; }
+        .csd-opt i { width: 18px; text-align: center; color: rgba(255,215,0,0.8); font-size: 1rem; }
+
         .analytics-period-btn.active {
             border-color: rgba(255, 215, 0, 0.8);
             background: rgba(255, 215, 0, 0.2);
@@ -1471,10 +1517,6 @@
                             <div class="text-xs text-gray-400">Клики по кампаниям</div>
                             <div id="analytics-total-campaign-clicks" class="text-2xl font-bold text-white">0</div>
                         </div>
-                        <div class="analytics-stat-card">
-                            <div class="text-xs text-gray-400">Ср. время на сайте</div>
-                            <div id="analytics-avg-time" class="text-2xl font-bold text-white">&mdash;</div>
-                        </div>
                     </div>
 
                     <div class="analytics-chart-grid">
@@ -1509,6 +1551,10 @@
                             <h4>Клики по кампаниям</h4>
                             <div class="analytics-chart-wrap"><canvas id="analytics-campaign-chart"></canvas></div>
                         </div>
+                        <div class="analytics-chart-card">
+                            <h4>Время на сайте</h4>
+                            <div class="analytics-chart-wrap"><canvas id="analytics-time-chart"></canvas></div>
+                        </div>
                     </div>
 
                     <!-- Campaign / tracking links -->
@@ -1524,16 +1570,23 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Источник (utm_source)</label>
-                                    <select id="campaign-source" required class="campaign-input">
-                                        <option value="">Выберите источник</option>
-                                        <option value="facebook">&#xf09a; Facebook</option>
-                                        <option value="instagram">📷 Instagram</option>
-                                        <option value="tiktok">🎵 TikTok</option>
-                                        <option value="telegram">✈️ Telegram</option>
-                                        <option value="youtube">▶️ YouTube</option>
-                                        <option value="whatsapp">💬 WhatsApp</option>
-                                        <option value="viber">📱 Viber</option>
-                                    </select>
+                                    <select id="campaign-source" required class="campaign-input" style="display:none;"></select>
+                                    <div id="campaign-source-custom" class="campaign-source-custom-wrap">
+                                        <button type="button" id="campaign-source-btn" class="campaign-source-btn">
+                                            <span id="campaign-source-display"><span style="color:rgba(255,255,255,0.35)">Выберите источник</span></span>
+                                            <i class="fas fa-chevron-down" style="font-size:0.7rem;color:rgba(255,215,0,0.6);"></i>
+                                        </button>
+                                        <div id="campaign-source-drop" class="campaign-source-drop" style="display:none;">
+                                            <div class="csd-opt" data-val="" data-icon="">Выберите источник</div>
+                                            <div class="csd-opt" data-val="facebook" data-icon="fab fa-facebook"><i class="fab fa-facebook"></i> Facebook</div>
+                                            <div class="csd-opt" data-val="instagram" data-icon="fab fa-instagram"><i class="fab fa-instagram"></i> Instagram</div>
+                                            <div class="csd-opt" data-val="tiktok" data-icon="fab fa-tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
+                                            <div class="csd-opt" data-val="telegram" data-icon="fab fa-telegram"><i class="fab fa-telegram"></i> Telegram</div>
+                                            <div class="csd-opt" data-val="youtube" data-icon="fab fa-youtube"><i class="fab fa-youtube"></i> YouTube</div>
+                                            <div class="csd-opt" data-val="whatsapp" data-icon="fab fa-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</div>
+                                            <div class="csd-opt" data-val="viber" data-icon="fab fa-viber"><i class="fab fa-viber"></i> Viber</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Тип трафика (utm_medium)</label>

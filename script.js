@@ -389,6 +389,18 @@
                 ? Math.round(timeOnSiteEvents.reduce((s, e) => s + Number((e.payload || {}).duration || 0), 0) / timeOnSiteEvents.length)
                 : 0;
 
+            // Distribution: <30s, 30s-1m, 1-2m, 2-5m, 5-10m, 10+m
+            const timeBuckets = { 'до 30с': 0, '30с–1мин': 0, '1–2 мин': 0, '2–5 мин': 0, '5–10 мин': 0, '10+ мин': 0 };
+            timeOnSiteEvents.forEach(e => {
+                const d = Number((e.payload || {}).duration || 0);
+                if (d < 30) timeBuckets['до 30с']++;
+                else if (d < 60) timeBuckets['30с–1мин']++;
+                else if (d < 120) timeBuckets['1–2 мин']++;
+                else if (d < 300) timeBuckets['2–5 мин']++;
+                else if (d < 600) timeBuckets['5–10 мин']++;
+                else timeBuckets['10+ мин']++;
+            });
+
             const daily = Object.entries(dailyMap)
                 .sort((a, b) => a[0].localeCompare(b[0]))
                 .map(([date, value]) => ({ date, ...value }));
@@ -407,6 +419,7 @@
                 totalViews,
                 totalCampaignClicks,
                 avgTime,
+                timeBuckets,
                 sources: toSortedArray(sourceCounts),
                 districts: toSortedArray(districtCounts),
                 districtByCity,
@@ -455,14 +468,12 @@
             const searchesEl = document.getElementById('analytics-total-searches');
             const viewsEl = document.getElementById('analytics-total-views');
             const campaignClicksEl = document.getElementById('analytics-total-campaign-clicks');
-            const avgTimeEl = document.getElementById('analytics-avg-time');
             const updatedEl = document.getElementById('analytics-updated-at');
 
             if (visitsEl) visitsEl.textContent = fmtNum(summary.totalVisits);
             if (searchesEl) searchesEl.textContent = fmtNum(summary.totalSearches);
             if (viewsEl) viewsEl.textContent = fmtNum(summary.totalViews);
             if (campaignClicksEl) campaignClicksEl.textContent = fmtNum(summary.totalCampaignClicks);
-            if (avgTimeEl) avgTimeEl.textContent = fmtTime(summary.avgTime);
             if (updatedEl) updatedEl.textContent = new Date().toLocaleString('ru-RU');
 
             const chartState = window.__veneraAdminCharts || {};
@@ -594,6 +605,44 @@
                         y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
                     },
                     plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+
+            // Time on site distribution chart
+            const timeBuckets = summary.timeBuckets || {};
+            const timeLabels = Object.keys(timeBuckets);
+            const timeValues = Object.values(timeBuckets);
+            const totalTimeSessions = timeValues.reduce((s, v) => s + v, 0);
+            const timeChartData = totalTimeSessions > 0
+                ? { labels: timeLabels, values: timeValues }
+                : { labels: ['Нет данных'], values: [0] };
+
+            setChart('timeOnSite', 'analytics-time-chart', {
+                type: 'bar',
+                data: {
+                    labels: timeChartData.labels,
+                    datasets: [{
+                        label: 'Сессий',
+                        data: timeChartData.values,
+                        backgroundColor: 'rgba(255,215,0,0.75)',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb' } },
+                        tooltip: {
+                            callbacks: {
+                                afterTitle: () => totalTimeSessions ? `Ср. время: ${fmtTime(summary.avgTime)}` : ''
+                            }
+                        }
+                    }
                 }
             });
 
@@ -890,6 +939,34 @@
             const form = document.getElementById('campaign-create-form');
             if (!form || form.dataset.bound) return;
             form.dataset.bound = '1';
+
+            // Init custom source dropdown
+            const srcBtn = document.getElementById('campaign-source-btn');
+            const srcDrop = document.getElementById('campaign-source-drop');
+            const srcDisplay = document.getElementById('campaign-source-display');
+            const srcHidden = document.getElementById('campaign-source');
+            if (srcBtn && srcDrop) {
+                srcBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = srcDrop.style.display !== 'none';
+                    srcDrop.style.display = isOpen ? 'none' : 'block';
+                });
+                document.addEventListener('click', function() { if(srcDrop) srcDrop.style.display = 'none'; });
+                srcDrop.querySelectorAll('.csd-opt').forEach(function(opt) {
+                    opt.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const val = this.dataset.val;
+                        const icon = this.dataset.icon;
+                        if (srcHidden) srcHidden.value = val;
+                        srcDisplay.innerHTML = val
+                            ? `<i class="${icon}" style="margin-right:6px;color:rgba(255,215,0,0.8);"></i>${this.textContent.trim()}`
+                            : '<span style="color:rgba(255,255,255,0.35)">Выберите источник</span>';
+                        srcDrop.querySelectorAll('.csd-opt').forEach(o => o.classList.toggle('active', o === this));
+                        srcDrop.style.display = 'none';
+                    });
+                });
+            }
+
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const name = document.getElementById('campaign-name').value.trim();
@@ -901,6 +978,9 @@
                 }
                 createCampaignLink(name, source, medium);
                 form.reset();
+                // Reset custom dropdown display
+                if (srcDisplay) srcDisplay.innerHTML = '<span style="color:rgba(255,255,255,0.35)">Выберите источник</span>';
+                if (srcDrop) srcDrop.querySelectorAll('.csd-opt').forEach(o => o.classList.remove('active'));
                 renderCampaignLinksAdmin();
                 const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
                 renderAdminAnalyticsDashboard(currentPeriod);
