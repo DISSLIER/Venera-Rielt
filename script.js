@@ -4648,7 +4648,9 @@ function _refreshClientCatalogSelects() {
     if (typeof _cselSync === 'function') {
         ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type'].forEach(function(id) { _cselSync(id); });
     }
-}(status) {
+}
+
+function _clientStatusMeta(status) {
     if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
     if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
     return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };

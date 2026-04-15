@@ -5,6 +5,18 @@
         "git push": true,
         "git revert": true,
         "git -C \"c:\\Users\\user\\Desktop\\Venera": true,
-        "&": true
+        "&": true,
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node -e \"require\\('fs'\\)\\.readFileSync\\('script\\.js','utf8'\\)\" 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node -e \"try \\{ new Function\\(require\\('fs'\\)\\.readFileSync\\('script\\.js','utf8'\\)\\); console\\.log\\('OK'\\); \\} catch\\(e\\) \\{ console\\.error\\(e\\.message\\); \\}\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
