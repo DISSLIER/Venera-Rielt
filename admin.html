@@ -565,6 +565,10 @@
                 gap: 0.8rem;
             }
 
+            .analytics-top-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
             /* Мобильный календарь: квадратные ячейки в стиле Android */
             .calendar-day-cell {
                 min-height: 0 !important;
@@ -1467,6 +1471,10 @@
                             <div class="text-xs text-gray-400">Клики по кампаниям</div>
                             <div id="analytics-total-campaign-clicks" class="text-2xl font-bold text-white">0</div>
                         </div>
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Ср. время на сайте</div>
+                            <div id="analytics-avg-time" class="text-2xl font-bold text-white">&mdash;</div>
+                        </div>
                     </div>
 
                     <div class="analytics-chart-grid">
@@ -1518,13 +1526,13 @@
                                     <label class="block text-xs text-gray-400 mb-1">Источник (utm_source)</label>
                                     <select id="campaign-source" required class="campaign-input">
                                         <option value="">Выберите источник</option>
-                                        <option value="facebook">Facebook</option>
-                                        <option value="instagram">Instagram</option>
-                                        <option value="tiktok">TikTok</option>
-                                        <option value="telegram">Telegram</option>
-                                        <option value="youtube">YouTube</option>
-                                        <option value="whatsapp">WhatsApp</option>
-                                        <option value="viber">Viber</option>
+                                        <option value="facebook">&#xf09a; Facebook</option>
+                                        <option value="instagram">📷 Instagram</option>
+                                        <option value="tiktok">🎵 TikTok</option>
+                                        <option value="telegram">✈️ Telegram</option>
+                                        <option value="youtube">▶️ YouTube</option>
+                                        <option value="whatsapp">💬 WhatsApp</option>
+                                        <option value="viber">📱 Viber</option>
                                     </select>
                                 </div>
                                 <div>

@@ -154,6 +154,16 @@
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
+            window.__visitStartTime = Date.now();
+            window.addEventListener('beforeunload', function() {
+                if (window.__visitStartTime) {
+                    var dur = Math.round((Date.now() - window.__visitStartTime) / 1000);
+                    if (dur >= 3 && dur < 7200) {
+                        pushAnalyticsEvent('time_on_site', { duration: dur });
+                    }
+                }
+            });
+
             const params = new URLSearchParams(window.location.search);
             const parsedCampaign = parseCampaignTrackingFromUrl(params);
             const utmSource = params.get('utm_source') || '';
@@ -374,6 +384,11 @@
             const totalViews = events.filter(e => e.type === 'property_view').length;
             const totalCampaignClicks = events.filter(e => e.type === 'campaign_click').length;
 
+            const timeOnSiteEvents = events.filter(e => e.type === 'time_on_site');
+            const avgTime = timeOnSiteEvents.length
+                ? Math.round(timeOnSiteEvents.reduce((s, e) => s + Number((e.payload || {}).duration || 0), 0) / timeOnSiteEvents.length)
+                : 0;
+
             const daily = Object.entries(dailyMap)
                 .sort((a, b) => a[0].localeCompare(b[0]))
                 .map(([date, value]) => ({ date, ...value }));
@@ -391,6 +406,7 @@
                 totalSearches,
                 totalViews,
                 totalCampaignClicks,
+                avgTime,
                 sources: toSortedArray(sourceCounts),
                 districts: toSortedArray(districtCounts),
                 districtByCity,
@@ -427,17 +443,26 @@
 
             const summary = buildAnalyticsSummary(days);
             const fmtNum = (num) => Number(num || 0).toLocaleString('ru-RU');
+            const fmtTime = (secs) => {
+                const s = Number(secs) || 0;
+                if (!s) return '—';
+                const m = Math.floor(s / 60);
+                const r = s % 60;
+                return m > 0 ? `${m} мин ${r} с` : `${s} с`;
+            };
 
             const visitsEl = document.getElementById('analytics-total-visits');
             const searchesEl = document.getElementById('analytics-total-searches');
             const viewsEl = document.getElementById('analytics-total-views');
             const campaignClicksEl = document.getElementById('analytics-total-campaign-clicks');
+            const avgTimeEl = document.getElementById('analytics-avg-time');
             const updatedEl = document.getElementById('analytics-updated-at');
 
             if (visitsEl) visitsEl.textContent = fmtNum(summary.totalVisits);
             if (searchesEl) searchesEl.textContent = fmtNum(summary.totalSearches);
             if (viewsEl) viewsEl.textContent = fmtNum(summary.totalViews);
             if (campaignClicksEl) campaignClicksEl.textContent = fmtNum(summary.totalCampaignClicks);
+            if (avgTimeEl) avgTimeEl.textContent = fmtTime(summary.avgTime);
             if (updatedEl) updatedEl.textContent = new Date().toLocaleString('ru-RU');
 
             const chartState = window.__veneraAdminCharts || {};
@@ -799,6 +824,8 @@
                 return;
             }
 
+            const _srcIconClass = (s) => ({ facebook:'fab fa-facebook', instagram:'fab fa-instagram', tiktok:'fab fa-tiktok', telegram:'fab fa-telegram', youtube:'fab fa-youtube', whatsapp:'fab fa-whatsapp', viber:'fab fa-viber' })[String(s||'').toLowerCase()] || 'fas fa-link';
+
             container.innerHTML = links.slice().reverse().map(link => {
                 const clicks = clickCounts[link.id] || 0;
                 const created = new Date(link.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -806,11 +833,12 @@
                 const safeName = String(link.name || '').replace(/</g, '&lt;');
                 const safeSource = String(link.source || '').replace(/</g, '&lt;');
                 const safeMedium = String(link.medium || '').replace(/</g, '&lt;');
+                const srcIcon = _srcIconClass(link.source);
                 return `
                 <div class="campaign-link-row" data-campaign-id="${link.id}">
                     <div class="campaign-link-info">
                         <div class="campaign-link-name">${safeName}</div>
-                        <div class="campaign-link-meta">${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
+                        <div class="campaign-link-meta"><i class="${srcIcon}" style="margin-right:5px;color:rgba(255,215,0,0.75);"></i>${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
                         <div class="campaign-link-url-wrap">
                             <input class="campaign-link-url" readonly value="${safeUrl}">
                             <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать">&#128203;</button>
