@@ -4484,23 +4484,23 @@ window.renderMessagesAdmin = function() {
     if (changed) { _saveMessages(msgs); window._updateMessagesBadge(); }
 
     if (msgs.length === 0) {
-        list.innerHTML = '<div class="text-gray-500 text-sm py-4">Заявок пока нет.</div>';
+        list.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:0.9rem;padding:16px 0;">Заявок пока нет.</div>';
         return;
     }
 
     list.innerHTML = msgs.map(function(m) {
         var date = new Date(m.timestamp);
         var dateStr = date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-        return '<div class="rounded-xl p-4 mb-3" style="background:#1a1a2e;border:1px solid #2a2a3e;" id="msg-card-' + m.id + '">' +
-            '<div class="flex justify-between items-start gap-2 mb-2">' +
-            '<span class="font-semibold text-white text-base">' + _escMsg(m.name) + '</span>' +
-            '<span class="text-gray-500 text-xs shrink-0">' + dateStr + '</span>' +
+        return '<div class="rounded-2xl p-5 mb-4" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);" id="msg-card-' + m.id + '">' +
+            '<div class="flex justify-between items-start gap-2 mb-3">' +
+            '<span style="font-weight:600;color:#fff;font-size:1rem;">' + _escMsg(m.name) + '</span>' +
+            '<span style="color:rgba(255,255,255,0.35);font-size:0.75rem;white-space:nowrap;">' + dateStr + '</span>' +
             '</div>' +
-            (m.phone ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-phone mr-2 text-yellow-400"></i>' + _escMsg(m.phone) + '</div>' : '') +
-            (m.email ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-envelope mr-2 text-yellow-400"></i>' + _escMsg(m.email) + '</div>' : '') +
-            (m.message ? '<div class="text-sm text-gray-400 mt-2 leading-relaxed" style="white-space:pre-wrap;">' + _escMsg(m.message) + '</div>' : '') +
-            '<div class="mt-3 flex gap-2">' +
-            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            (m.phone ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.75);margin-bottom:4px;"><i class="fas fa-phone mr-2" style="color:#ffd700;"></i>' + _escMsg(m.phone) + '</div>' : '') +
+            (m.email ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.75);margin-bottom:4px;"><i class="fas fa-envelope mr-2" style="color:#ffd700;"></i>' + _escMsg(m.email) + '</div>' : '') +
+            (m.message ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.5);margin-top:10px;white-space:pre-wrap;line-height:1.6;border-top:1px solid rgba(255,255,255,0.07);padding-top:10px;">' + _escMsg(m.message) + '</div>' : '') +
+            '<div style="margin-top:14px;">' +
+            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="admin-btn-del">Удалить</button>' +
             '</div>' +
             '</div>';
     }).join('');
