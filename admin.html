@@ -1636,7 +1636,7 @@
         <div class="glass-effect rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="client-modal-title" class="text-2xl font-bold gold-text">Добавить покупателя</h3>
-                <button id="close-client-modal" class="text-white text-2xl">&times;</button>
+                <button id="close-client-modal" class="cal-btn-cancel" style="padding:4px 12px;font-size:1.25rem;line-height:1;">&times;</button>
             </div>
 
             <form id="admin-clients-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1644,19 +1644,19 @@
 
                 <div>
                     <label for="client-fullname" class="block text-gray-400 mb-2">ФИО *</label>
-                    <input id="client-fullname" type="text" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-fullname" type="text" required class="cal-input">
                 </div>
                 <div>
                     <label for="client-phone" class="block text-gray-400 mb-2">Номер телефона *</label>
-                    <input id="client-phone" type="text" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-phone" type="text" required class="cal-input">
                 </div>
                 <div>
                     <label for="client-email" class="block text-gray-400 mb-2">Email</label>
-                    <input id="client-email" type="email" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-email" type="email" class="cal-input">
                 </div>
                 <div>
                     <label for="client-status" class="block text-gray-400 mb-2">Статус</label>
-                    <select id="client-status" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-status" class="cal-select">
                         <option value="pending">⏳ В ожидании</option>
                         <option value="success">✅ Сделка/готов</option>
                         <option value="reject">❌ Отказ</option>
@@ -1665,49 +1665,49 @@
 
                 <div>
                     <label for="client-rooms" class="block text-gray-400 mb-2">Комнаты</label>
-                    <input id="client-rooms" type="text" placeholder="1, 2, 3, студия" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-rooms" type="text" placeholder="1, 2, 3, студия" class="cal-input">
                 </div>
                 <div>
                     <label for="client-city" class="block text-gray-400 mb-2">Город</label>
-                    <select id="client-city" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-city" class="cal-select">
                         <option value="">-- Выберите город --</option>
                     </select>
                 </div>
                 <div>
                     <label for="client-district" class="block text-gray-400 mb-2">Район</label>
-                    <select id="client-district" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-district" class="cal-select">
                         <option value="">-- Выберите район --</option>
                     </select>
                 </div>
                 <div>
                     <label for="client-condition" class="block text-gray-400 mb-2">Состояние</label>
-                    <select id="client-condition" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-condition" class="cal-select">
                         <option value="">-- Выберите состояние --</option>
                     </select>
                 </div>
                 <div>
                     <label for="client-type" class="block text-gray-400 mb-2">Тип</label>
-                    <select id="client-type" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <select id="client-type" class="cal-select">
                         <option value="">-- Выберите тип --</option>
                     </select>
                 </div>
                 <div>
                     <label for="client-price-from" class="block text-gray-400 mb-2">Цена от</label>
-                    <input id="client-price-from" type="number" min="0" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-price-from" type="number" min="0" class="cal-input">
                 </div>
                 <div>
                     <label for="client-price-to" class="block text-gray-400 mb-2">Цена до</label>
-                    <input id="client-price-to" type="number" min="0" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="client-price-to" type="number" min="0" class="cal-input">
                 </div>
 
                 <div class="md:col-span-2">
                     <label for="client-note" class="block text-gray-400 mb-2">Заметка (что искал)</label>
-                    <textarea id="client-note" rows="3" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                    <textarea id="client-note" rows="3" class="cal-input"></textarea>
                 </div>
 
                 <div class="md:col-span-2 flex gap-3 pt-2">
-                    <button type="button" id="cancel-client-modal" class="px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition">Отмена</button>
-                    <button type="submit" id="save-client-btn" class="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Сохранить</button>
+                    <button type="button" id="cancel-client-modal" class="cal-btn-cancel">Отмена</button>
+                    <button type="submit" id="save-client-btn" class="cal-btn-primary">Сохранить</button>
                 </div>
             </form>
         </div>
@@ -1717,7 +1717,7 @@
         <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-2xl font-bold gold-text">Запись в календарь</h3>
-                <button id="calendar-note-close" class="text-white text-2xl">&times;</button>
+                <button id="calendar-note-close" class="cal-btn-cancel" style="padding:4px 12px;font-size:1.25rem;line-height:1;">&times;</button>
             </div>
             <form id="calendar-note-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input id="calendar-note-id" type="hidden">
@@ -2405,6 +2405,11 @@
                 _cselInit('calendar-realtor-filter');
                 _cselInit('calendar-note-realtor');
                 _cselInit('calendar-note-type');
+                _cselInit('client-status');
+                _cselInit('client-city');
+                _cselInit('client-district');
+                _cselInit('client-condition');
+                _cselInit('client-type');
 
                 var orig = window.renderCalendarAdmin;
                 window.renderCalendarAdmin = function() {
