@@ -1730,8 +1730,8 @@
                         <input id="calendar-note-time" type="text" inputmode="numeric" placeholder="00:00" maxlength="5" class="cal-time-field"
                             oninput="(function(el){var s=el.value.replace(/\D/g,'');if(s.length>4)s=s.slice(0,4);if(s.length>=3)s=s.slice(0,2)+':'+s.slice(2);el.value=s;})(this)"
                             onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)">
-                        <button type="button" onclick="window._calTpOpen && window._calTpOpen()" style="background:none;border:none;cursor:pointer;padding:0 12px 0 4px;color:rgba(255,255,255,0.45);font-size:0.9rem;flex-shrink:0;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">
-                            <i class="fas fa-clock"></i>
+                        <button type="button" id="cal-time-icon-btn" onclick="event.stopPropagation();window._calTpOpen && window._calTpOpen()" style="background:none;border:none;cursor:pointer;padding:0 10px 0 4px;font-size:1rem;flex-shrink:0;">
+                            <i class="fas fa-clock" style="filter:invert(1) sepia(1) saturate(3) hue-rotate(10deg);opacity:0.75;"></i>
                         </button>
                         <div id="cal-time-picker">
                             <div class="cal-tp-head"><span>Часы</span><span>Минуты</span></div>
@@ -2388,7 +2388,8 @@
             };
 
             document.addEventListener('click', function(e) {
-                if (picker && !picker.contains(e.target) && e.target !== timeInput) {
+                var btn = document.getElementById('cal-time-icon-btn');
+                if (picker && !picker.contains(e.target) && e.target !== timeInput && e.target !== btn && !(btn && btn.contains(e.target))) {
                     picker.classList.remove('open');
                 }
             });
