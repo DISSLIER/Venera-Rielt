@@ -1488,28 +1488,26 @@
                 const price = card.querySelector('.price-tag').textContent;
                 const type = card.querySelector('.type-tag').textContent;
                 const propertyDiv = document.createElement('div');
-                propertyDiv.className = 'p-4 bg-gray-800 rounded-lg flex flex-col admin-property-card h-full';
+                propertyDiv.className = 'flex flex-col admin-property-card h-full';
+                propertyDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
                 propertyDiv.dataset.id = card.dataset.id;
                 propertyDiv.innerHTML = `
-                    <div class="flex-grow">
-                        <div class="relative mb-3 overflow-hidden rounded-lg">
-                            <img src="${card.dataset.mainPhoto || imageSrc}" alt="${title}" class="w-full h-40 object-cover">
-                            <div class="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                                ${type}
-                            </div>
-                            <div class="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">
-                                ${price}
-                            </div>
+                    <div style="height:4px;background:linear-gradient(90deg,#c8a84b,#ffd700,#c8a84b);"></div>
+                    <div class="flex flex-col flex-grow" style="padding:16px;">
+                        <div class="relative mb-3 overflow-hidden" style="border-radius:12px;">
+                            <img src="${card.dataset.mainPhoto || imageSrc}" alt="${title}" class="w-full h-40 object-cover" style="display:block;">
+                            <div class="absolute top-2 left-2 text-xs px-2 py-1" style="background:rgba(0,0,0,0.7);color:rgba(255,215,0,0.9);border-radius:6px;font-weight:600;">${type}</div>
+                            <div class="absolute top-2 right-2 text-xs font-bold px-2 py-1" style="background:linear-gradient(90deg,#c8a84b,#ffd700);color:#000;border-radius:6px;">${price}</div>
                         </div>
-                        <h4 class="font-semibold text-sm mb-2 line-clamp-2">${title}</h4>
-                        <div class="text-xs text-gray-400 mb-3 line-clamp-1 flex items-center">
-                            <i class="fas fa-map-marker-alt mr-1 flex-shrink-0"></i>
-                            <span class="truncate">${card.dataset.fullAddress || card.dataset.address || ''}</span>
+                        <h4 style="font-size:0.88rem;font-weight:700;color:#fff;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${title}</h4>
+                        <div style="font-size:0.72rem;color:rgba(255,215,0,0.6);display:flex;align-items:center;gap:4px;margin-bottom:auto;">
+                            <i class="fas fa-map-marker-alt" style="flex-shrink:0;"></i>
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${card.dataset.fullAddress || card.dataset.address || ''}</span>
                         </div>
-                    </div>
-                    <div class="flex gap-2 mt-auto pt-3">
-                        <button class="edit-property flex-1 text-blue-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Изменить</button>
-                        <button class="delete-property flex-1 text-red-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Удалить</button>
+                        <div class="flex gap-2 mt-3">
+                            <button class="edit-property admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                            <button class="delete-property admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
+                        </div>
                     </div>
                 `;
                 propertiesList.appendChild(propertyDiv);

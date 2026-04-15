@@ -17,6 +17,10 @@
         "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1 ; if \\(\\$LASTEXITCODE -eq 0\\) \\{ git add -A ; git commit -m \"UI: properties view - glass cards, gold accent bar, cal-btn-primary add button, cal-input search, admin-btn-edit/del\" ; git push \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
