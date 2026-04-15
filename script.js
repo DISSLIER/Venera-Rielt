@@ -291,6 +291,9 @@
                 dailyMap[key] = { visits: 0, searches: 0, views: 0 };
             }
 
+            const campaignClicksBySource = {};
+            const campaignBySource = campaignClicksBySource;
+
             events.forEach(event => {
                 const type = String(event.type || '');
                 const payload = event.payload || {};
@@ -342,6 +345,9 @@
                 if (type === 'campaign_click') {
                     const campaignLabel = String(payload.campaignName || payload.vid || 'Без названия');
                     campaignClickCounts[campaignLabel] = (campaignClickCounts[campaignLabel] || 0) + 1;
+                    const srcLabel = normalizeSourceLabel(String(payload.source || '')) || 'Другие';
+                    if (!campaignBySource) campaignBySource = {};
+                    campaignBySource[srcLabel] = (campaignBySource[srcLabel] || 0) + 1;
                 }
             });
 
@@ -426,6 +432,7 @@
                 agents: agentViewEntries,
                 agentAdded: agentAddedEntries,
                 campaignClicks: toSortedArray(campaignClickCounts),
+                campaignBySource: toSortedArray(campaignBySource),
                 daily,
                 hourly
             };
@@ -583,30 +590,57 @@
                 }
             });
 
-            const campaignTop = summary.campaignClicks.slice(0, 12);
-            const campaignLabels = campaignTop.length ? campaignTop.map(item => item.label) : ['Нет данных'];
-            const campaignValues = campaignTop.length ? campaignTop.map(item => item.value) : [0];
+            const _srcIconCls = (s) => ({
+                facebook:'fab fa-facebook', instagram:'fab fa-instagram', tiktok:'fab fa-tiktok',
+                telegram:'fab fa-telegram', youtube:'fab fa-youtube', whatsapp:'fab fa-whatsapp',
+                viber:'fab fa-viber'
+            })[String(s||'').toLowerCase()] || 'fas fa-link';
+
+            const campaignBySrc = (summary.campaignBySource || []).filter(x => x.value > 0);
+            const bySourceLabels = campaignBySrc.length ? campaignBySrc.map(x => x.label) : ['Нет данных'];
+            const bySourceValues = campaignBySrc.length ? campaignBySrc.map(x => x.value) : [0];
+            const bySourceColors = bySourceLabels.map(l => getSourceColor(l));
 
             setChart('campaign', 'analytics-campaign-chart', {
                 type: 'bar',
                 data: {
-                    labels: campaignLabels,
+                    labels: bySourceLabels,
                     datasets: [{
                         label: 'Кликов',
-                        data: campaignValues,
-                        backgroundColor: '#FFD700'
+                        data: bySourceValues,
+                        backgroundColor: bySourceColors,
+                        borderRadius: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(203,213,225,0.15)' } },
+                        x: { display: false, grid: { display: false } },
                         y: { ticks: { color: '#cbd5e1', stepSize: 1 }, grid: { color: 'rgba(203,213,225,0.15)' } }
                     },
-                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                    plugins: { legend: { display: false } }
                 }
             });
+
+            // Icon strip below campaign chart
+            const campCanvas = document.getElementById('analytics-campaign-chart');
+            if (campCanvas) {
+                const wrap = campCanvas.parentElement;
+                let iconRow = wrap.querySelector('.camp-icon-row');
+                if (!iconRow) {
+                    iconRow = document.createElement('div');
+                    iconRow.className = 'camp-icon-row';
+                    iconRow.style.cssText = 'display:flex;justify-content:space-around;align-items:flex-end;padding:6px 8px 2px;';
+                    wrap.appendChild(iconRow);
+                }
+                iconRow.innerHTML = campaignBySrc.length
+                    ? campaignBySrc.map(x => `<div style="text-align:center;flex:1;min-width:0;">
+                        <i class="${_srcIconCls(x.label)}" style="font-size:1.1rem;color:${getSourceColor(x.label)};display:block;margin-bottom:2px;"></i>
+                        <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);">${x.value}</span>
+                      </div>`).join('')
+                    : '<div style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;width:100%">Нет данных</div>';
+            }
 
             // Time on site distribution chart
             const timeBuckets = summary.timeBuckets || {};
