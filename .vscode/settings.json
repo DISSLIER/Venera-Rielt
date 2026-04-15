@@ -25,6 +25,10 @@
         "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1 ; if \\(\\$LASTEXITCODE -eq 0\\) \\{ git add -A ; git commit -m \"UI: remove gold accent bar from property and agent cards\" ; git push \\}$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; node --check script\\.js 2>&1 ; if \\(\\$LASTEXITCODE -eq 0\\) \\{ git add -A ; git commit -m \"UI: campaign section fully restyled - glass\\+gold form, link rows, copy/delete icons FA\" ; git push \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

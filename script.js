@@ -890,14 +890,14 @@
                         <div class="campaign-link-meta"><i class="${srcIcon}" style="margin-right:5px;color:rgba(255,215,0,0.75);"></i>${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
                         <div class="campaign-link-url-wrap">
                             <input class="campaign-link-url" readonly value="${safeUrl}">
-                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать">&#128203;</button>
+                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать"><i class="fas fa-copy"></i></button>
                         </div>
                     </div>
                     <div class="campaign-link-stats">
                         <div class="campaign-click-count">${clicks}</div>
                         <div class="text-xs text-gray-400">кликов</div>
                     </div>
-                    <button type="button" class="campaign-delete-btn" data-delete-id="${link.id}" title="Удалить">&times;</button>
+                    <button type="button" class="campaign-delete-btn" data-delete-id="${link.id}" title="Удалить"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('');
 
@@ -907,8 +907,8 @@
                     const text = this.dataset.copy;
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(text).then(() => {
-                            this.textContent = '✓';
-                            setTimeout(() => { this.textContent = '📋'; }, 1500);
+                            this.innerHTML = '<i class="fas fa-check"></i>';
+                            setTimeout(() => { this.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
                         });
                     } else {
                         const el = document.createElement('textarea');
