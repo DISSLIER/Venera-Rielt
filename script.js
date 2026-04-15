@@ -154,6 +154,18 @@
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
+            // Always clean tracking params from URL FIRST — before any dedup check —
+            // so that trackCampaignClick() running immediately after won't see stale params.
+            const params = new URLSearchParams(window.location.search);
+            const parsedCampaign = parseCampaignTrackingFromUrl(params);
+            const vid = parsedCampaign.vid;
+            if (vid) {
+                try {
+                    const cleanUrl = window.location.pathname + window.location.hash;
+                    history.replaceState(null, '', cleanUrl);
+                } catch (_) {}
+            }
+
             // Dedup: only record one visit per browser tab session
             try {
                 if (sessionStorage.getItem('__venera_visit_recorded')) return;
@@ -170,10 +182,7 @@
                 }
             });
 
-            const params = new URLSearchParams(window.location.search);
-            const parsedCampaign = parseCampaignTrackingFromUrl(params);
             const utmSource = params.get('utm_source') || '';
-            const vid = parsedCampaign.vid;
             const sourceLabel = parsedCampaign.sourceLabel || detectTrafficSource(document.referrer || '', utmSource);
 
             pushAnalyticsEvent('visit', {
@@ -194,12 +203,6 @@
                     medium: String(utmMedium).trim()
                 });
                 window.__venera_campaign_click_logged_for_vid = vid;
-
-                // Remove tracking params from URL so refresh doesn't re-record
-                try {
-                    const cleanUrl = window.location.pathname + window.location.hash;
-                    history.replaceState(null, '', cleanUrl);
-                } catch (_) {}
             }
         }
 

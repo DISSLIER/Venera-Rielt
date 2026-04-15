@@ -412,6 +412,8 @@
             border-radius: 16px;
             padding: 1.25rem;
             backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 50;
         }
 
         .campaign-form-grid {
@@ -1516,7 +1518,10 @@
                 <section id="admin-analytics-view" class="admin-view hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h3 class="text-2xl font-semibold gold-text">Аналитика сайта</h3>
-                        <div class="text-xs text-gray-400">Обновлено: <span id="analytics-updated-at">-</span></div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <div class="text-xs text-gray-400">Обновлено: <span id="analytics-updated-at">-</span></div>
+                            <button type="button" class="cal-btn-cancel" style="font-size:0.75rem;padding:4px 10px;" onclick="if(confirm('Очистить все данные аналитики?')){localStorage.removeItem('venera_analytics_events_v1');localStorage.removeItem('venera_campaign_links_v1');sessionStorage.removeItem('__venera_visit_recorded');if(window.VENERA_ANALYTICS&&typeof window.VENERA_ANALYTICS.renderAdminAnalyticsDashboard==='function')window.VENERA_ANALYTICS.renderAdminAnalyticsDashboard(window.__veneraCurrentAnalyticsPeriod||7);}">Сбросить данные</button>
+                        </div>
                     </div>
 
                     <div class="analytics-period-bar" role="tablist" aria-label="Период аналитики">
