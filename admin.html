@@ -1597,11 +1597,11 @@
                     <div class="campaign-section mt-6">
                         <h4 class="text-lg font-semibold gold-text mb-3">Трекинговые ссылки для рекламных кампаний</h4>
 
-                        <form id="campaign-create-form" class="campaign-form mb-4">
+                        <form id="campaign-create-form" class="campaign-form mb-4" novalidate>
                             <div class="campaign-form-grid">
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Название кампании</label>
-                                    <input id="campaign-name" type="text" placeholder="Например: Акция июль 2025" required
+                                    <input id="campaign-name" type="text" placeholder="Например: Акция июль 2025"
                                         class="campaign-input">
                                 </div>
                                 <div>
@@ -1626,7 +1626,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Тип трафика (utm_medium)</label>
-                                    <input id="campaign-medium" type="text" placeholder="cpc, post, story, bio" required
+                                    <input id="campaign-medium" type="text" placeholder="cpc, post, story, bio"
                                         class="campaign-input">
                                 </div>
                             </div>
@@ -1661,15 +1661,15 @@
 
                     <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
                         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                            <input id="clients-filter-fio" type="text" placeholder="Фильтр: ФИО" class="cal-input">
-                            <input id="clients-filter-phone" type="text" placeholder="Фильтр: телефон" class="cal-input">
-                            <input id="clients-filter-email" type="text" placeholder="Фильтр: email" class="cal-input">
-                            <select id="clients-filter-city" class="cal-select"><option value="">Фильтр: город (все)</option></select>
-                            <select id="clients-filter-district" class="cal-select"><option value="">Фильтр: район (все)</option></select>
+                            <input id="clients-filter-fio" type="text" placeholder="ФИО" class="cal-input">
+                            <input id="clients-filter-phone" type="text" placeholder="Телефон" class="cal-input">
+                            <input id="clients-filter-email" type="text" placeholder="Email" class="cal-input">
+                            <select id="clients-filter-city" class="cal-select"><option value="">Город (все)</option></select>
+                            <select id="clients-filter-district" class="cal-select"><option value="">Район (все)</option></select>
 
-                            <input id="clients-filter-rooms" type="text" placeholder="Фильтр: комнаты" class="cal-input">
-                            <select id="clients-filter-condition" class="cal-select"><option value="">Фильтр: состояние (все)</option></select>
-                            <select id="clients-filter-type" class="cal-select"><option value="">Фильтр: тип (все)</option></select>
+                            <input id="clients-filter-rooms" type="text" placeholder="Комнаты" class="cal-input">
+                            <select id="clients-filter-condition" class="cal-select"><option value="">Состояние (все)</option></select>
+                            <select id="clients-filter-type" class="cal-select"><option value="">Тип (все)</option></select>
                             <input id="clients-filter-price-from" type="number" min="0" placeholder="Цена от €" class="cal-input">
                             <input id="clients-filter-price-to" type="number" min="0" placeholder="Цена до €" class="cal-input">
                             <select id="clients-filter-status" class="cal-select">
@@ -1679,7 +1679,7 @@
                                 <option value="reject">Только отказ</option>
                             </select>
 
-                            <input id="clients-filter-note" type="text" placeholder="Фильтр: заметка" class="cal-input xl:col-span-3" style="grid-column: span 3;">
+                            <input id="clients-filter-note" type="text" placeholder="Заметка" class="cal-input xl:col-span-3" style="grid-column: span 3;">
                             <button id="clients-filter-reset" type="button" class="cal-btn-cancel xl:col-span-2" style="grid-column: span 2;">Сбросить фильтры</button>
                         </div>
                     </div>

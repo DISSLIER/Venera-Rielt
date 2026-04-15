@@ -650,8 +650,7 @@
                 }
                 iconRow.innerHTML = campaignBySrc.length
                     ? campaignBySrc.map(x => `<div style="text-align:center;flex:1;min-width:0;">
-                        <i class="${_srcIconCls(x.label)}" style="font-size:1.1rem;color:${getSourceColor(x.label)};display:block;margin-bottom:2px;"></i>
-                        <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);">${x.value}</span>
+                        <i class="${_srcIconCls(x.label)}" style="font-size:1.2rem;color:${getSourceColor(x.label)};display:block;"></i>
                       </div>`).join('')
                     : '<div style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;width:100%">Нет данных</div>';
             }
@@ -1017,13 +1016,25 @@
 
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const name = document.getElementById('campaign-name').value.trim();
-                const source = document.getElementById('campaign-source').value.trim();
-                const medium = document.getElementById('campaign-medium').value.trim();
+                const nameEl = document.getElementById('campaign-name');
+                const mediumEl = document.getElementById('campaign-medium');
+                const name = nameEl.value.trim();
+                const source = (srcHidden ? srcHidden.value : '').trim();
+                const medium = mediumEl.value.trim();
+                nameEl.style.borderColor = name ? '' : 'rgba(239,68,68,0.7)';
+                if (mediumEl) mediumEl.style.borderColor = medium ? '' : 'rgba(239,68,68,0.7)';
+                if (srcBtn) srcBtn.style.borderColor = source ? '' : 'rgba(239,68,68,0.7)';
                 if (!name || !source || !medium) {
-                    alert('Заполните название, источник и тип трафика.');
+                    const missing = [];
+                    if (!name) missing.push('название');
+                    if (!source) missing.push('источник');
+                    if (!medium) missing.push('тип трафика');
+                    alert('Заполните: ' + missing.join(', ') + '.');
                     return;
                 }
+                nameEl.style.borderColor = '';
+                if (mediumEl) mediumEl.style.borderColor = '';
+                if (srcBtn) srcBtn.style.borderColor = '';
                 createCampaignLink(name, source, medium);
                 form.reset();
                 // Reset custom dropdown display
