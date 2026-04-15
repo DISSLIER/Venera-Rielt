@@ -5045,24 +5045,43 @@ function _renderCalendarDayEntries() {
     title.textContent = 'Записи на ' + d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
 
     if (!notes.length) {
-        list.innerHTML = '<div class="text-gray-500 text-sm">На эту дату записей нет.</div>';
+        list.innerHTML = '<div class="flex items-center gap-3 py-4 px-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);"><i class="fas fa-calendar-times" style="color:rgba(255,215,0,0.3);font-size:1.2rem;"></i><span class="text-gray-500 text-sm">На эту дату записей нет</span></div>';
         return;
     }
+
+    var typeIcons = { 'Встреча': 'fa-handshake', 'Показ': 'fa-home', 'Звонок': 'fa-phone', 'Другое': 'fa-bookmark' };
+    var typeColors = { 'Встреча': '#a78bfa', 'Показ': '#34d399', 'Звонок': '#60a5fa', 'Другое': '#fbbf24' };
 
     list.innerHTML = notes.map(function(n) {
         var time = n.time ? _escMsg(n.time) : '--:--';
         var realtor = n.realtorName ? _escMsg(n.realtorName) : 'Не назначен';
         var type = _escMsg(n.type || 'Другое');
-        return '<div class="rounded-lg border border-gray-800 bg-black/20 p-3">' +
-            '<div class="flex flex-wrap justify-between gap-2 mb-1">' +
-                '<div class="text-sm text-gray-300"><span class="text-gold-400">' + time + '</span> • ' + type + '</div>' +
-                '<div class="text-xs text-gray-400">' + realtor + '</div>' +
+        var icon = typeIcons[n.type] || 'fa-bookmark';
+        var color = typeColors[n.type] || '#fbbf24';
+        return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
+            'onmouseover="this.style.boxShadow=\'0 4px 24px rgba(255,215,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
+            '<div class="flex items-center gap-3 mb-2">' +
+                '<div style="width:36px;height:36px;border-radius:10px;background:' + color + '22;border:1px solid ' + color + '44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                    '<i class="fas ' + icon + '" style="color:' + color + ';font-size:0.85rem;"></i>' +
+                '</div>' +
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="font-semibold text-white text-sm truncate">' + _escMsg(n.title || '') + '</div>' +
+                    '<div class="flex items-center gap-2 mt-0.5">' +
+                        '<span style="font-size:11px;color:' + color + ';font-weight:600;">' + type + '</span>' +
+                        '<span style="font-size:10px;color:rgba(255,255,255,0.25);">•</span>' +
+                        '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="font-size:10px;color:rgba(255,255,255,0.35);text-align:right;flex-shrink:0;">' + realtor + '</div>' +
             '</div>' +
-            '<div class="text-white font-semibold">' + _escMsg(n.title || '') + '</div>' +
-            (n.note ? '<div class="text-sm text-gray-300 mt-1" style="white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
-            '<div class="mt-2 flex gap-2">' +
-                '<button onclick="window.editCalendarNote(\'' + n.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition">Изменить</button>' +
-                '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
+            '<div style="display:flex;gap:8px;margin-top:10px;">' +
+                '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
+                    'onmouseover="this.style.background=\'rgba(96,165,250,0.18)\'" onmouseout="this.style.background=\'rgba(96,165,250,0.08)\'">' +
+                    '<i class="fas fa-pen mr-1" style="font-size:9px;"></i>Изменить</button>' +
+                '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;transition:background 0.2s;" ' +
+                    'onmouseover="this.style.background=\'rgba(239,68,68,0.18)\'" onmouseout="this.style.background=\'rgba(239,68,68,0.08)\'">' +
+                    '<i class="fas fa-trash mr-1" style="font-size:9px;"></i>Удалить</button>' +
             '</div>' +
         '</div>';
     }).join('');
@@ -5091,25 +5110,33 @@ function _renderCalendarGrid() {
     });
 
     var cells = weekNames.map(function(n) {
-        return '<div class="text-center text-xs font-semibold text-gray-400 py-2">' + n + '</div>';
+        return '<div class="text-center text-xs font-semibold py-2" style="color:rgba(255,215,0,0.5);letter-spacing:0.05em;">' + n + '</div>';
     });
 
     for (var i = 0; i < startWeekday; i++) {
-        cells.push('<div class="rounded-lg border border-gray-900 bg-gray-950/40 min-h-[72px]"></div>');
+        cells.push('<div class="rounded-xl min-h-[68px]" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);"></div>');
     }
 
     for (var day = 1; day <= daysInMonth; day++) {
         var iso = st.year + '-' + _pad2(st.month + 1) + '-' + _pad2(day);
         var isSelected = st.selectedDate === iso;
         var hasNotes = !!notesMap[iso];
+        var count = notesMap[iso] || 0;
+        var isToday = iso === new Date().toISOString().slice(0, 10);
+
+        var cellBg = isSelected
+            ? 'background:linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,215,0,0.08));border:1px solid rgba(255,215,0,0.6);'
+            : isToday
+                ? 'background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.25);'
+                : 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);';
+
         cells.push(
-            '<button type="button" data-calendar-date="' + iso + '" class="calendar-day-cell rounded-lg border min-h-[72px] p-2 text-left transition ' +
-            (isSelected ? 'border-yellow-400 bg-yellow-400/10' : 'border-gray-800 bg-gray-900/30 hover:bg-gray-800/50') + '">' +
-                '<div class="flex items-center justify-between">' +
-                    '<span class="text-sm ' + (isSelected ? 'text-yellow-300 font-bold' : 'text-gray-200') + '">' + day + '</span>' +
-                    (hasNotes ? '<span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">' + notesMap[iso] + '</span>' : '') +
+            '<button type="button" data-calendar-date="' + iso + '" class="calendar-day-cell rounded-xl min-h-[68px] p-2 text-left transition-all duration-200 hover:scale-[1.03]" style="' + cellBg + '">' +
+                '<div class="flex items-start justify-between">' +
+                    '<span class="text-sm font-semibold ' + (isSelected ? '' : isToday ? '' : '') + '" style="color:' + (isSelected ? '#ffd700' : isToday ? '#ffe066' : 'rgba(255,255,255,0.8)') + ';">' + day + '</span>' +
+                    (hasNotes ? '<span class="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold" style="background:#ffd700;color:#000;">' + count + '</span>' : '') +
                 '</div>' +
-                (hasNotes ? '<div class="mt-2 text-[11px] text-yellow-200">Есть записи</div>' : '<div class="mt-2 text-[11px] text-gray-500">-</div>') +
+                (hasNotes ? '<div class="mt-2 flex gap-1 flex-wrap">' + Array(Math.min(count,3)).fill('<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;opacity:0.8;"></span>').join('') + '</div>' : '') +
             '</button>'
         );
     }
