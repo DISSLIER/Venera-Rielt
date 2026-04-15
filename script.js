@@ -1492,7 +1492,6 @@
                 propertyDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
                 propertyDiv.dataset.id = card.dataset.id;
                 propertyDiv.innerHTML = `
-                    <div style="height:4px;background:linear-gradient(90deg,#c8a84b,#ffd700,#c8a84b);"></div>
                     <div class="flex flex-col flex-grow" style="padding:16px;">
                         <div class="relative mb-3 overflow-hidden" style="border-radius:12px;">
                             <img src="${card.dataset.mainPhoto || imageSrc}" alt="${title}" class="w-full h-40 object-cover" style="display:block;">
@@ -1540,7 +1539,6 @@
                 agentDiv.className = 'flex flex-col h-full';
                 agentDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
                 agentDiv.innerHTML = `
-                    <div style="height:4px;background:linear-gradient(90deg,#c8a84b,#ffd700,#c8a84b);"></div>
                     <div class="flex flex-col flex-grow" style="padding:18px;">
                         <div class="flex items-center gap-4 mb-4">
                             <div style="flex-shrink:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,215,0,0.5);padding:2px;background:rgba(0,0,0,0.3);">
