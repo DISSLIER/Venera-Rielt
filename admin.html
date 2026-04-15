@@ -1732,7 +1732,7 @@
                             oninput="(function(el){var s=el.value.replace(/\D/g,'');if(s.length>4)s=s.slice(0,4);if(s.length>=3)s=s.slice(0,2)+':'+s.slice(2);el.value=s;})(this)"
                             onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)">
                         <button type="button" id="cal-time-icon-btn" onclick="event.stopPropagation();window._calTpOpen && window._calTpOpen()" style="position:absolute;right:0;top:0;bottom:0;width:40px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                            <i class="fas fa-clock" style="font-size:14px;filter:brightness(0) invert(1);opacity:0.6;pointer-events:none;"></i>
+                            <i class="fas fa-stopwatch" style="font-size:14px;filter:brightness(0) invert(1);opacity:0.6;pointer-events:none;"></i>
                         </button>
                         <div id="cal-time-picker">
                             <div class="cal-tp-head"><span>Часы</span><span>Минуты</span></div>
