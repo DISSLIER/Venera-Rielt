@@ -1532,35 +1532,46 @@
                 const exactCount = propertyCountsByAgent[agentId] || 0;
                 agent.properties_count = exactCount;
 
+                const socials = [
+                    agent.whatsapp ? `<a href="https://wa.me/${agent.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#ffd700;opacity:0.8;" title="WhatsApp"><i class="fab fa-whatsapp" style="font-size:1.1rem;"></i></a>` : '',
+                    agent.telegram ? `<a href="https://t.me/${agent.telegram.replace(/^@/,'')}" target="_blank" style="color:#ffd700;opacity:0.8;" title="Telegram"><i class="fab fa-telegram" style="font-size:1.1rem;"></i></a>` : '',
+                    agent.viber   ? `<a href="viber://chat?number=${agent.viber.replace(/\D/g,'')}" style="color:#ffd700;opacity:0.8;" title="Viber"><i class="fab fa-viber" style="font-size:1.1rem;"></i></a>` : ''
+                ].filter(Boolean).join('');
+
                 const agentDiv = document.createElement('div');
                 agentDiv.className = 'flex flex-col h-full';
-                agentDiv.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);border-radius:16px;padding:18px;';
+                agentDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
                 agentDiv.innerHTML = `
-                    <div class="flex-grow">
-                        <div class="flex items-center mb-4">
-                            <img src="${agent.photo}" alt="${agent.name}" class="w-14 h-14 rounded-full object-cover mr-3 flex-shrink-0" style="border:2px solid rgba(255,215,0,0.35);">
+                    <div style="height:4px;background:linear-gradient(90deg,#c8a84b,#ffd700,#c8a84b);"></div>
+                    <div class="flex flex-col flex-grow" style="padding:18px;">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div style="flex-shrink:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,215,0,0.5);padding:2px;background:rgba(0,0,0,0.3);">
+                                <img src="${agent.photo}" alt="${agent.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">
+                            </div>
                             <div class="min-w-0 flex-1">
-                                <h4 class="font-semibold text-sm truncate" style="color:#fff;">${agent.name}</h4>
-                                <p class="text-xs truncate" style="color:rgba(255,215,0,0.7);">${agent.position}</p>
+                                <h4 style="font-size:0.95rem;font-weight:700;color:#fff;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${agent.name}</h4>
+                                <p style="font-size:0.75rem;color:rgba(255,215,0,0.75);margin:0 0 6px;">${agent.position}</p>
+                                ${socials ? `<div style="display:flex;gap:10px;align-items:center;">${socials}</div>` : ''}
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-3">
-                            <div class="px-2 py-2 rounded text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.12);">
-                                <div class="text-xs mb-1" style="color:rgba(255,215,0,0.6);"><i class="fas fa-phone mr-1"></i>Телефон</div>
-                                <div class="text-xs break-all text-white">${agent.phone || '-'}</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                            <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:8px 10px;">
+                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;"><i class="fas fa-phone" style="margin-right:4px;"></i>Телефон</div>
+                                <div style="font-size:0.75rem;color:#fff;word-break:break-all;">${agent.phone || '—'}</div>
                             </div>
-                            <div class="px-2 py-2 rounded text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.12);">
-                                <div class="text-xs mb-1" style="color:rgba(255,215,0,0.6);">Объектов</div>
-                                <div class="text-xs font-bold" style="color:#ffd700;">${exactCount}</div>
+                            <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:8px 10px;text-align:center;">
+                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Объектов</div>
+                                <div style="font-size:1.3rem;font-weight:700;color:#ffd700;line-height:1;">${exactCount}</div>
                             </div>
                         </div>
-                        <div class="text-center rounded py-2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.1);">
-                            <span class="text-xs" style="color:rgba(255,255,255,0.65);">${agent.email || 'Email не указан'}</span>
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:7px 10px;margin-bottom:auto;">
+                            <i class="fas fa-envelope" style="color:rgba(255,215,0,0.5);margin-right:6px;font-size:0.7rem;"></i>
+                            <span style="font-size:0.75rem;color:rgba(255,255,255,0.6);">${agent.email || 'Email не указан'}</span>
                         </div>
-                    </div>
-                    <div class="flex gap-2 mt-auto pt-3">
-                        <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
-                        <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
+                        <div class="flex gap-2 mt-3">
+                            <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                            <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
+                        </div>
                     </div>
                 `;
                 agentsList.appendChild(agentDiv);
