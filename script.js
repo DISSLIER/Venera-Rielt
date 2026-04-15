@@ -1533,33 +1533,34 @@
                 agent.properties_count = exactCount;
 
                 const agentDiv = document.createElement('div');
-                agentDiv.className = 'p-4 bg-gray-800 rounded-lg flex flex-col h-full';
+                agentDiv.className = 'flex flex-col h-full';
+                agentDiv.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);border-radius:16px;padding:18px;';
                 agentDiv.innerHTML = `
                     <div class="flex-grow">
                         <div class="flex items-center mb-4">
-                            <img src="${agent.photo}" alt="${agent.name}" class="w-14 h-14 rounded-full object-cover mr-3 flex-shrink-0">
+                            <img src="${agent.photo}" alt="${agent.name}" class="w-14 h-14 rounded-full object-cover mr-3 flex-shrink-0" style="border:2px solid rgba(255,215,0,0.35);">
                             <div class="min-w-0 flex-1">
-                                <h4 class="font-semibold text-sm truncate">${agent.name}</h4>
-                                <p class="text-xs text-gray-400 truncate">${agent.position}</p>
+                                <h4 class="font-semibold text-sm truncate" style="color:#fff;">${agent.name}</h4>
+                                <p class="text-xs truncate" style="color:rgba(255,215,0,0.7);">${agent.position}</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-3">
-                            <div class="bg-gray-700 px-2 py-2 rounded text-center">
-                                <div class="text-xs text-gray-400"><i class="fas fa-phone mr-1"></i>Телефон</div>
-                                <div class="text-xs break-all">${agent.phone || '-'}</div>
+                            <div class="px-2 py-2 rounded text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.12);">
+                                <div class="text-xs mb-1" style="color:rgba(255,215,0,0.6);"><i class="fas fa-phone mr-1"></i>Телефон</div>
+                                <div class="text-xs break-all text-white">${agent.phone || '-'}</div>
                             </div>
-                            <div class="bg-gray-700 px-2 py-2 rounded text-center">
-                                <div class="text-xs text-gray-400">Объектов</div>
-                                <div class="text-xs font-bold">${exactCount}</div>
+                            <div class="px-2 py-2 rounded text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.12);">
+                                <div class="text-xs mb-1" style="color:rgba(255,215,0,0.6);">Объектов</div>
+                                <div class="text-xs font-bold" style="color:#ffd700;">${exactCount}</div>
                             </div>
                         </div>
-                        <div class="text-center bg-gray-700 rounded py-2">
-                            <span class="text-xs text-gray-300">${agent.email || 'Email не указан'}</span>
+                        <div class="text-center rounded py-2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.1);">
+                            <span class="text-xs" style="color:rgba(255,255,255,0.65);">${agent.email || 'Email не указан'}</span>
                         </div>
                     </div>
                     <div class="flex gap-2 mt-auto pt-3">
-                        <button class="edit-agent flex-1 text-blue-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Изменить</button>
-                        <button class="delete-agent flex-1 text-red-400 py-2 text-xs font-medium bg-gray-700 hover:bg-gray-600 rounded transition" data-index="${index}">Удалить</button>
+                        <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                        <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
                     </div>
                 `;
                 agentsList.appendChild(agentDiv);
