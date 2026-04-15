@@ -5179,8 +5179,7 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
     _renderCalendarRealtorSelects();
     var idEl = document.getElementById('calendar-note-id');
     var dateEl = document.getElementById('calendar-note-date');
-    var hourEl = document.getElementById('calendar-note-hour');
-    var minEl = document.getElementById('calendar-note-minute');
+    var timeEl = document.getElementById('calendar-note-time');
     var realtorEl = document.getElementById('calendar-note-realtor');
     var typeEl = document.getElementById('calendar-note-type');
     var titleEl = document.getElementById('calendar-note-title');
@@ -5193,14 +5192,7 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
 
     idEl.value = note ? note.id : '';
     dateEl.value = note ? (note.date || '') : (dateIso || _calendarState().selectedDate);
-    if (note && note.time) {
-        var tp = note.time.split(':');
-        hourEl.value = parseInt(tp[0], 10);
-        minEl.value = parseInt(tp[1] || '0', 10);
-    } else {
-        hourEl.value = '';
-        minEl.value = '';
-    }
+    timeEl.value = note ? (note.time || '') : '';
     realtorEl.value = note ? (note.realtorId || '') : '';
     typeEl.value = note ? (note.type || 'Встреча') : 'Встреча';
     titleEl.value = note ? (note.title || '') : '';
@@ -5282,14 +5274,7 @@ window.initCalendarAdmin = function() {
             e.preventDefault();
             var id = (document.getElementById('calendar-note-id') || {}).value || '';
             var date = (document.getElementById('calendar-note-date') || {}).value || '';
-            var hv = parseInt((document.getElementById('calendar-note-hour') || {}).value || '', 10);
-            var mv = parseInt((document.getElementById('calendar-note-minute') || {}).value || '', 10);
-            var time = '';
-            if (!isNaN(hv) && (document.getElementById('calendar-note-hour') || {}).value !== '') {
-                hv = Math.min(23, Math.max(0, hv));
-                mv = isNaN(mv) ? 0 : Math.min(59, Math.max(0, mv));
-                time = String(hv).padStart(2, '0') + ':' + String(mv).padStart(2, '0');
-            }
+            var time = ((document.getElementById('calendar-note-time') || {}).value || '').trim();
             var realtorId = (document.getElementById('calendar-note-realtor') || {}).value || '';
             var realtorName = '';
             var realtorSel = document.getElementById('calendar-note-realtor');

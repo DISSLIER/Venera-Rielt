@@ -583,38 +583,35 @@
             .cal-mobile-layout { display: flex !important; }
         }
 
-        /* Поле времени: два number-инпута HH / MM */
+        /* Поле времени с иконкой */
         .cal-time-group {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,215,0,0.25);
             border-radius: 12px;
-            padding: 8px 12px;
+            padding: 8px 14px;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .cal-time-group:focus-within {
             border-color: rgba(255,215,0,0.6);
             box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
         }
-        .cal-time-group i { color: rgba(255,215,0,0.6); font-size: 0.85rem; }
-        .cal-time-num {
-            width: 3ch;
+        .cal-time-group i { color: rgba(255,215,0,0.5); font-size: 0.85rem; flex-shrink: 0; }
+        .cal-time-field {
+            flex: 1;
             background: transparent;
             border: none;
             outline: none;
             color: #fff;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             font-family: 'Montserrat', sans-serif;
             font-variant-numeric: tabular-nums;
-            text-align: center;
-            -moz-appearance: textfield;
+            letter-spacing: 0.08em;
+            min-width: 0;
         }
-        .cal-time-num::-webkit-outer-spin-button,
-        .cal-time-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .cal-time-num::placeholder { color: rgba(255,255,255,0.3); }
-        .cal-time-sep { color: rgba(255,215,0,0.7); font-size: 1rem; font-weight: 700; line-height: 1; }
+        .cal-time-field::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 0.08em; }
         /* Мобайл: тип+время вертикально, title на отдельной строке */
         .cal-entry-title-mob { display: none; }
         .cal-entry-title-desk { display: block; }
@@ -1668,12 +1665,12 @@
                     <input id="calendar-note-date" type="date" required class="cal-input">
                 </div>
                 <div>
-                    <label class="block text-gray-400 mb-2">Время</label>
+                    <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
                     <div class="cal-time-group">
                         <i class="fas fa-clock"></i>
-                        <input id="calendar-note-hour" type="number" min="0" max="23" placeholder="ЧЧ" class="cal-time-num">
-                        <span class="cal-time-sep">:</span>
-                        <input id="calendar-note-minute" type="number" min="0" max="59" placeholder="ММ" class="cal-time-num">
+                        <input id="calendar-note-time" type="text" inputmode="numeric" placeholder="00:00" maxlength="5" class="cal-time-field"
+                            oninput="(function(el){var s=el.value.replace(/\D/g,'');if(s.length>4)s=s.slice(0,4);if(s.length>=3)s=s.slice(0,2)+':'+s.slice(2);el.value=s;})(this)"
+                            onblur="(function(el){var m=el.value.match(/^(\d{1,2})(?::(\d{0,2}))?$/);if(!m&&el.value!==''){el.value='';return;}if(m){var h=Math.min(23,parseInt(m[1]));var mn=m[2]!==undefined?Math.min(59,parseInt(m[2]||'0')):0;el.value=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}})(this)">
                     </div>
                 </div>
                 <div>
