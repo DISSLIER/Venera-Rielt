@@ -5075,11 +5075,11 @@ function _renderCalendarDayEntries() {
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
                     '</div>' +
                 '</div>' +
-                '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">' +
+                '<div style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-shrink:0;">' +
+                    '<span style="font-size:12px;color:rgba(255,255,255,0.8);text-align:right;font-weight:500;max-width:80px;line-height:1.3;">' + realtor + '</span>' +
                     (agentPhoto
-                        ? '<img src="' + agentPhoto + '" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,0.3);">'
-                        : '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
-                    '<span style="font-size:11px;color:rgba(255,255,255,0.7);text-align:center;max-width:72px;line-height:1.3;font-weight:500;">' + realtor + '</span>' +
+                        ? '<img src="' + agentPhoto + '" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,0.3);flex-shrink:0;">'
+                        : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
                 '</div>' +
             '</div>' +
             (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
@@ -5122,7 +5122,7 @@ function _renderCalendarGrid() {
     });
 
     for (var i = 0; i < startWeekday; i++) {
-        cells.push('<div class="rounded-xl min-h-[68px]" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);"></div>');
+        cells.push('<div class="cal-empty-cell rounded-xl min-h-[68px]" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);"></div>');
     }
 
     for (var day = 1; day <= daysInMonth; day++) {
@@ -5146,9 +5146,9 @@ function _renderCalendarGrid() {
                     (hasNotes ? '<span class="cal-cell-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;border-radius:999px;background:#ffd700;color:#000;font-size:10px;font-weight:700;">' + count + '</span>' : '') +
                 '</div>' +
                 (hasNotes ? '<div class="cal-desktop-dots" style="margin-top:8px;display:flex;gap:4px;">' + Array(Math.min(count,3)).fill('<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;opacity:0.8;"></span>').join('') + '</div>' : '') +
-                '<div class="cal-mobile-layout" style="display:none;flex-direction:column;align-items:center;gap:3px;">' +
-                    '<span style="font-size:0.875rem;font-weight:600;color:' + dayColor + ';">' + day + '</span>' +
+                '<div class="cal-mobile-layout" style="display:none;flex-direction:column;align-items:center;gap:2px;">' +
                     '<span style="width:4px;height:4px;border-radius:50%;background:#ffd700;' + (hasNotes ? '' : 'visibility:hidden;') + '"></span>' +
+                    '<span style="font-size:0.875rem;font-weight:600;color:' + dayColor + ';">' + day + '</span>' +
                 '</div>' +
             '</button>'
         );

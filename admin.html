@@ -574,6 +574,10 @@
                 align-items: center !important;
                 justify-content: center !important;
             }
+            .cal-empty-cell {
+                min-height: 0 !important;
+                aspect-ratio: 1;
+            }
             .cal-desktop-row { display: none !important; }
             .cal-desktop-dots { display: none !important; }
             .cal-mobile-layout { display: flex !important; }
@@ -581,6 +585,57 @@
 
         /* Скрываем AM/PM из поля времени — принудительный 24ч формат */
         input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; }
+        input[type="time"]::-webkit-datetime-edit-hour-field,
+        input[type="time"]::-webkit-datetime-edit-minute-field { color: #fff; }
+
+        /* Стилизованный input/textarea в стиле сайта */
+        .cal-input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            color: #fff;
+            padding: 10px 14px;
+            font-size: 0.875rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .cal-input:focus {
+            outline: none;
+            border-color: rgba(255,215,0,0.6);
+            box-shadow: 0 0 0 2px rgba(255,215,0,0.1);
+        }
+        .cal-input::placeholder { color: rgba(255,255,255,0.3); }
+        .cal-input::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(3) hue-rotate(10deg); opacity: 0.7; cursor: pointer; }
+        /* Кнопки модала */
+        .cal-btn-cancel {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .cal-btn-cancel:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+        .cal-btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.22), rgba(255,165,0,0.14));
+            border: 1px solid rgba(255,215,0,0.5);
+            color: #ffd700;
+            border-radius: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .cal-btn-primary:hover { background: linear-gradient(135deg,rgba(255,215,0,0.35),rgba(255,165,0,0.25)); box-shadow: 0 4px 16px rgba(255,215,0,0.15); }
 
         /* Стилизованный select в стиле сайта */
         .cal-select {
@@ -1573,11 +1628,11 @@
                 <input id="calendar-note-id" type="hidden">
                 <div>
                     <label for="calendar-note-date" class="block text-gray-400 mb-2">Дата *</label>
-                    <input id="calendar-note-date" type="date" required class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="calendar-note-date" type="date" required class="cal-input">
                 </div>
                 <div>
                     <label for="calendar-note-time" class="block text-gray-400 mb-2">Время</label>
-                    <input id="calendar-note-time" type="time" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="calendar-note-time" type="time" class="cal-input">
                 </div>
                 <div>
                     <label for="calendar-note-realtor" class="block text-gray-400 mb-2">Риелтор</label>
@@ -1596,15 +1651,15 @@
                 </div>
                 <div class="md:col-span-2">
                     <label for="calendar-note-title" class="block text-gray-400 mb-2">Заголовок *</label>
-                    <input id="calendar-note-title" type="text" required placeholder="Например: Показ квартиры на Рышкановке" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                    <input id="calendar-note-title" type="text" required placeholder="Например: Показ квартиры на Рышкановке" class="cal-input">
                 </div>
                 <div class="md:col-span-2">
                     <label for="calendar-note-text" class="block text-gray-400 mb-2">Заметка</label>
-                    <textarea id="calendar-note-text" rows="3" placeholder="Детали встречи/показа" class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                    <textarea id="calendar-note-text" rows="3" placeholder="Детали встречи/показа" class="cal-input"></textarea>
                 </div>
                 <div class="md:col-span-2 flex gap-3 pt-2">
-                    <button type="button" id="calendar-note-cancel" class="px-5 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition">Отмена</button>
-                    <button type="submit" class="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Сохранить запись</button>
+                    <button type="button" id="calendar-note-cancel" class="cal-btn-cancel">Отмена</button>
+                    <button type="submit" class="cal-btn-primary">Сохранить запись</button>
                 </div>
             </form>
         </div>
