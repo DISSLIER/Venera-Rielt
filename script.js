@@ -5063,13 +5063,12 @@ function _renderCalendarDayEntries() {
         var agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
         return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
             'onmouseover="this.style.boxShadow=\'0 4px 24px rgba(255,215,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
-            '<div class="flex items-center gap-3 mb-2">' +
+            '<div class="flex items-center gap-3">' +
                 '<div style="width:36px;height:36px;border-radius:10px;background:' + color + '22;border:1px solid ' + color + '44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
                     '<i class="fas ' + icon + '" style="color:' + color + ';font-size:0.85rem;"></i>' +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
-                    '<div class="font-semibold text-white text-sm truncate">' + _escMsg(n.title || '') + '</div>' +
-                    '<div class="flex items-center gap-2 mt-0.5">' +
+                    '<div class="flex items-center gap-2">' +
                         '<span style="font-size:11px;color:' + color + ';font-weight:600;">' + type + '</span>' +
                         '<span style="font-size:10px;color:rgba(255,255,255,0.25);">•</span>' +
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
@@ -5082,7 +5081,8 @@ function _renderCalendarDayEntries() {
                         : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
                 '</div>' +
             '</div>' +
-            (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
+            '<div class="font-semibold text-white text-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' + _escMsg(n.title || '') + '</div>' +
+            (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
             '<div style="display:flex;gap:8px;margin-top:10px;">' +
                 '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
                     'onmouseover="this.style.background=\'rgba(96,165,250,0.18)\'" onmouseout="this.style.background=\'rgba(96,165,250,0.08)\'">' +
