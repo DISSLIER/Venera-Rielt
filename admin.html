@@ -1632,7 +1632,7 @@
         </div>
     </div>
 
-    <div id="client-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[55] hidden flex items-center justify-center p-4">
+    <div id="client-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[201] hidden flex items-center justify-center p-4">
         <div class="glass-effect rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="client-modal-title" class="text-2xl font-bold gold-text">Добавить покупателя</h3>
@@ -1775,53 +1775,53 @@
     </div>
 
     <!-- Property Edit Modal -->
-    <div id="property-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center">
+    <div id="property-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[201] hidden flex items-center justify-center">
         <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-2xl font-bold gold-text" id="property-modal-title">Редактировать объект</h3>
-                <button id="close-property-modal" class="text-white text-2xl">&times;</button>
+                <button id="close-property-modal" class="cal-btn-cancel" style="padding:4px 12px;font-size:1.25rem;line-height:1;">&times;</button>
             </div>
             <form id="property-edit-form">
                 <div class="mb-4">
                     <label class="block text-gray-400 mb-2">ID</label>
-                    <input type="text" id="property-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" readonly>
+                    <input type="text" id="property-id" class="cal-input w-full" readonly>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-gray-400 mb-2">Название</label>
-                        <input type="text" id="property-title" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="text" id="property-title" class="cal-input w-full" required>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Главное фото (URL)</label>
-                        <input type="text" id="property-main-photo" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="text" id="property-main-photo" class="cal-input w-full" required>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Дополнительные фото (URL, через запятую)</label>
-                        <textarea id="property-photos" rows="3" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="https://example.com/photo1.jpg, https://example.com/photo2.jpg"></textarea>
+                        <textarea id="property-photos" rows="3" class="cal-input w-full" placeholder="https://example.com/photo1.jpg, https://example.com/photo2.jpg"></textarea>
                         <p class="text-gray-500 text-sm mt-1">mainPhoto это главное фото. Сюда вставляйте остальные фото через запятую, а в properties.config.js они будут записаны как массив photos.</p>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Город</label>
-                        <select id="property-city" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <select id="property-city" class="cal-select" required>
                             <option value="">-- Выберите город --</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Район</label>
-                        <select id="property-district" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <select id="property-district" class="cal-select" required>
                             <option value="">-- Выберите район --</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Сделка</label>
-                        <select id="property-listing-mode" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <select id="property-listing-mode" class="cal-select" required>
                             <option value="sale">Продажа</option>
                             <option value="rent">Аренда</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Тип</label>
-                        <select id="property-type" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <select id="property-type" class="cal-select" required>
                             <option value="premium">Премиум</option>
                             <option value="secondary">Вторичка</option>
                             <option value="newbuilding">Новострой</option>
@@ -1836,31 +1836,31 @@
 
                     <div>
                         <label class="block text-gray-400 mb-2">Цена (€)</label>
-                        <input type="number" id="property-price" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="number" id="property-price" class="cal-input w-full" required>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Площадь (м²)</label>
-                        <input type="number" id="property-area" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="number" id="property-area" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Комнаты</label>
-                        <input type="number" id="property-rooms" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="number" id="property-rooms" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Этаж</label>
-                        <input type="text" id="property-floors" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: 5/12 или 3">
+                        <input type="text" id="property-floors" class="cal-input w-full" placeholder="Например: 5/12 или 3">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Участок (соток)</label>
-                        <input type="number" id="property-land" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="number" id="property-land" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Парковочные места</label>
-                        <input type="number" id="property-parking" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="number" id="property-parking" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Состояние</label>
-                        <select id="property-condition" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <select id="property-condition" class="cal-select">
                             <option value="">Не указано</option>
                             <option value="Евроремонт">Евроремонт</option>
                             <option value="Хорошее">Хорошее</option>
@@ -1873,27 +1873,27 @@
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Санузел</label>
-                        <input type="text" id="property-bathroom" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: Раздельный, 2 санузла">
+                        <input type="text" id="property-bathroom" class="cal-input w-full" placeholder="Например: Раздельный, 2 санузла">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Балкон</label>
-                        <input type="text" id="property-balcony" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Например: 2 балкона, лоджия">
+                        <input type="text" id="property-balcony" class="cal-input w-full" placeholder="Например: 2 балкона, лоджия">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Полный адрес</label>
-                        <input type="text" id="property-full-address" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="text" id="property-full-address" class="cal-input w-full" required>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Описание</label>
-                        <textarea id="property-description" rows="3" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none"></textarea>
+                        <textarea id="property-description" rows="3" class="cal-input w-full"></textarea>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Координаты (широта, долгота)</label>
-                        <input type="text" id="property-coords" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="text" id="property-coords" class="cal-input w-full">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Риелтор</label>
-                        <select id="property-rieltor-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <select id="property-rieltor-id" class="cal-select" required>
                             <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
@@ -1901,77 +1901,69 @@
                 <div id="property-edit-status" class="p-3 rounded-lg mb-4 hidden" role="alert"></div>
                 
                 <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancel-property-edit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                        Отмена
-                    </button>
-                    <button type="submit" id="property-save-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Сохранить
-                    </button>
+                    <button type="button" id="cancel-property-edit" class="cal-btn-cancel">Отмена</button>
+                    <button type="submit" id="property-save-btn" class="cal-btn-primary">Сохранить</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Agent Edit Modal: форма редактирования и генерации конфига риелтора -->
-    <div id="agent-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center">
+    <div id="agent-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[201] hidden flex items-center justify-center">
         <div class="glass-effect rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-2xl font-bold gold-text" id="agent-modal-title">Редактировать риелтора</h3>
-                <button id="close-agent-modal" class="text-white text-2xl">&times;</button>
+                <button id="close-agent-modal" class="cal-btn-cancel" style="padding:4px 12px;font-size:1.25rem;line-height:1;">&times;</button>
             </div>
             <form id="agent-edit-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">ID риелтора</label>
-                        <input type="number" id="agent-rieltor-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="number" id="agent-rieltor-id" class="cal-input w-full" required>
                         <p class="text-gray-500 text-sm mt-1">Этот ID будет использоваться для связи объектов недвижимости с риелтором</p>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Имя</label>
-                        <input type="text" id="agent-name" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="text" id="agent-name" class="cal-input w-full" required>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Должность</label>
-                        <input type="text" id="agent-position" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <input type="text" id="agent-position" class="cal-input w-full" required>
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Телефон</label>
-                        <input type="text" id="agent-phone" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="text" id="agent-phone" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Email</label>
-                        <input type="email" id="agent-email" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="email" id="agent-email" class="cal-input w-full">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">WhatsApp</label>
-                        <input type="text" id="agent-whatsapp" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Номер с кодом страны">
+                        <input type="text" id="agent-whatsapp" class="cal-input w-full" placeholder="Номер с кодом страны">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Telegram</label>
-                        <input type="text" id="agent-telegram" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Никнейм или номер">
+                        <input type="text" id="agent-telegram" class="cal-input w-full" placeholder="Никнейм или номер">
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-2">Viber</label>
-                        <input type="text" id="agent-viber" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Номер с кодом страны">
+                        <input type="text" id="agent-viber" class="cal-input w-full" placeholder="Номер с кодом страны">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Фото (URL)</label>
-                        <input type="text" id="agent-photo" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none">
+                        <input type="text" id="agent-photo" class="cal-input w-full">
                     </div>
                     <div class="md:col-span-2 hidden">
                         <label class="block text-gray-400 mb-2">ID</label>
-                        <input type="text" id="agent-id" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" readonly>
+                        <input type="text" id="agent-id" class="cal-input w-full" readonly>
                     </div>
                 </div>
                 <div id="agent-edit-status" class="p-3 rounded-lg mb-4 hidden" role="alert"></div>
 
                 <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancel-agent-edit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                        Отмена
-                    </button>
-                    <button type="submit" id="agent-save-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                        Сохранить
-                    </button>
+                    <button type="button" id="cancel-agent-edit" class="cal-btn-cancel">Отмена</button>
+                    <button type="submit" id="agent-save-btn" class="cal-btn-primary">Сохранить</button>
                 </div>
             </form>
         </div>
@@ -2410,6 +2402,12 @@
                 _cselInit('client-district');
                 _cselInit('client-condition');
                 _cselInit('client-type');
+                _cselInit('property-city');
+                _cselInit('property-district');
+                _cselInit('property-listing-mode');
+                _cselInit('property-type');
+                _cselInit('property-condition');
+                _cselInit('property-rieltor-id');
 
                 var orig = window.renderCalendarAdmin;
                 window.renderCalendarAdmin = function() {

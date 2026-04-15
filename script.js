@@ -1382,6 +1382,7 @@
                 citySelect.value = currentValue;
             }
 
+            if (typeof _cselSync === 'function') _cselSync('property-city');
             citySelect.addEventListener('change', populateDistrictSelect);
         }
 
@@ -1406,6 +1407,7 @@
             if (currentDistrict && Array.from(districtSelect.options).some(option => option.value === currentDistrict)) {
                 districtSelect.value = currentDistrict;
             }
+            if (typeof _cselSync === 'function') _cselSync('property-district');
         }
 
         function openAdminPanelWithAuth() {
@@ -1639,6 +1641,11 @@
             if (snippetField) {
                 snippetField.value = '';
             }
+
+            if (typeof _cselSync === 'function') {
+                ['property-listing-mode', 'property-type', 'property-condition', 'property-rieltor-id',
+                 'property-city', 'property-district'].forEach(id => _cselSync(id));
+            }
             
             modal.classList.remove('hidden');
         }
@@ -1659,6 +1666,7 @@
                 option.textContent = `${agent.rieltor_id}: ${agent.name} (${agent.position})`;
                 realtorSelect.appendChild(option);
             });
+            if (typeof _cselSync === 'function') _cselSync('property-rieltor-id');
         }
         
         function closePropertyEditModal() {
