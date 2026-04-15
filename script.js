@@ -4491,16 +4491,16 @@ window.renderMessagesAdmin = function() {
     list.innerHTML = msgs.map(function(m) {
         var date = new Date(m.timestamp);
         var dateStr = date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-        return '<div class="rounded-xl p-4 mb-3" style="background:#1a1a2e;border:1px solid #2a2a3e;" id="msg-card-' + m.id + '">' +
+        return '<div class="rounded-xl p-4 mb-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(8px);" id="msg-card-' + m.id + '">' +
             '<div class="flex justify-between items-start gap-2 mb-2">' +
-            '<span class="font-semibold text-white text-base">' + _escMsg(m.name) + '</span>' +
-            '<span class="text-gray-500 text-xs shrink-0">' + dateStr + '</span>' +
+            '<span style="font-weight:600;color:#fff;font-size:1rem;">' + _escMsg(m.name) + '</span>' +
+            '<span style="color:rgba(255,255,255,0.4);font-size:0.75rem;white-space:nowrap;">' + dateStr + '</span>' +
             '</div>' +
-            (m.phone ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-phone mr-2 text-yellow-400"></i>' + _escMsg(m.phone) + '</div>' : '') +
-            (m.email ? '<div class="text-sm text-gray-300 mb-1"><i class="fas fa-envelope mr-2 text-yellow-400"></i>' + _escMsg(m.email) + '</div>' : '') +
-            (m.message ? '<div class="text-sm text-gray-400 mt-2 leading-relaxed" style="white-space:pre-wrap;">' + _escMsg(m.message) + '</div>' : '') +
+            (m.phone ? '<div class="text-sm mb-1" style="color:rgba(255,255,255,0.8);"><i class="fas fa-phone mr-2" style="color:#ffd700;"></i>' + _escMsg(m.phone) + '</div>' : '') +
+            (m.email ? '<div class="text-sm mb-1" style="color:rgba(255,255,255,0.8);"><i class="fas fa-envelope mr-2" style="color:#ffd700;"></i>' + _escMsg(m.email) + '</div>' : '') +
+            (m.message ? '<div class="text-sm mt-2" style="color:rgba(255,255,255,0.55);white-space:pre-wrap;line-height:1.6;">' + _escMsg(m.message) + '</div>' : '') +
             '<div class="mt-3 flex gap-2">' +
-            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="admin-btn-del">Удалить</button>' +
             '</div>' +
             '</div>';
     }).join('');
@@ -4632,9 +4632,11 @@ function _refreshClientCatalogSelects() {
 
     var cityForFilter = (document.getElementById('clients-filter-city') || {}).value || '';
     _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), 'Фильтр: район (все)', true);
-}
 
-function _clientStatusMeta(status) {
+    if (typeof _cselSync === 'function') {
+        ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type'].forEach(function(id) { _cselSync(id); });
+    }
+}(status) {
     if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
     if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
     return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };
@@ -4790,21 +4792,21 @@ window.renderClientsAdmin = function() {
                 : null
         ].filter(function(v) { return !!v; }).join('<br>');
 
-        return '<tr class="border-t border-gray-800">' +
-            '<td class="px-3 py-3">' +
-                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" class="inline-flex items-center gap-2 px-2 py-1 rounded bg-black/30 hover:bg-black/50 transition" title="Сменить статус">' +
+        return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,255,255,0.07);">' +
+            '<td style="padding:10px 12px;">' +
+                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:background 0.2s;" title="Сменить статус">' +
                     '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
-                    '<span class="text-gray-300 text-xs">' + meta.label + '</span>' +
+                    '<span style="color:rgba(255,255,255,0.7);font-size:0.75rem;">' + meta.label + '</span>' +
                 '</button>' +
             '</td>' +
-            '<td class="px-3 py-3 text-white">' + _escMsg(item.fullName) + '</td>' +
-            '<td class="px-3 py-3 text-gray-200">' + _escMsg(item.phone) + '</td>' +
-            '<td class="px-3 py-3 text-gray-200">' + (item.email ? _escMsg(item.email) : '<span class="text-gray-500">-</span>') + '</td>' +
-            '<td class="px-3 py-3 text-gray-300">' + (params || '<span class="text-gray-500">-</span>') + '</td>' +
-            '<td class="px-3 py-3 text-gray-300" style="white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
-            '<td class="px-3 py-3">' +
-                '<button onclick="window.editClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition mr-2">Изменить</button>' +
-                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="px-3 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800 transition">Удалить</button>' +
+            '<td style="padding:10px 12px;color:#fff;">' + _escMsg(item.fullName) + '</td>' +
+            '<td style="padding:10px 12px;color:rgba(255,255,255,0.8);">' + _escMsg(item.phone) + '</td>' +
+            '<td style="padding:10px 12px;color:rgba(255,255,255,0.7);">' + (item.email ? _escMsg(item.email) : '<span style="color:rgba(255,255,255,0.25);">-</span>') + '</td>' +
+            '<td style="padding:10px 12px;color:rgba(255,255,255,0.65);font-size:0.8rem;line-height:1.5;">' + (params || '<span style="color:rgba(255,255,255,0.25);">-</span>') + '</td>' +
+            '<td style="padding:10px 12px;color:rgba(255,255,255,0.65);white-space:pre-wrap;font-size:0.8rem;">' + _escMsg(item.note) + '</td>' +
+            '<td style="padding:10px 12px;">' +
+                '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit mr-2">Изменить</button>' +
+                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del">Удалить</button>' +
             '</td>' +
         '</tr>';
     }).join('');
@@ -4869,6 +4871,7 @@ window.initClientsAdmin = function() {
     if (filterCitySelect) {
         filterCitySelect.addEventListener('change', function() {
             _populateSelect('clients-filter-district', _getDistrictOptions(filterCitySelect.value || ''), 'Фильтр: район (все)', false);
+            if (typeof _cselSync === 'function') _cselSync('clients-filter-district');
             window.renderClientsAdmin();
         });
     }
@@ -4939,6 +4942,9 @@ window.initClientsAdmin = function() {
                 }
             });
             _populateSelect('clients-filter-district', [], 'Фильтр: район (все)', false);
+            if (typeof _cselSync === 'function') {
+                ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type', 'clients-filter-status'].forEach(function(id) { _cselSync(id); });
+            }
             window.renderClientsAdmin();
         });
     }

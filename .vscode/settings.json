@@ -5,6 +5,10 @@
         "git push": true,
         "git revert": true,
         "git -C \"c:\\Users\\user\\Desktop\\Venera": true,
-        "&": true
+        "&": true,
+        "ForEach-Object": true,
+        "Join-String": true,
+        "Set-Content": true,
+        "%": true
     }
 }
