@@ -137,6 +137,8 @@ function replacePropertiesInDom(propertiesPayload) {
         initMainMap();
         if (typeof filterMapMarkers === 'function') filterMapMarkers();
     }
+
+    if (typeof applyPropertyStatuses === 'function') applyPropertyStatuses();
 }
 
 function replaceAgentsInState(agentsPayload) {
