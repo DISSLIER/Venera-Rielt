@@ -363,9 +363,15 @@
         }
 
         /* Property status overlays */
+        .property-card > div:first-child {
+            position: relative !important;
+        }
         .property-status-overlay {
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             z-index: 2;
             display: flex;
             align-items: center;
@@ -375,12 +381,12 @@
             transition: opacity 0.3s;
         }
         .property-status-overlay[data-status="sold"] {
-            background: rgba(185, 28, 28, 0.52);
-            opacity: 1;
+            background: rgba(185, 28, 28, 0.55);
+            opacity: 1 !important;
         }
         .property-status-overlay[data-status="reserved"] {
-            background: rgba(202, 138, 4, 0.52);
-            opacity: 1;
+            background: rgba(202, 138, 4, 0.55);
+            opacity: 1 !important;
         }
         .property-status-label {
             font-size: 1.25rem;

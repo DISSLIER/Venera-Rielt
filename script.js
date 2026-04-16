@@ -876,6 +876,27 @@
             });
         }
 
+        // Global toggle helpers for status buttons (used via onclick in HTML)
+        window._propToggleStatus = function(status) {
+            var inp = document.getElementById('property-status-val');
+            if (!inp) return;
+            var current = inp.value;
+            var next = (current === status) ? '' : status;
+            inp.value = next;
+            var btnSold = document.getElementById('prop-btn-sold');
+            var btnRes = document.getElementById('prop-btn-reserved');
+            if (btnSold) btnSold.classList.toggle('active-sold', next === 'sold');
+            if (btnRes) btnRes.classList.toggle('active-reserved', next === 'reserved');
+        };
+        window._propToggleHidden = function() {
+            var inp = document.getElementById('property-hidden-val');
+            if (!inp) return;
+            var next = inp.value === '1' ? '' : '1';
+            inp.value = next;
+            var btn = document.getElementById('prop-btn-hidden');
+            if (btn) btn.classList.toggle('active-hidden', next === '1');
+        };
+
         function getCampaignStore() {
             try {
                 const raw = localStorage.getItem(CAMPAIGN_STORAGE_KEY);
@@ -1348,7 +1369,7 @@
                      data-year="${property.year || ''}" data-land="${property.land || ''}" data-parking="${property.parking || ''}" data-address="${shortAddress}"
                      data-full-address="${fullAddress}" data-description="${property.description || ''}" data-condition="${property.condition || 'Евроремонт'}"
                      data-bathroom="${property.bathroom || 'Раздельный'}" data-balcony="${property.balcony || '1 балкон'}" data-main-photo="${image}" data-photos="${photosSerialized}">
-                    <div class="relative">
+                    <div class="relative" style="position:relative">
                         <img src="${image}" alt="${title}" class="w-full h-64 object-cover">
                         <div class="property-status-overlay" data-status=""><span class="property-status-label"></span></div>
                         <div class="property-badges">
@@ -3740,6 +3761,9 @@
                 document.getElementById('map-overlay').classList.remove('active');
                 enableBodyScroll();
             });
+
+            // Apply property statuses after all DOM setup
+            applyPropertyStatuses();
         });
 
         // Property search functionality
