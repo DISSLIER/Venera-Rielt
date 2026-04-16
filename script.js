@@ -813,7 +813,7 @@
                             tension: 0.3
                         },
                         {
-                            label: 'Просмотры объектов',
+                            label: 'Просмотры',
                             data: activityRows.map(item => item.views),
                             borderColor: '#F59E0B',
                             backgroundColor: 'rgba(245,158,11,0.18)',
