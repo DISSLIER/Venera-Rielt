@@ -310,6 +310,25 @@
         .csd-opt.active { color: #ffd700; }
         .csd-opt i { width: 18px; text-align: center; color: rgba(255,215,0,0.8); font-size: 1rem; }
 
+        /* Property status toggle buttons */
+        .prop-status-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255,215,0,0.18);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: Montserrat, sans-serif;
+        }
+        .prop-status-btn:hover { border-color: rgba(255,215,0,0.4); color: rgba(255,255,255,0.8); }
+        .prop-status-btn.active-sold { border-color: rgba(239,68,68,0.8); background: rgba(239,68,68,0.18); color: #f87171; }
+        .prop-status-btn.active-reserved { border-color: rgba(251,191,36,0.8); background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .prop-status-btn.active-hidden { border-color: rgba(148,163,184,0.7); background: rgba(148,163,184,0.12); color: #94a3b8; }
+
         .analytics-period-btn.active {
             border-color: rgba(255, 215, 0, 0.8);
             background: rgba(255, 215, 0, 0.2);
@@ -2019,7 +2038,22 @@
                     </div>
                 </div>
                 <div id="property-edit-status" class="p-3 rounded-lg mb-4 hidden" role="alert"></div>
-                
+
+                <!-- Status controls -->
+                <input type="hidden" id="property-status-val" value="">
+                <input type="hidden" id="property-hidden-val" value="">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Статус объекта</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="prop-btn-sold" class="prop-status-btn"
+                            onclick="_propToggleStatus('sold')"><i class="fas fa-times-circle mr-1"></i> Продан</button>
+                        <button type="button" id="prop-btn-reserved" class="prop-status-btn"
+                            onclick="_propToggleStatus('reserved')"><i class="fas fa-clock mr-1"></i> Забронировано</button>
+                        <button type="button" id="prop-btn-hidden" class="prop-status-btn"
+                            onclick="_propToggleHidden()"><i class="fas fa-eye-slash mr-1"></i> Скрыть</button>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-4">
                     <button type="button" id="cancel-property-edit" class="cal-btn-cancel">Отмена</button>
                     <button type="submit" id="property-save-btn" class="cal-btn-primary">Сохранить</button>
@@ -2346,6 +2380,26 @@
 
         <script>
         /* ======= Custom Select ======= */
+        function _propToggleStatus(status) {
+            var inp = document.getElementById('property-status-val');
+            if (!inp) return;
+            var current = inp.value;
+            var next = (current === status) ? '' : status;
+            inp.value = next;
+            var btnSold = document.getElementById('prop-btn-sold');
+            var btnRes = document.getElementById('prop-btn-reserved');
+            if (btnSold) btnSold.classList.toggle('active-sold', next === 'sold');
+            if (btnRes) btnRes.classList.toggle('active-reserved', next === 'reserved');
+        }
+        function _propToggleHidden() {
+            var inp = document.getElementById('property-hidden-val');
+            if (!inp) return;
+            var next = inp.value === '1' ? '' : '1';
+            inp.value = next;
+            var btn = document.getElementById('prop-btn-hidden');
+            if (btn) btn.classList.toggle('active-hidden', next === '1');
+        }
+
         function _cselInit(selId) {
             var sel = document.getElementById(selId);
             if (!sel || sel._cselDone) return;

@@ -838,6 +838,43 @@
         // ─── Campaign / tracking links ──────────────────────────────────────────────
         const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
         const CAMPAIGN_LANDING_URL = 'https://venera-rielt.vercel.app/';
+        const PROPERTY_STATUS_KEY = 'venera_property_status_v1';
+
+        function getPropertyStatusStore() {
+            try {
+                const raw = localStorage.getItem(PROPERTY_STATUS_KEY);
+                const data = raw ? JSON.parse(raw) : null;
+                if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+            } catch (_) {}
+            return {};
+        }
+
+        function savePropertyStatusStore(store) {
+            try { localStorage.setItem(PROPERTY_STATUS_KEY, JSON.stringify(store)); } catch (_) {}
+        }
+
+        function applyPropertyStatuses() {
+            const store = getPropertyStatusStore();
+            document.querySelectorAll('.property-card').forEach(card => {
+                const id = card.dataset.id;
+                if (!id) return;
+                const entry = store[id] || {};
+                const status = entry.status || '';
+                const hidden = !!entry.hidden;
+                card.dataset.propStatus = status;
+                card.dataset.propHidden = hidden ? '1' : '';
+                const overlay = card.querySelector('.property-status-overlay');
+                if (overlay) {
+                    overlay.dataset.status = status;
+                    const label = overlay.querySelector('.property-status-label');
+                    if (label) {
+                        if (status === 'sold') label.textContent = 'ПРОДАН';
+                        else if (status === 'reserved') label.textContent = 'ЗАБРОНИРОВАНО';
+                        else label.textContent = '';
+                    }
+                }
+            });
+        }
 
         function getCampaignStore() {
             try {
@@ -1313,6 +1350,7 @@
                      data-bathroom="${property.bathroom || 'Раздельный'}" data-balcony="${property.balcony || '1 балкон'}" data-main-photo="${image}" data-photos="${photosSerialized}">
                     <div class="relative">
                         <img src="${image}" alt="${title}" class="w-full h-64 object-cover">
+                        <div class="property-status-overlay" data-status=""><span class="property-status-label"></span></div>
                         <div class="property-badges">
                             <div class="type-tag ${typeMeta.tagClass}">${typeMeta.label}</div>
                             <div class="${listingBadgeClass}">Аренда</div>
@@ -1418,6 +1456,7 @@
         }
 
         appendConfiguredProperties();
+        applyPropertyStatuses();
 
         // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
         function updatePropertiesForSaleCount() {
@@ -1775,6 +1814,19 @@
         }
         
         // Property edit modal functions
+        function _applyPropertyStatusButtons(status, hidden) {
+            const inp = document.getElementById('property-status-val');
+            const hidInp = document.getElementById('property-hidden-val');
+            if (inp) inp.value = status;
+            if (hidInp) hidInp.value = hidden ? '1' : '';
+            const btnSold = document.getElementById('prop-btn-sold');
+            const btnReserved = document.getElementById('prop-btn-reserved');
+            const btnHidden = document.getElementById('prop-btn-hidden');
+            if (btnSold) btnSold.classList.toggle('active-sold', status === 'sold');
+            if (btnReserved) btnReserved.classList.toggle('active-reserved', status === 'reserved');
+            if (btnHidden) btnHidden.classList.toggle('active-hidden', hidden);
+        }
+
         function openPropertyEditModal(index = null) {
             const modal = document.getElementById('property-edit-modal');
             const title = document.getElementById('property-modal-title');
@@ -1832,6 +1884,11 @@
                 if (propertyTemplateSelect) {
                     propertyTemplateSelect.value = inferPropertyConfigTemplate(data.type, data.land);
                 }
+
+                // Load status from store
+                const _statusStore = getPropertyStatusStore();
+                const _curEntry = _statusStore[card.dataset.id] || {};
+                _applyPropertyStatusButtons(_curEntry.status || '', !!_curEntry.hidden);
             } else {
                 // Add new property
                 title.textContent = 'Добавить объект';
@@ -1845,6 +1902,7 @@
                 populateCitySelect();
                 populateDistrictSelect();
                 syncPropertyConfigTemplateSelection();
+                _applyPropertyStatusButtons('', false);
             }
 
             if (snippetField) {
@@ -2367,6 +2425,23 @@
             if (typeof renderPropertiesList === 'function') renderPropertiesList();
             if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
             if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+
+            // Save and apply property status (sold / reserved / hidden)
+            const _propStatusVal = (document.getElementById('property-status-val') || {}).value || '';
+            const _propHiddenVal = (document.getElementById('property-hidden-val') || {}).value || '';
+            const _statusStore = getPropertyStatusStore();
+            const _savedCardId = isNew
+                ? document.querySelector('.property-card:last-child')?.dataset.id
+                : cardId;
+            if (_savedCardId) {
+                if (_propStatusVal || _propHiddenVal === '1') {
+                    _statusStore[_savedCardId] = { status: _propStatusVal, hidden: _propHiddenVal === '1' };
+                } else {
+                    delete _statusStore[_savedCardId];
+                }
+                savePropertyStatusStore(_statusStore);
+            }
+            applyPropertyStatuses();
             registerCityDistrict(normalized.city, normalized.district);
             syncCityDistrictCatalog();
             populateSearchCitySelect();
@@ -3241,6 +3316,11 @@
             const matchingCards = [];
 
             propertyCards.forEach(card => {
+                // Skip cards hidden by admin
+                if (card.dataset.propHidden === '1') {
+                    card.classList.remove('visible');
+                    return;
+                }
                 const cardCity = card.dataset.city || '';
                 const cardDistrict = card.dataset.district || '';
                 const cardPrice = parseInt(card.dataset.price, 10) || 0;
