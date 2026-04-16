@@ -393,6 +393,27 @@ function updatePropertySaveHandler() {
 
         pushSharedSnapshot();
 
+        // Save property status (sold / reserved / hidden)
+        if (typeof getPropertyStatusStore === 'function' && typeof savePropertyStatusStore === 'function') {
+            const _statusVal = (document.getElementById('property-status-val') || {}).value || '';
+            const _hiddenVal = (document.getElementById('property-hidden-val') || {}).value || '';
+            const _store = getPropertyStatusStore();
+            let _savedId = cardId;
+            if (isNew) {
+                const allCards = document.querySelectorAll('.property-card');
+                _savedId = allCards.length ? allCards[allCards.length - 1].dataset.id : '';
+            }
+            if (_savedId) {
+                if (_statusVal || _hiddenVal === '1') {
+                    _store[_savedId] = { status: _statusVal, hidden: _hiddenVal === '1' };
+                } else {
+                    delete _store[_savedId];
+                }
+                savePropertyStatusStore(_store);
+            }
+            if (typeof applyPropertyStatuses === 'function') applyPropertyStatuses();
+        }
+
         if (statusEl) {
             statusEl.textContent = isNew ? '✅ Объект добавлен!' : '✅ Объект обновлён!';
             statusEl.className = 'p-3 rounded-lg bg-green-600 text-white';
