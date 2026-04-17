@@ -3834,7 +3834,7 @@
         }
 
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
-        const PROMO_STORAGE_KEY = 'venera_promo_slides_v3';
+        const PROMO_STORAGE_KEY = 'venera_promo_slides_v4';
 
         function getPromoSlides() {
             try {
@@ -3845,7 +3845,7 @@
             // Demo slides
             var demo = [
                 { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
-                { type: 'video', url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', alt: 'Видео', link: '' },
+                { type: 'video', url: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-house-3780/1080p.mp4', alt: 'Видео', link: '' },
                 { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
@@ -3876,7 +3876,9 @@
                 var el = document.createElement('div');
                 el.className = 'promo-slide' + (i === 0 ? ' active' : '');
                 if (slide.type === 'video') {
-                    el.innerHTML = '<video autoplay muted playsinline loop preload="auto" class="promo-media"><source src="' + slide.url + '" type="video/mp4"></video>';
+                    el.innerHTML = '<video autoplay muted playsinline preload="auto" class="promo-media"><source src="' + slide.url + '" type="video/mp4"></video>';
+                    var vid = el.querySelector('video');
+                    vid.addEventListener('ended', function() { goToPromoSlide(_promoCurrentIndex + 1); });
                 } else {
                     el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || 'Реклама') + '" class="promo-media">';
                 }
@@ -3897,13 +3899,16 @@
 
             // Auto-play video on first slide
             var firstVideo = container.querySelector('.promo-slide.active video');
-            if (firstVideo) firstVideo.play().catch(function() {});
+            if (firstVideo) {
+                firstVideo.play().catch(function() {});
+                // Don't start timer — wait for ended event
+            } else {
+                startPromoAutoplay();
+            }
 
             // Hide nav if only 1 slide
             var navBtns = section.querySelectorAll('.promo-nav');
             navBtns.forEach(function(b) { b.style.display = slides.length > 1 ? '' : 'none'; });
-
-            startPromoAutoplay();
         }
 
         var _promoAutoplayTimer = null;
@@ -3918,11 +3923,21 @@
             slides.forEach(function(s, i) {
                 s.classList.toggle('active', i === _promoCurrentIndex);
                 var vid = s.querySelector('video');
-                if (vid) { if (i === _promoCurrentIndex) vid.play().catch(function() {}); else vid.pause(); }
+                if (vid) {
+                    if (i === _promoCurrentIndex) { vid.currentTime = 0; vid.play().catch(function() {}); }
+                    else vid.pause();
+                }
             });
             dots.forEach(function(d, i) { d.classList.toggle('active', i === _promoCurrentIndex); });
 
-            resetPromoAutoplay();
+            // For video slides: no timer, wait for ended event. For images: use timer.
+            var activeSlide = slides[_promoCurrentIndex];
+            var activeVid = activeSlide ? activeSlide.querySelector('video') : null;
+            if (activeVid) {
+                clearInterval(_promoAutoplayTimer);
+            } else {
+                resetPromoAutoplay();
+            }
         }
 
         function startPromoAutoplay() {
