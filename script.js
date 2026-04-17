@@ -3840,9 +3840,16 @@
             try {
                 var raw = localStorage.getItem(PROMO_STORAGE_KEY);
                 var data = raw ? JSON.parse(raw) : null;
-                if (Array.isArray(data)) return data;
+                if (Array.isArray(data) && data.length) return data;
             } catch (_) {}
-            return [];
+            // Demo slides
+            var demo = [
+                { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
+                { type: 'video', url: 'https://cdn.pixabay.com/video/2024/08/01/224084_large.mp4', alt: 'Видео', link: '' },
+                { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
+            ];
+            savePromoSlides(demo);
+            return demo;
         }
 
         function savePromoSlides(slides) {
