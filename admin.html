@@ -1494,6 +1494,9 @@
                     <button type="button" class="admin-nav-btn" data-admin-view-target="admin-calendar-view" aria-selected="false" title="Календарь" aria-label="Календарь встреч и показов">
                         <i class="fas fa-calendar-alt"></i>
                     </button>
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-promo-view" aria-selected="false" title="Реклама" aria-label="Управление рекламой">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
                 </nav>
 
                 <button id="close-admin-panel" class="admin-exit-btn" title="Выход" aria-label="Выйти из админ-панели">
@@ -1766,6 +1769,41 @@
                             <div class="text-gray-500 text-sm">Выберите дату в календаре.</div>
                         </div>
                     </div>
+                </section>
+
+                <section id="admin-promo-view" class="admin-view hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h3 class="text-2xl font-semibold gold-text">Рекламная карусель</h3>
+                            <p class="text-xs text-gray-500 mt-1">Фото и видео между поиском и каталогом на главной</p>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl p-5 mb-6" style="background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.01) 100%);border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(12px);">
+                        <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Добавить слайд</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">Тип</label>
+                                <select id="promo-add-type" class="cal-select">
+                                    <option value="image">Фото</option>
+                                    <option value="video">Видео</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">URL медиа *</label>
+                                <input id="promo-add-url" type="text" class="cal-input" placeholder="https://...">
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">Ссылка (клик)</label>
+                                <input id="promo-add-link" type="text" class="cal-input" placeholder="https://... (необязательно)">
+                            </div>
+                            <div>
+                                <button id="promo-add-btn" type="button" class="cal-btn-primary w-full">
+                                    <i class="fas fa-plus mr-1"></i> Добавить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="promo-admin-list" class="space-y-3"></div>
                 </section>
             </div>
         </div>
@@ -2333,6 +2371,9 @@
                     }
                     if (targetId === 'admin-calendar-view') {
                         if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
+                    }
+                    if (targetId === 'admin-promo-view') {
+                        if (typeof renderPromoAdmin === 'function') renderPromoAdmin();
                     }
                 }
 

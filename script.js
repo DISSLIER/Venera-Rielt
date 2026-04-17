@@ -1658,6 +1658,9 @@
             if (e.key === PROPERTY_STATUS_KEY) {
                 applyPropertyStatuses();
             }
+            if (e.key === PROMO_STORAGE_KEY) {
+                renderPromoCarousel();
+            }
         });
 
         // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
@@ -3830,6 +3833,135 @@
             });
         }
 
+        // ─── Promo Carousel ──────────────────────────────────────────────────────────
+        const PROMO_STORAGE_KEY = 'venera_promo_slides_v1';
+
+        function getPromoSlides() {
+            try {
+                var raw = localStorage.getItem(PROMO_STORAGE_KEY);
+                var data = raw ? JSON.parse(raw) : null;
+                if (Array.isArray(data)) return data;
+            } catch (_) {}
+            return [];
+        }
+
+        function savePromoSlides(slides) {
+            try { localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(slides)); } catch (_) {}
+        }
+
+        function renderPromoCarousel() {
+            var slides = getPromoSlides();
+            var section = document.getElementById('promo-section');
+            var container = document.getElementById('promo-carousel');
+            var dotsContainer = document.getElementById('promo-dots');
+            if (!section || !container) return;
+
+            if (!slides.length) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = '';
+
+            container.innerHTML = '';
+            if (dotsContainer) dotsContainer.innerHTML = '';
+
+            slides.forEach(function(slide, i) {
+                var el = document.createElement('div');
+                el.className = 'promo-slide' + (i === 0 ? ' active' : '');
+                if (slide.type === 'video') {
+                    el.innerHTML = '<video src="' + slide.url + '" muted playsinline loop class="promo-media"></video>';
+                } else {
+                    el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || 'Реклама') + '" class="promo-media">';
+                }
+                if (slide.link) {
+                    el.style.cursor = 'pointer';
+                    el.addEventListener('click', function() { window.open(slide.link, '_blank'); });
+                }
+                container.appendChild(el);
+
+                if (dotsContainer && slides.length > 1) {
+                    var dot = document.createElement('button');
+                    dot.className = 'promo-dot' + (i === 0 ? ' active' : '');
+                    dot.dataset.index = i;
+                    dot.addEventListener('click', function() { goToPromoSlide(i); });
+                    dotsContainer.appendChild(dot);
+                }
+            });
+
+            // Auto-play video on first slide
+            var firstVideo = container.querySelector('.promo-slide.active video');
+            if (firstVideo) firstVideo.play().catch(function() {});
+
+            // Hide nav if only 1 slide
+            var navBtns = section.querySelectorAll('.promo-nav');
+            navBtns.forEach(function(b) { b.style.display = slides.length > 1 ? '' : 'none'; });
+
+            startPromoAutoplay();
+        }
+
+        var _promoAutoplayTimer = null;
+        var _promoCurrentIndex = 0;
+
+        function goToPromoSlide(index) {
+            var slides = document.querySelectorAll('#promo-carousel .promo-slide');
+            var dots = document.querySelectorAll('#promo-dots .promo-dot');
+            if (!slides.length) return;
+            _promoCurrentIndex = ((index % slides.length) + slides.length) % slides.length;
+
+            slides.forEach(function(s, i) {
+                s.classList.toggle('active', i === _promoCurrentIndex);
+                var vid = s.querySelector('video');
+                if (vid) { if (i === _promoCurrentIndex) vid.play().catch(function() {}); else vid.pause(); }
+            });
+            dots.forEach(function(d, i) { d.classList.toggle('active', i === _promoCurrentIndex); });
+
+            resetPromoAutoplay();
+        }
+
+        function startPromoAutoplay() {
+            clearInterval(_promoAutoplayTimer);
+            _promoAutoplayTimer = setInterval(function() {
+                goToPromoSlide(_promoCurrentIndex + 1);
+            }, 5000);
+        }
+
+        function resetPromoAutoplay() {
+            clearInterval(_promoAutoplayTimer);
+            startPromoAutoplay();
+        }
+
+        // Nav buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.promo-prev')) goToPromoSlide(_promoCurrentIndex - 1);
+            if (e.target.closest('.promo-next')) goToPromoSlide(_promoCurrentIndex + 1);
+        });
+
+        // ─── Promo Admin ────────────────────────────────────────────────────────────
+        function renderPromoAdmin() {
+            var list = document.getElementById('promo-admin-list');
+            if (!list) return;
+            var slides = getPromoSlides();
+            list.innerHTML = '';
+            slides.forEach(function(slide, i) {
+                var div = document.createElement('div');
+                div.className = 'promo-admin-item';
+                var preview = slide.type === 'video'
+                    ? '<video src="' + slide.url + '" muted class="promo-admin-thumb"></video>'
+                    : '<img src="' + slide.url + '" class="promo-admin-thumb">';
+                div.innerHTML = preview +
+                    '<div class="promo-admin-info">' +
+                        '<span class="promo-admin-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                        (slide.link ? '<span class="promo-admin-link" title="' + slide.link + '"><i class="fas fa-link"></i></span>' : '') +
+                    '</div>' +
+                    '<div class="promo-admin-actions">' +
+                        '<button class="promo-move-up admin-btn-eye" data-i="' + i + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
+                        '<button class="promo-move-down admin-btn-eye" data-i="' + i + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
+                        '<button class="promo-delete admin-btn-del" data-i="' + i + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
+                    '</div>';
+                list.appendChild(div);
+            });
+        }
+
         // Initialize main map when page loads
         document.addEventListener('DOMContentLoaded', function() {
             trackVisitEvent();
@@ -3841,6 +3973,7 @@
             renderAgents();
             initMainMap();
             updateAgentPhotos();
+            renderPromoCarousel();
 
             const saleModeBtn = document.getElementById('listing-sale-btn');
             const allModeBtn = document.getElementById('listing-all-btn');
@@ -4084,6 +4217,34 @@
                     renderAgents();
                     updateAgentPhotos();
                 }
+            }
+
+            // Promo admin actions
+            if (e.target.closest('.promo-delete')) {
+                var idx = Number(e.target.closest('.promo-delete').dataset.i);
+                var sl = getPromoSlides(); sl.splice(idx, 1); savePromoSlides(sl);
+                renderPromoAdmin(); renderPromoCarousel();
+                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+            }
+            if (e.target.closest('.promo-move-up')) {
+                var idx = Number(e.target.closest('.promo-move-up').dataset.i);
+                var sl = getPromoSlides(); if (idx > 0) { var t = sl[idx]; sl[idx] = sl[idx-1]; sl[idx-1] = t; savePromoSlides(sl); renderPromoAdmin(); renderPromoCarousel(); }
+            }
+            if (e.target.closest('.promo-move-down')) {
+                var idx = Number(e.target.closest('.promo-move-down').dataset.i);
+                var sl = getPromoSlides(); if (idx < sl.length - 1) { var t = sl[idx]; sl[idx] = sl[idx+1]; sl[idx+1] = t; savePromoSlides(sl); renderPromoAdmin(); renderPromoCarousel(); }
+            }
+            if (e.target.id === 'promo-add-btn' || e.target.closest('#promo-add-btn')) {
+                var urlInp = document.getElementById('promo-add-url');
+                var linkInp = document.getElementById('promo-add-link');
+                var typeInp = document.getElementById('promo-add-type');
+                if (!urlInp || !urlInp.value.trim()) return;
+                var sl = getPromoSlides();
+                sl.push({ url: urlInp.value.trim(), type: (typeInp && typeInp.value) || 'image', link: linkInp ? linkInp.value.trim() : '', alt: '' });
+                savePromoSlides(sl);
+                urlInp.value = ''; if (linkInp) linkInp.value = '';
+                renderPromoAdmin(); renderPromoCarousel();
+                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
             
             // Close modals
