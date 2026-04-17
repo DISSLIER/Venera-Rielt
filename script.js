@@ -3834,7 +3834,7 @@
         }
 
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
-        const PROMO_STORAGE_KEY = 'venera_promo_slides_v5';
+        const PROMO_STORAGE_KEY = 'venera_promo_slides_v6';
 
         function getPromoSlides() {
             try {
@@ -3845,7 +3845,7 @@
             // Demo slides
             var demo = [
                 { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
-                { type: 'video', url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', alt: 'Видео', link: '' },
+                { type: 'video', url: 'image/promo-realestate.mp4', alt: 'Недвижимость', link: '' },
                 { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
@@ -3876,9 +3876,35 @@
                 var el = document.createElement('div');
                 el.className = 'promo-slide' + (i === 0 ? ' active' : '');
                 if (slide.type === 'video') {
-                    el.innerHTML = '<video autoplay muted playsinline preload="auto" class="promo-media"><source src="' + slide.url + '" type="video/mp4"></video>';
+                    el.innerHTML = '<video autoplay muted playsinline preload="auto" class="promo-media"><source src="' + slide.url + '" type="video/mp4"></video>' +
+                        '<div class="promo-video-controls">' +
+                        '<button class="promo-vc-btn promo-vc-play" title="Пауза"><i class="fas fa-pause"></i></button>' +
+                        '<input type="range" class="promo-vc-seek" min="0" max="100" value="0" step="0.1">' +
+                        '<button class="promo-vc-btn promo-vc-mute" title="Звук"><i class="fas fa-volume-mute"></i></button>' +
+                        '</div>';
                     var vid = el.querySelector('video');
+                    var playBtn = el.querySelector('.promo-vc-play');
+                    var seekBar = el.querySelector('.promo-vc-seek');
+                    var muteBtn = el.querySelector('.promo-vc-mute');
                     vid.addEventListener('ended', function() { goToPromoSlide(_promoCurrentIndex + 1); });
+                    playBtn.addEventListener('click', function(ev) {
+                        ev.stopPropagation();
+                        if (vid.paused) { vid.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
+                        else { vid.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
+                    });
+                    muteBtn.addEventListener('click', function(ev) {
+                        ev.stopPropagation();
+                        vid.muted = !vid.muted;
+                        muteBtn.innerHTML = vid.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+                    });
+                    vid.addEventListener('timeupdate', function() {
+                        if (vid.duration) seekBar.value = (vid.currentTime / vid.duration) * 100;
+                    });
+                    seekBar.addEventListener('input', function(ev) {
+                        ev.stopPropagation();
+                        if (vid.duration) vid.currentTime = (seekBar.value / 100) * vid.duration;
+                    });
+                    seekBar.addEventListener('click', function(ev) { ev.stopPropagation(); });
                 } else {
                     el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || 'Реклама') + '" class="promo-media">';
                 }
