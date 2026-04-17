@@ -2054,6 +2054,26 @@
                     </div>
                 </div>
 
+                <!-- Marker controls -->
+                <input type="hidden" id="property-marker-hotprice" value="">
+                <input type="hidden" id="property-marker-discount" value="">
+                <input type="hidden" id="property-marker-exclusive" value="">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Маркеры объекта</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="prop-btn-hotprice" class="prop-status-btn"
+                            onclick="_propToggleMarker('hotprice')"><i class="fas fa-fire mr-1"></i> Горячая цена</button>
+                        <button type="button" id="prop-btn-discount" class="prop-status-btn"
+                            onclick="_propToggleMarker('discount')"><i class="fas fa-percent mr-1"></i> Скидка</button>
+                        <button type="button" id="prop-btn-exclusive" class="prop-status-btn"
+                            onclick="_propToggleMarker('exclusive')"><i class="fas fa-star mr-1"></i> Эксклюзив</button>
+                    </div>
+                </div>
+                <div id="prop-discount-price-row" class="mb-4" style="display:none;">
+                    <label class="block text-gray-400 mb-2">Новая цена со скидкой (€)</label>
+                    <input type="number" id="property-discount-price" class="cal-input w-full" placeholder="Введите цену со скидкой">
+                </div>
+
                 <div class="flex justify-end space-x-4">
                     <button type="button" id="cancel-property-edit" class="cal-btn-cancel">Отмена</button>
                     <button type="submit" id="property-save-btn" class="cal-btn-primary">Сохранить</button>
@@ -2398,6 +2418,18 @@
             inp.value = next;
             var btn = document.getElementById('prop-btn-hidden');
             if (btn) btn.classList.toggle('active-hidden', next === '1');
+        }
+        function _propToggleMarker(marker) {
+            var inp = document.getElementById('property-marker-' + marker);
+            if (!inp) return;
+            var next = inp.value === '1' ? '' : '1';
+            inp.value = next;
+            var btn = document.getElementById('prop-btn-' + marker);
+            if (btn) btn.classList.toggle('active-marker-' + marker, next === '1');
+            if (marker === 'discount') {
+                var row = document.getElementById('prop-discount-price-row');
+                if (row) row.style.display = next === '1' ? 'block' : 'none';
+            }
         }
 
         function _cselInit(selId) {

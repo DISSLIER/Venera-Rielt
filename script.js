@@ -965,6 +965,89 @@
                     console.log('[STATUS] card', id, '→ status:', status, ', overlay NOT FOUND!');
                 }
             });
+            // Also apply markers
+            applyPropertyMarkers();
+        }
+
+        // ─── Property markers (hotprice / discount / exclusive) ────────────────────
+        function applyPropertyMarkers() {
+            const store = getPropertyStatusStore();
+            document.querySelectorAll('.property-card').forEach(card => {
+                const id = card.dataset.id;
+                if (!id) return;
+                const entry = store[id] || {};
+
+                // Remove old marker badges
+                card.querySelectorAll('.prop-marker-badge').forEach(el => el.remove());
+                card.querySelectorAll('.prop-discount-price').forEach(el => el.remove());
+
+                const badgesContainer = card.querySelector('.property-badges');
+                if (!badgesContainer) return;
+
+                // Add marker badges below type badges
+                if (entry.hotprice) {
+                    const b = document.createElement('div');
+                    b.className = 'prop-marker-badge hotprice-badge';
+                    b.textContent = '🔥 ГОРЯЧАЯ ЦЕНА';
+                    badgesContainer.appendChild(b);
+                }
+                if (entry.exclusive) {
+                    const b = document.createElement('div');
+                    b.className = 'prop-marker-badge exclusive-badge';
+                    b.textContent = '⭐ ЭКСКЛЮЗИВ';
+                    badgesContainer.appendChild(b);
+                }
+                if (entry.discount && entry.discountPrice) {
+                    const b = document.createElement('div');
+                    b.className = 'prop-marker-badge discount-badge';
+                    b.textContent = '% СКИДКА';
+                    badgesContainer.appendChild(b);
+
+                    // Show discount price below original price
+                    const priceTag = card.querySelector('.price-tag');
+                    if (priceTag) {
+                        priceTag.classList.add('price-old');
+                        // Insert discount price after price tag
+                        var discountEl = document.createElement('div');
+                        discountEl.className = 'prop-discount-price gold-bg text-black font-bold px-4 py-2 rounded-full';
+                        discountEl.textContent = formatPriceValue(Number(entry.discountPrice));
+                        priceTag.parentNode.insertBefore(discountEl, priceTag.nextSibling);
+                    }
+                } else {
+                    const priceTag = card.querySelector('.price-tag');
+                    if (priceTag) priceTag.classList.remove('price-old');
+                }
+            });
+        }
+
+        window._propToggleMarker = function(marker) {
+            var inp = document.getElementById('property-marker-' + marker);
+            if (!inp) return;
+            var next = inp.value === '1' ? '' : '1';
+            inp.value = next;
+            var btn = document.getElementById('prop-btn-' + marker);
+            if (btn) btn.classList.toggle('active-marker-' + marker, next === '1');
+
+            // Show/hide discount price input
+            if (marker === 'discount') {
+                var discountRow = document.getElementById('prop-discount-price-row');
+                if (discountRow) discountRow.style.display = next === '1' ? 'block' : 'none';
+            }
+        };
+
+        function _applyPropertyMarkerButtons(entry) {
+            entry = entry || {};
+            var markers = ['hotprice', 'discount', 'exclusive'];
+            markers.forEach(function(m) {
+                var inp = document.getElementById('property-marker-' + m);
+                if (inp) inp.value = entry[m] ? '1' : '';
+                var btn = document.getElementById('prop-btn-' + m);
+                if (btn) btn.classList.toggle('active-marker-' + m, !!entry[m]);
+            });
+            var discountPriceInp = document.getElementById('property-discount-price');
+            if (discountPriceInp) discountPriceInp.value = entry.discountPrice || '';
+            var discountRow = document.getElementById('prop-discount-price-row');
+            if (discountRow) discountRow.style.display = entry.discount ? 'block' : 'none';
         }
 
         // Global toggle helpers for status buttons (used via onclick in HTML)
@@ -1839,16 +1922,21 @@
         function renderPropertiesList() {
             const propertiesList = document.getElementById('properties-list');
             propertiesList.innerHTML = '';
+            const statusStore = getPropertyStatusStore();
             
             document.querySelectorAll('.property-card').forEach((card, index) => {
                 const title = card.querySelector('h3').textContent;
                 const imageSrc = card.querySelector('img').src;
                 const price = card.querySelector('.price-tag').textContent;
                 const type = card.querySelector('.type-tag').textContent;
+                const cardId = card.dataset.id || '';
+                const isHidden = !!(statusStore[cardId] && statusStore[cardId].hidden);
+                const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
+                const eyeOpacity = isHidden ? '0.4' : '0.8';
                 const propertyDiv = document.createElement('div');
                 propertyDiv.className = 'flex flex-col admin-property-card h-full';
                 propertyDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
-                propertyDiv.dataset.id = card.dataset.id;
+                propertyDiv.dataset.id = cardId;
                 propertyDiv.innerHTML = `
                     <div class="flex flex-col flex-grow" style="padding:16px;">
                         <div class="relative mb-3 overflow-hidden" style="border-radius:12px;">
@@ -1863,6 +1951,9 @@
                         </div>
                         <div class="flex gap-2 mt-3">
                             <button class="edit-property admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                            <button class="toggle-hide-property admin-btn-eye py-2 text-xs" data-index="${index}" data-id="${cardId}" title="${isHidden ? 'Показать' : 'Скрыть'}">
+                                <i class="fas ${eyeIcon}" style="opacity:${eyeOpacity};"></i>
+                            </button>
                             <button class="delete-property admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
                         </div>
                     </div>
@@ -2016,6 +2107,7 @@
                 const _statusStore = getPropertyStatusStore();
                 const _curEntry = _statusStore[card.dataset.id] || {};
                 _applyPropertyStatusButtons(_curEntry.status || '', !!_curEntry.hidden);
+                _applyPropertyMarkerButtons(_curEntry);
             } else {
                 // Add new property
                 title.textContent = 'Добавить объект';
@@ -2030,6 +2122,7 @@
                 populateDistrictSelect();
                 syncPropertyConfigTemplateSelection();
                 _applyPropertyStatusButtons('', false);
+                _applyPropertyMarkerButtons({});
             }
 
             if (snippetField) {
@@ -2565,8 +2658,16 @@
                 ? document.querySelector('.property-card:last-child')?.dataset.id
                 : cardId;
             if (_savedCardId) {
-                if (_propStatusVal || _propHiddenVal === '1') {
-                    _statusStore[_savedCardId] = { status: _propStatusVal, hidden: _propHiddenVal === '1' };
+                var _mHotprice = (document.getElementById('property-marker-hotprice') || {}).value === '1';
+                var _mDiscount = (document.getElementById('property-marker-discount') || {}).value === '1';
+                var _mExclusive = (document.getElementById('property-marker-exclusive') || {}).value === '1';
+                var _mDiscountPrice = (document.getElementById('property-discount-price') || {}).value || '';
+                if (_propStatusVal || _propHiddenVal === '1' || _mHotprice || _mDiscount || _mExclusive) {
+                    _statusStore[_savedCardId] = {
+                        status: _propStatusVal, hidden: _propHiddenVal === '1',
+                        hotprice: _mHotprice, discount: _mDiscount, exclusive: _mExclusive,
+                        discountPrice: _mDiscount ? _mDiscountPrice : ''
+                    };
                 } else {
                     delete _statusStore[_savedCardId];
                 }
@@ -3932,6 +4033,26 @@
             if (e.target.classList.contains('delete-property')) {
                 const index = e.target.dataset.index;
                 deleteProperty(parseInt(index));
+            }
+
+            // Toggle hide property (eye button in admin list)
+            if (e.target.closest('.toggle-hide-property')) {
+                const btn = e.target.closest('.toggle-hide-property');
+                const pid = btn.dataset.id;
+                if (pid) {
+                    const store = getPropertyStatusStore();
+                    const cur = store[pid] || {};
+                    cur.hidden = !cur.hidden;
+                    if (!cur.status && !cur.hidden && !cur.hotprice && !cur.discount && !cur.exclusive) {
+                        delete store[pid];
+                    } else {
+                        store[pid] = cur;
+                    }
+                    savePropertyStatusStore(store);
+                    applyPropertyStatuses();
+                    renderPropertiesList();
+                    if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                }
             }
             
             // Edit agent

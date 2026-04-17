@@ -797,6 +797,26 @@
                     </div>
                 </div>
 
+                <!-- Marker controls -->
+                <input type="hidden" id="property-marker-hotprice" value="">
+                <input type="hidden" id="property-marker-discount" value="">
+                <input type="hidden" id="property-marker-exclusive" value="">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Маркеры объекта</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="prop-btn-hotprice" class="prop-status-btn"
+                            onclick="_propToggleMarker('hotprice')"><i class="fas fa-fire mr-1"></i> Горячая цена</button>
+                        <button type="button" id="prop-btn-discount" class="prop-status-btn"
+                            onclick="_propToggleMarker('discount')"><i class="fas fa-percent mr-1"></i> Скидка</button>
+                        <button type="button" id="prop-btn-exclusive" class="prop-status-btn"
+                            onclick="_propToggleMarker('exclusive')"><i class="fas fa-star mr-1"></i> Эксклюзив</button>
+                    </div>
+                </div>
+                <div id="prop-discount-price-row" class="mb-4" style="display:none;">
+                    <label class="block text-gray-400 mb-2">Новая цена со скидкой (€)</label>
+                    <input type="number" id="property-discount-price" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Введите цену со скидкой">
+                </div>
+
                 <div class="flex justify-end space-x-4">
                     <button type="button" id="cancel-property-edit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
                         Отмена

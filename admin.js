@@ -411,8 +411,16 @@ function updatePropertySaveHandler() {
                 _savedId = allCards.length ? allCards[allCards.length - 1].dataset.id : '';
             }
             if (_savedId) {
-                if (_statusVal || _hiddenVal === '1') {
-                    _store[_savedId] = { status: _statusVal, hidden: _hiddenVal === '1' };
+                var _hotprice = (document.getElementById('property-marker-hotprice') || {}).value === '1';
+                var _discount = (document.getElementById('property-marker-discount') || {}).value === '1';
+                var _exclusive = (document.getElementById('property-marker-exclusive') || {}).value === '1';
+                var _discountPrice = (document.getElementById('property-discount-price') || {}).value || '';
+                if (_statusVal || _hiddenVal === '1' || _hotprice || _discount || _exclusive) {
+                    _store[_savedId] = {
+                        status: _statusVal, hidden: _hiddenVal === '1',
+                        hotprice: _hotprice, discount: _discount, exclusive: _exclusive,
+                        discountPrice: _discount ? _discountPrice : ''
+                    };
                 } else {
                     delete _store[_savedId];
                 }
