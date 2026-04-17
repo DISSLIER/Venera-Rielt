@@ -524,6 +524,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePropertySaveHandler();
     updateAgentSaveHandler();
 
+    // Always apply statuses after DOM is ready, even if loadFromLocalStorage didn't rebuild cards
+    if (typeof applyPropertyStatuses === 'function') applyPropertyStatuses();
+
     const cloudReady = initCloudSync();
     if (!cloudReady) {
         console.log('Cloud sync выключен: используется localStorage fallback.');

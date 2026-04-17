@@ -403,6 +403,25 @@
             display: none !important;
         }
 
+        /* Status buttons in property edit modal */
+        .prop-status-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255,215,0,0.18);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: Montserrat, sans-serif;
+        }
+        .prop-status-btn:hover { border-color: rgba(255,215,0,0.4); color: rgba(255,255,255,0.8); }
+        .prop-status-btn.active-sold { border-color: rgba(239,68,68,0.8); background: rgba(239,68,68,0.18); color: #f87171; }
+        .prop-status-btn.active-reserved { border-color: rgba(251,191,36,0.8); background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .prop-status-btn.active-hidden { border-color: rgba(148,163,184,0.7); background: rgba(148,163,184,0.12); color: #94a3b8; }
+
         .property-spec-label {
             display: inline-flex;
             align-items: center;

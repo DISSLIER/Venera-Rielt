@@ -38,6 +38,10 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "0..($lines.Count-1)": true
+        "0..($lines.Count-1)": true,
+        "/^cd \"c:\\\\Users\\\\user\\\\Desktop\\\\Venera Rielt\" ; python -m http\\.server 8080$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

@@ -855,23 +855,51 @@
 
         function applyPropertyStatuses() {
             const store = getPropertyStatusStore();
+            var keys = Object.keys(store);
+            console.log('[STATUS] applyPropertyStatuses called, store keys:', keys.length, keys);
             document.querySelectorAll('.property-card').forEach(card => {
                 const id = card.dataset.id;
                 if (!id) return;
                 const entry = store[id] || {};
                 const status = entry.status || '';
                 const hidden = !!entry.hidden;
+
+                // Set data attributes
                 card.dataset.propStatus = status;
                 card.dataset.propHidden = hidden ? '1' : '';
+
+                // Apply hidden directly via inline style
+                if (hidden) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.removeProperty('display');
+                }
+
                 const overlay = card.querySelector('.property-status-overlay');
                 if (overlay) {
-                    overlay.dataset.status = status;
+                    overlay.setAttribute('data-status', status);
+                    // Apply overlay styles DIRECTLY via inline styles
+                    if (status === 'sold') {
+                        overlay.style.opacity = '1';
+                        overlay.style.background = 'rgba(185, 28, 28, 0.55)';
+                    } else if (status === 'reserved') {
+                        overlay.style.opacity = '1';
+                        overlay.style.background = 'rgba(202, 138, 4, 0.55)';
+                    } else {
+                        overlay.style.opacity = '0';
+                        overlay.style.background = '';
+                    }
                     const label = overlay.querySelector('.property-status-label');
                     if (label) {
                         if (status === 'sold') label.textContent = 'ПРОДАН';
                         else if (status === 'reserved') label.textContent = 'ЗАБРОНИРОВАНО';
                         else label.textContent = '';
                     }
+                    if (status) {
+                        console.log('[STATUS] card', id, '→ status:', status, ', overlay found:', !!overlay);
+                    }
+                } else if (status) {
+                    console.log('[STATUS] card', id, '→ status:', status, ', overlay NOT FOUND!');
                 }
             });
         }
@@ -1478,6 +1506,13 @@
 
         appendConfiguredProperties();
         applyPropertyStatuses();
+
+        // Auto-apply statuses when localStorage changes from another tab
+        window.addEventListener('storage', function(e) {
+            if (e.key === PROPERTY_STATUS_KEY) {
+                applyPropertyStatuses();
+            }
+        });
 
         // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
         function updatePropertiesForSaleCount() {
