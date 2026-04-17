@@ -460,6 +460,17 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
+        /* Overlay discount price */
+        .overlay-price-old {
+            text-decoration: line-through;
+            opacity: 0.5;
+            font-size: 0.8rem;
+        }
+
+        .prop-marker-badge i {
+            margin-right: 3px;
+        }
+
         /* Eye button in admin property list */
         .admin-btn-eye {
             padding: 6px 10px;

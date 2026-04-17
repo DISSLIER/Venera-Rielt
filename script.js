@@ -988,19 +988,19 @@
                 if (entry.hotprice) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge hotprice-badge';
-                    b.textContent = '🔥 ГОРЯЧАЯ ЦЕНА';
+                    b.innerHTML = '<i class="fas fa-fire"></i> ГОРЯЧАЯ ЦЕНА';
                     badgesContainer.appendChild(b);
                 }
                 if (entry.exclusive) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge exclusive-badge';
-                    b.textContent = '⭐ ЭКСКЛЮЗИВ';
+                    b.innerHTML = '<i class="fas fa-gem"></i> ЭКСКЛЮЗИВ';
                     badgesContainer.appendChild(b);
                 }
                 if (entry.discount && entry.discountPrice) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge discount-badge';
-                    b.textContent = '% СКИДКА';
+                    b.innerHTML = '<i class="fas fa-tag"></i> СКИДКА';
                     badgesContainer.appendChild(b);
 
                     // Show discount price below original price
@@ -4369,7 +4369,23 @@
             // Update overlay with property data
             document.querySelector('#property-overlay .p-8 h3').textContent = propertyCard.querySelector('h3').textContent;
             const price = button.dataset.price ? `€${parseInt(button.dataset.price).toLocaleString()}` : `€${parseInt(propertyData.price || '0').toLocaleString()}`;
-            document.querySelector('#property-overlay .p-8 .gold-bg').textContent = price;
+            var overlayPriceEl = document.querySelector('#property-overlay .p-8 .gold-bg');
+            overlayPriceEl.textContent = price;
+            // Remove old discount price from overlay
+            var oldOverlayDiscount = document.getElementById('overlay-discount-price');
+            if (oldOverlayDiscount) oldOverlayDiscount.remove();
+            overlayPriceEl.classList.remove('overlay-price-old');
+            // Show discount price if applicable
+            var _overlayStatusStore = getPropertyStatusStore();
+            var _overlayEntry = _overlayStatusStore[propertyData.id] || {};
+            if (_overlayEntry.discount && _overlayEntry.discountPrice) {
+                overlayPriceEl.classList.add('overlay-price-old');
+                var discountDiv = document.createElement('div');
+                discountDiv.id = 'overlay-discount-price';
+                discountDiv.className = 'gold-bg text-black font-bold px-4 py-2 rounded-full';
+                discountDiv.textContent = formatPriceValue(Number(_overlayEntry.discountPrice));
+                overlayPriceEl.parentNode.appendChild(discountDiv);
+            }
             // Update address in overlay
             const addressElement = document.getElementById('property-overlay-full-address');
             addressElement.textContent = propertyData.fullAddress || `${propertyData.city || ''}, ${propertyData.district || ''}, ${propertyData.address || ''}`.replace(/, , /g, ', ').replace(/^, |, $/g, '');
