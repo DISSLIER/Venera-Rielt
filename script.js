@@ -839,6 +839,37 @@
         const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
         const CAMPAIGN_LANDING_URL = 'https://venera-rielt.vercel.app/';
         const PROPERTY_STATUS_KEY = 'venera_property_status_v1';
+        const AGENT_STATUS_KEY = 'venera_agent_status_v1';
+
+        // Company fallback contact info (used when agent is hidden)
+        const COMPANY_CONTACT = {
+            name: 'Venera Rielt',
+            position: 'Агентство недвижимости',
+            phone: '+373 22 123 456',
+            whatsapp: '+37322123456',
+            telegram: '+37322123456',
+            viber: '+37360123456',
+            photo: 'https://i.ibb.co/35ZQ5g8X/logo.png'
+        };
+
+        function getAgentStatusStore() {
+            try {
+                const raw = localStorage.getItem(AGENT_STATUS_KEY);
+                const data = raw ? JSON.parse(raw) : null;
+                if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+            } catch (_) {}
+            return {};
+        }
+
+        function saveAgentStatusStore(store) {
+            try { localStorage.setItem(AGENT_STATUS_KEY, JSON.stringify(store)); } catch (_) {}
+        }
+
+        function isAgentHidden(rieltorId) {
+            if (!rieltorId) return false;
+            var store = getAgentStatusStore();
+            return !!(store[String(rieltorId)] && store[String(rieltorId)].hidden);
+        }
 
         function getPropertyStatusStore() {
             try {
@@ -1824,6 +1855,11 @@
                 const exactCount = propertyCountsByAgent[agentId] || 0;
                 agent.properties_count = exactCount;
 
+                const agentStore = getAgentStatusStore();
+                const isHidden = !!(agentStore[agentId] && agentStore[agentId].hidden);
+                const hiddenClass = isHidden ? 'active-hidden' : '';
+                const hiddenLabel = isHidden ? 'Показать' : 'Скрыть';
+
                 const socials = [
                     agent.whatsapp ? `<a href="https://wa.me/${agent.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#ffd700;opacity:0.8;" title="WhatsApp"><i class="fab fa-whatsapp" style="font-size:1.1rem;"></i></a>` : '',
                     agent.telegram ? `<a href="https://t.me/${agent.telegram.replace(/^@/,'')}" target="_blank" style="color:#ffd700;opacity:0.8;" title="Telegram"><i class="fab fa-telegram" style="font-size:1.1rem;"></i></a>` : '',
@@ -1861,6 +1897,9 @@
                         </div>
                         <div class="flex gap-2 mt-3">
                             <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                            <button class="hide-agent prop-status-btn flex-1 py-2 text-xs font-medium ${hiddenClass}" data-rieltor-id="${agentId}" style="flex:none;width:auto;padding:6px 12px;">
+                                <i class="fas fa-eye-slash" style="margin-right:4px;"></i>${hiddenLabel}
+                            </button>
                             <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
                         </div>
                     </div>
@@ -3505,8 +3544,11 @@
             const visibleCount = Math.min((currentAgentPage + 1) * agentsPerPage, agents.length);
             visibleAgents = agents.slice(0, visibleCount);
             
-            // Render visible agents
+            // Render visible agents (skip hidden ones)
+            const agentStatusStore = getAgentStatusStore();
             visibleAgents.forEach(agent => {
+                const agentKey = String(agent.rieltor_id || '');
+                if (agentStatusStore[agentKey] && agentStatusStore[agentKey].hidden) return;
                 const agentHtml = `
                 <div class="glass-effect rounded-xl p-6 text-center transition duration-500 ease-in-out hover:shadow-lg">
                     <div class="agent-photo mx-auto mb-6 w-32 h-32 rounded-full overflow-hidden border-4 border-gray-700">
@@ -3637,8 +3679,16 @@
                 const rieltorId = img.dataset.rieltorId;
                 const agent = agents.find(a => a.rieltor_id == rieltorId);
                 if (agent) {
-                    img.src = agent.photo;
-                    img.alt = agent.name;
+                    // If agent is hidden, hide the badge entirely
+                    if (isAgentHidden(rieltorId)) {
+                        var badge = img.closest('.agent-badge');
+                        if (badge) badge.style.display = 'none';
+                    } else {
+                        var badge = img.closest('.agent-badge');
+                        if (badge) badge.style.display = '';
+                        img.src = agent.photo;
+                        img.alt = agent.name;
+                    }
                 }
             });
         }
@@ -3858,6 +3908,25 @@
             if (e.target.classList.contains('delete-agent')) {
                 const index = e.target.dataset.index;
                 deleteAgent(parseInt(index));
+            }
+
+            // Hide/show agent
+            if (e.target.closest('.hide-agent')) {
+                const btn = e.target.closest('.hide-agent');
+                const rid = btn.dataset.rieltorId;
+                if (rid) {
+                    const store = getAgentStatusStore();
+                    const cur = store[rid] || {};
+                    if (cur.hidden) {
+                        delete store[rid];
+                    } else {
+                        store[rid] = { hidden: true };
+                    }
+                    saveAgentStatusStore(store);
+                    renderAgentsList();
+                    renderAgents();
+                    updateAgentPhotos();
+                }
             }
             
             // Close modals
@@ -4196,26 +4265,28 @@
             
             if (rieltorId) {
                 const agent = agents.find(a => a.rieltor_id == rieltorId);
-                if (agent) {
-                    agentInfoContainer.style.display = 'block';
-                    document.querySelector('#property-overlay .flex.items-center img').src = agent.photo;
-                    document.querySelector('#property-overlay .flex.items-center .font-semibold').textContent = agent.name;
-                    document.querySelector('#property-overlay .flex.items-center .text-sm').textContent = agent.position;
-                    
-                    // Update contact buttons
-                    const callBtn = document.querySelector('#property-overlay .contact-call-btn');
-                    callBtn.innerHTML = `<i class="fas fa-phone-alt mr-2"></i> ${agent.phone}`;
-                    callBtn.onclick = function() { window.location.href = `tel:${agent.phone}`; };
-                    
-                    const whatsappBtn = document.querySelector('#property-overlay a:has(i.fa-whatsapp)');
-                    whatsappBtn.href = `https://wa.me/${agent.phone.replace(/\D/g, '')}`;
-                    
-                    const telegramBtn = document.querySelector('#property-overlay a:has(i.fa-telegram)');
-                    telegramBtn.href = `https://t.me/${agent.phone.replace(/\D/g, '')}`;
-                    
-                    const viberBtn = document.querySelector('#property-overlay a:has(i.fa-viber)');
-                    viberBtn.href = `viber://chat?number=${agent.phone.replace(/\D/g, '')}`;
-                }
+                const agentHidden = isAgentHidden(rieltorId);
+                // Use company fallback if agent is hidden
+                const contactInfo = (agent && !agentHidden) ? agent : COMPANY_CONTACT;
+                
+                agentInfoContainer.style.display = 'block';
+                document.querySelector('#property-overlay .flex.items-center img').src = contactInfo.photo || '';
+                document.querySelector('#property-overlay .flex.items-center .font-semibold').textContent = contactInfo.name || '';
+                document.querySelector('#property-overlay .flex.items-center .text-sm').textContent = contactInfo.position || '';
+                
+                // Update contact buttons
+                const callBtn = document.querySelector('#property-overlay .contact-call-btn');
+                callBtn.innerHTML = `<i class="fas fa-phone-alt mr-2"></i> ${contactInfo.phone}`;
+                callBtn.onclick = function() { window.location.href = `tel:${contactInfo.phone}`; };
+                
+                const whatsappBtn = document.querySelector('#property-overlay a:has(i.fa-whatsapp)');
+                whatsappBtn.href = `https://wa.me/${(contactInfo.whatsapp || contactInfo.phone).replace(/\D/g, '')}`;
+                
+                const telegramBtn = document.querySelector('#property-overlay a:has(i.fa-telegram)');
+                telegramBtn.href = `https://t.me/${(contactInfo.telegram || contactInfo.phone).replace(/\D/g, '')}`;
+                
+                const viberBtn = document.querySelector('#property-overlay a:has(i.fa-viber)');
+                viberBtn.href = `viber://chat?number=${(contactInfo.viber || contactInfo.phone).replace(/\D/g, '')}`;
             } else {
                 agentInfoContainer.style.display = 'none';
             }
