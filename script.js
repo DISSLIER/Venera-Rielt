@@ -3834,7 +3834,7 @@
         }
 
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
-        const PROMO_STORAGE_KEY = 'venera_promo_slides_v1';
+        const PROMO_STORAGE_KEY = 'venera_promo_slides_v2';
 
         function getPromoSlides() {
             try {
@@ -3845,7 +3845,7 @@
             // Demo slides
             var demo = [
                 { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
-                { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4', alt: 'Видео', link: '' },
+                { type: 'video', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', alt: 'Видео', link: '' },
                 { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
