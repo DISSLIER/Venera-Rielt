@@ -421,16 +421,10 @@ function updatePropertySaveHandler() {
             if (typeof applyPropertyStatuses === 'function') applyPropertyStatuses();
         }
 
-        if (statusEl) {
-            statusEl.textContent = isNew ? '✅ Объект добавлен!' : '✅ Объект обновлён!';
-            statusEl.className = 'p-3 rounded-lg bg-green-600 text-white';
-            statusEl.classList.remove('hidden');
-            setTimeout(() => {
-                if (closePropertyEditModal) closePropertyEditModal();
-            }, 1200);
-        } else if (closePropertyEditModal) {
-            closePropertyEditModal();
+        if (typeof showToast === 'function') {
+            showToast(isNew ? 'Объект добавлен в каталог' : 'Объект обновлён');
         }
+        if (closePropertyEditModal) closePropertyEditModal();
 
         return false;
     }, true);
@@ -490,16 +484,10 @@ function updateAgentSaveHandler() {
 
         pushSharedSnapshot();
 
-        if (statusEl) {
-            statusEl.textContent = isNew ? '✅ Риелтор добавлен!' : '✅ Риелтор обновлён!';
-            statusEl.className = 'p-3 rounded-lg bg-green-600 text-white';
-            statusEl.classList.remove('hidden');
-            setTimeout(() => {
-                if (closeAgentEditModal) closeAgentEditModal();
-            }, 1200);
-        } else if (closeAgentEditModal) {
-            closeAgentEditModal();
+        if (typeof showToast === 'function') {
+            showToast(isNew ? 'Риелтор добавлен' : 'Риелтор обновлён');
         }
+        if (closeAgentEditModal) closeAgentEditModal();
 
         return false;
     }, true);
