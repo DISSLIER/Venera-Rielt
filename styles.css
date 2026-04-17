@@ -424,6 +424,48 @@
         .prop-status-btn.active-reserved { border-color: rgba(251,191,36,0.8); background: rgba(251,191,36,0.15); color: #fbbf24; }
         .prop-status-btn.active-hidden { border-color: rgba(148,163,184,0.7); background: rgba(148,163,184,0.12); color: #94a3b8; }
 
+        /* ─── Toast notification ─────────────────────────────────────────── */
+        .venera-toast {
+            position: fixed;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-30px);
+            opacity: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px 14px 18px;
+            border-radius: 16px;
+            background: rgba(20, 20, 20, 0.92);
+            border: 1.5px solid rgba(255, 215, 0, 0.35);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,215,0,0.08);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            font-family: 'Montserrat', sans-serif;
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .venera-toast--visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .venera-toast__icon {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .venera-toast__text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .venera-toast--error {
+            border-color: rgba(255, 68, 68, 0.45);
+        }
+
         .property-spec-label {
             display: inline-flex;
             align-items: center;

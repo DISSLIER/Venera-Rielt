@@ -841,6 +841,38 @@
         const PROPERTY_STATUS_KEY = 'venera_property_status_v1';
         const AGENT_STATUS_KEY = 'venera_agent_status_v1';
 
+        // ─── Toast notification ─────────────────────────────────────────────────────
+        function showToast(message, type) {
+            type = type || 'success';
+            var existing = document.getElementById('venera-toast');
+            if (existing) existing.remove();
+
+            var icons = {
+                success: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>',
+                error: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                info: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+            };
+
+            var toast = document.createElement('div');
+            toast.id = 'venera-toast';
+            toast.className = 'venera-toast venera-toast--' + type;
+            toast.innerHTML = '<div class="venera-toast__icon">' + (icons[type] || icons.success) + '</div>' +
+                '<div class="venera-toast__text">' + message + '</div>';
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    toast.classList.add('venera-toast--visible');
+                });
+            });
+
+            setTimeout(function () {
+                toast.classList.remove('venera-toast--visible');
+                toast.addEventListener('transitionend', function () { toast.remove(); });
+                setTimeout(function () { toast.remove(); }, 600);
+            }, 3000);
+        }
+
         // Company fallback contact info (used when agent is hidden)
         const COMPANY_CONTACT = {
             name: 'Venera Rielt',
@@ -2021,8 +2053,12 @@
                 realtorSelect.remove(1);
             }
             
-            // Add agents as options
+            // Add agents as options (deduplicate by rieltor_id)
+            const seen = new Set();
             agents.forEach(agent => {
+                const rid = String(agent.rieltor_id);
+                if (seen.has(rid)) return;
+                seen.add(rid);
                 const option = document.createElement('option');
                 option.value = agent.rieltor_id;
                 option.textContent = `${agent.rieltor_id}: ${agent.name} (${agent.position})`;
@@ -2202,7 +2238,7 @@
             );
 
             if (!appendResult.added || !appendResult.card) {
-                alert('Не удалось добавить объект в каталог.');
+                showToast('Не удалось добавить объект в каталог', 'error');
                 return;
             }
 
@@ -2244,13 +2280,13 @@
             }
 
             appendResult.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            alert(`Объект ${appendResult.propertyId} добавлен в каталог (предпросмотр).`);
+            showToast('Объект ' + appendResult.propertyId + ' добавлен в каталог (предпросмотр)');
         }
 
         function savePropertyDraft() {
             const draft = collectPropertyFormData();
             localStorage.setItem(PROPERTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-            alert('Черновик сохранен локально в браузере.');
+            showToast('Черновик сохранён локально в браузере');
         }
 
         function loadPropertyDraft() {
@@ -2550,7 +2586,7 @@
             }
 
             closePropertyEditModal();
-            alert(isNew ? 'Объект добавлен в каталог.' : 'Объект обновлён.');
+            showToast(isNew ? 'Объект добавлен в каталог' : 'Объект обновлён');
             return false;
         }
         
@@ -2581,11 +2617,11 @@
             if (isNew) {
                 // Add new agent (in a real app, this would update the database)
                 console.log('Adding new agent:', agentData);
-                alert('Новый риелтор добавлен! В реальном приложении данные были бы сохранены в базе данных.');
+                showToast('Новый риелтор добавлен!');
             } else {
                 // Update existing agent (in a real app, this would update the database)
                 console.log('Updating agent at index:', index, agentData);
-                alert('Данные риелтора обновлены! В реальном приложении данные были бы сохранены в базе данных.');
+                showToast('Данные риелтора обновлены!');
             }
             
             closeAgentEditModal();

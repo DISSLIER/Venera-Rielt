@@ -147,9 +147,14 @@ function replaceAgentsInState(agentsPayload) {
         .map((item, index) => (typeof normalizeAgentConfig === 'function' ? normalizeAgentConfig(item, index) : item))
         .filter(Boolean);
 
+    // Deduplicate by rieltor_id (keep last occurrence)
+    const seen = new Map();
+    normalized.forEach(a => seen.set(String(a.rieltor_id), a));
+    const unique = Array.from(seen.values());
+
     try {
         if (Array.isArray(agents)) {
-            agents.splice(0, agents.length, ...normalized);
+            agents.splice(0, agents.length, ...unique);
         }
     } catch (_) {
         // ignore
