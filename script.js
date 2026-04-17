@@ -3834,7 +3834,7 @@
         }
 
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
-        const PROMO_STORAGE_KEY = 'venera_promo_slides_v6';
+        const PROMO_STORAGE_KEY = 'venera_promo_slides_v7';
 
         function getPromoSlides() {
             try {
@@ -3845,7 +3845,8 @@
             // Demo slides
             var demo = [
                 { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
-                { type: 'video', url: 'image/promo-realestate.mp4', alt: 'Недвижимость', link: '' },
+                { type: 'video', url: 'image/add/promo-realestate.mp4', alt: 'Недвижимость', link: '' },
+                { type: 'video', url: 'image/add/promo-venera.mp4', alt: 'Venera Rielt', link: '' },
                 { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
