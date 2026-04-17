@@ -4384,7 +4384,12 @@
                 discountDiv.id = 'overlay-discount-price';
                 discountDiv.className = 'gold-bg text-black font-bold px-4 py-2 rounded-full';
                 discountDiv.textContent = formatPriceValue(Number(_overlayEntry.discountPrice));
-                overlayPriceEl.parentNode.appendChild(discountDiv);
+                var priceWrap = overlayPriceEl.closest('.overlay-price-wrap');
+                if (priceWrap) {
+                    priceWrap.appendChild(discountDiv);
+                } else {
+                    overlayPriceEl.after(discountDiv);
+                }
             }
             // Update address in overlay
             const addressElement = document.getElementById('property-overlay-full-address');
