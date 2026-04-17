@@ -3845,7 +3845,7 @@
             // Demo slides
             var demo = [
                 { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
-                { type: 'video', url: 'https://cdn.pixabay.com/video/2024/08/01/224084_large.mp4', alt: 'Видео', link: '' },
+                { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4', alt: 'Видео', link: '' },
                 { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
@@ -3876,7 +3876,7 @@
                 var el = document.createElement('div');
                 el.className = 'promo-slide' + (i === 0 ? ' active' : '');
                 if (slide.type === 'video') {
-                    el.innerHTML = '<video src="' + slide.url + '" muted playsinline loop class="promo-media"></video>';
+                    el.innerHTML = '<video src="' + slide.url + '" autoplay muted playsinline loop class="promo-media"></video>';
                 } else {
                     el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || 'Реклама') + '" class="promo-media">';
                 }
