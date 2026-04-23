@@ -873,6 +873,37 @@
             }, 3000);
         }
 
+        // ─── Confirm Dialog ──────────────────────────────────────────────────────────
+        function showConfirm(message, onConfirm) {
+            var existing = document.getElementById('venera-confirm-overlay');
+            if (existing) existing.remove();
+            var overlay = document.createElement('div');
+            overlay.id = 'venera-confirm-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);';
+            var box = document.createElement('div');
+            box.style.cssText = 'background:linear-gradient(145deg,rgba(18,18,20,0.98),rgba(10,10,12,0.98));border:1px solid rgba(255,215,0,0.25);border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.6);padding:32px 28px 24px;max-width:380px;width:90%;text-align:center;';
+            box.innerHTML =
+                '<div style="width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,0.12);border:1.5px solid rgba(239,68,68,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
+                '</div>' +
+                '<p style="color:#e5e7eb;font-size:0.95rem;line-height:1.5;margin-bottom:24px;">' + message + '</p>' +
+                '<div style="display:flex;gap:10px;justify-content:center;">' +
+                    '<button id="venera-confirm-cancel" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#9ca3af;font-size:0.875rem;font-weight:500;cursor:pointer;">Отмена</button>' +
+                    '<button id="venera-confirm-ok" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.15);color:#f87171;font-size:0.875rem;font-weight:600;cursor:pointer;">Удалить</button>' +
+                '</div>';
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            function close() { overlay.remove(); }
+            overlay.querySelector('#venera-confirm-cancel').addEventListener('click', close);
+            overlay.querySelector('#venera-confirm-ok').addEventListener('click', function() { close(); onConfirm(); });
+            overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+            function onKey(e) {
+                if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+                if (e.key === 'Enter') { close(); onConfirm(); document.removeEventListener('keydown', onKey); }
+            }
+            document.addEventListener('keydown', onKey);
+        }
+
         // Company fallback contact info (used when agent is hidden)
         const COMPANY_CONTACT = {
             name: 'Venera Rielt',
@@ -1237,12 +1268,12 @@
             container.querySelectorAll('.campaign-delete-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.dataset.deleteId;
-                    if (confirm('Удалить трекинговую ссылку?')) {
+                    showConfirm('Удалить трекинговую ссылку?', function() {
                         deleteCampaignLink(id);
                         renderCampaignLinksAdmin();
                         const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
                         renderAdminAnalyticsDashboard(currentPeriod);
-                    }
+                    });
                 });
             });
         }
@@ -2734,32 +2765,34 @@
         
         // Delete property - реально удаляет карточку из каталога
         function deleteProperty(index) {
-            if (!confirm('Вы уверены, что хотите удалить этот объект?')) return;
-            const card = document.querySelectorAll('.property-card')[index];
-            if (!card) return;
-            card.remove();
-            propertyCounter = getCurrentMaxPropertyIdNumber();
-            if (mainMap) {
-                mainMap.remove();
-                mainMap = null;
-                propertyMarkers.length = 0;
-                initMainMap();
-            }
-            if (typeof countAgentProperties === 'function') countAgentProperties();
-            if (typeof renderAgents === 'function') renderAgents();
-            if (typeof renderPropertiesList === 'function') renderPropertiesList();
-            if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
-            if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+            showConfirm('Удалить этот объект из каталога?', function() {
+                const card = document.querySelectorAll('.property-card')[index];
+                if (!card) return;
+                card.remove();
+                propertyCounter = getCurrentMaxPropertyIdNumber();
+                if (mainMap) {
+                    mainMap.remove();
+                    mainMap = null;
+                    propertyMarkers.length = 0;
+                    initMainMap();
+                }
+                if (typeof countAgentProperties === 'function') countAgentProperties();
+                if (typeof renderAgents === 'function') renderAgents();
+                if (typeof renderPropertiesList === 'function') renderPropertiesList();
+                if (typeof updatePropertiesForSaleCount === 'function') updatePropertiesForSaleCount();
+                if (typeof updateListingModeBadgesVisibility === 'function') updateListingModeBadgesVisibility();
+            });
         }
 
         // Delete agent - реально удаляет риелтора из списка
         function deleteAgent(index) {
-            if (!confirm('Вы уверены, что хотите удалить этого риелтора?')) return;
-            agents.splice(index, 1);
-            agentCounter = getCurrentMaxAgentIdNumber(agents);
-            if (typeof countAgentProperties === 'function') countAgentProperties();
-            if (typeof renderAgents === 'function') renderAgents();
-            if (typeof renderAgentsList === 'function') renderAgentsList();
+            showConfirm('Удалить этого риелтора?', function() {
+                agents.splice(index, 1);
+                agentCounter = getCurrentMaxAgentIdNumber(agents);
+                if (typeof countAgentProperties === 'function') countAgentProperties();
+                if (typeof renderAgents === 'function') renderAgents();
+                if (typeof renderAgentsList === 'function') renderAgentsList();
+            });
         }
 
         function normalizeAgentConfig(agent, index) {
@@ -4296,9 +4329,11 @@
             }
             if (e.target.closest('.promo-delete')) {
                 var idx = Number(e.target.closest('.promo-delete').dataset.i);
-                var sl = getPromoSlides(); sl.splice(idx, 1); savePromoSlides(sl);
-                renderPromoAdmin(); renderPromoCarousel();
-                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                showConfirm('Удалить этот слайд из карусели?', function() {
+                    var sl = getPromoSlides(); sl.splice(idx, 1); savePromoSlides(sl);
+                    renderPromoAdmin(); renderPromoCarousel();
+                    if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                });
             }
             if (e.target.closest('.promo-move-up')) {
                 var idx = Number(e.target.closest('.promo-move-up').dataset.i);
@@ -5382,17 +5417,21 @@ function _escMsg(str) {
 }
 
 window.deleteMessage = function(id) {
-    var msgs = _getMessages().filter(function(m) { return m.id !== id; });
-    _saveMessages(msgs);
-    window.renderMessagesAdmin();
-    window._updateMessagesBadge();
+    showConfirm('Удалить это сообщение?', function() {
+        var msgs = _getMessages().filter(function(m) { return m.id !== id; });
+        _saveMessages(msgs);
+        window.renderMessagesAdmin();
+        window._updateMessagesBadge();
+    });
 };
 
 window.deleteReadMessages = function() {
-    var msgs = _getMessages().filter(function(m) { return !m.read; });
-    _saveMessages(msgs);
-    window.renderMessagesAdmin();
-    window._updateMessagesBadge();
+    showConfirm('Удалить все прочитанные сообщения?', function() {
+        var msgs = _getMessages().filter(function(m) { return !m.read; });
+        _saveMessages(msgs);
+        window.renderMessagesAdmin();
+        window._updateMessagesBadge();
+    });
 };
 
 // Обновляем бейдж при загрузке страницы
@@ -5698,9 +5737,11 @@ window.cycleClientStatus = function(id) {
 };
 
 window.deleteClient = function(id) {
-    var items = _getClients().filter(function(item) { return item.id !== id; });
-    _saveClients(items);
-    window.renderClientsAdmin();
+    showConfirm('Удалить этого клиента из базы?', function() {
+        var items = _getClients().filter(function(item) { return item.id !== id; });
+        _saveClients(items);
+        window.renderClientsAdmin();
+    });
 };
 
 window.editClient = function(id) {
@@ -6097,9 +6138,11 @@ window.editCalendarNote = function(id) {
 };
 
 window.deleteCalendarNote = function(id) {
-    var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
-    _saveCalendarNotes(items);
-    window.renderCalendarAdmin();
+    showConfirm('Удалить эту запись из календаря?', function() {
+        var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
+        _saveCalendarNotes(items);
+        window.renderCalendarAdmin();
+    });
 };
 
 window.initCalendarAdmin = function() {
