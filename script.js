@@ -5417,7 +5417,7 @@ function _escMsg(str) {
 }
 
 window.deleteMessage = function(id) {
-    showConfirm('Удалить это сообщение?', function() {
+    showConfirm('Удалить эту заявку с сайта?', function() {
         var msgs = _getMessages().filter(function(m) { return m.id !== id; });
         _saveMessages(msgs);
         window.renderMessagesAdmin();
@@ -5426,7 +5426,7 @@ window.deleteMessage = function(id) {
 };
 
 window.deleteReadMessages = function() {
-    showConfirm('Удалить все прочитанные сообщения?', function() {
+    showConfirm('Удалить все прочитанные заявки с сайта?', function() {
         var msgs = _getMessages().filter(function(m) { return !m.read; });
         _saveMessages(msgs);
         window.renderMessagesAdmin();
