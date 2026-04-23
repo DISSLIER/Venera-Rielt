@@ -922,7 +922,18 @@
                 company: 'Venera Rielt',
                 text1: 'Мы — лидер на рынке элитной недвижимости Молдовы с 2010 года. Наша компания специализируется на премиальном сегменте жилой и коммерческой недвижимости.',
                 text2: 'Наш подход сочетает в себе глубокое знание местного рынка, международные стандарты работы и индивидуальный подход к каждому клиенту.',
-                text3: 'За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.'
+                text3: 'За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.',
+                stat1Value: '12+',
+                stat1Label: 'Лет опыта',
+                stat2Value: '500+',
+                stat2Label: 'Довольных клиентов',
+                stat3Value: '100+',
+                stat3Label: 'Объектов',
+                stat4Value: '100%',
+                stat4Label: 'Надёжность',
+                photo1: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+                photo2: 'https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+                photo3: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
             },
             contact: {
                 title: 'Связаться с нами',
@@ -983,6 +994,11 @@
             el.setAttribute('rel', href === '#' ? '' : 'noopener noreferrer');
         }
 
+        function _setSrc(id, value) {
+            var el = document.getElementById(id);
+            if (el && value) el.setAttribute('src', value);
+        }
+
         function applySiteContentSettings() {
             var s = getSiteContentSettings();
 
@@ -991,6 +1007,17 @@
             _setText('about-text-1', s.about.text1);
             _setText('about-text-2', s.about.text2);
             _setText('about-text-3', s.about.text3);
+            _setText('about-stat-1-value', s.about.stat1Value);
+            _setText('about-stat-1-label', s.about.stat1Label);
+            _setText('about-stat-2-value', s.about.stat2Value);
+            _setText('about-stat-2-label', s.about.stat2Label);
+            _setText('about-stat-3-value', s.about.stat3Value);
+            _setText('about-stat-3-label', s.about.stat3Label);
+            _setText('about-stat-4-value', s.about.stat4Value);
+            _setText('about-stat-4-label', s.about.stat4Label);
+            _setSrc('about-photo-1', s.about.photo1);
+            _setSrc('about-photo-2', s.about.photo2);
+            _setSrc('about-photo-3', s.about.photo3);
 
             _setText('contact-section-title', s.contact.title);
             _setText('contact-section-lead', s.contact.lead);
@@ -1035,6 +1062,17 @@
             setValue('site-about-text-1', s.about.text1);
             setValue('site-about-text-2', s.about.text2);
             setValue('site-about-text-3', s.about.text3);
+            setValue('site-about-stat-1-value', s.about.stat1Value);
+            setValue('site-about-stat-1-label', s.about.stat1Label);
+            setValue('site-about-stat-2-value', s.about.stat2Value);
+            setValue('site-about-stat-2-label', s.about.stat2Label);
+            setValue('site-about-stat-3-value', s.about.stat3Value);
+            setValue('site-about-stat-3-label', s.about.stat3Label);
+            setValue('site-about-stat-4-value', s.about.stat4Value);
+            setValue('site-about-stat-4-label', s.about.stat4Label);
+            setValue('site-about-photo-1', s.about.photo1);
+            setValue('site-about-photo-2', s.about.photo2);
+            setValue('site-about-photo-3', s.about.photo3);
             setValue('site-contact-title', s.contact.title);
             setValue('site-contact-lead', s.contact.lead);
             setValue('site-contact-info-title', s.contact.infoTitle);
@@ -1051,6 +1089,10 @@
             setValue('site-social-telegram', s.social.telegram);
             setValue('site-social-whatsapp', s.social.whatsapp);
             setValue('site-social-viber', s.social.viber);
+
+            _setSrc('admin-about-photo-preview-1', s.about.photo1);
+            _setSrc('admin-about-photo-preview-2', s.about.photo2);
+            _setSrc('admin-about-photo-preview-3', s.about.photo3);
         };
 
         function getAgentStatusStore() {
@@ -4481,6 +4523,17 @@
                 s.about.text1 = getValue('site-about-text-1') || s.about.text1;
                 s.about.text2 = getValue('site-about-text-2') || s.about.text2;
                 s.about.text3 = getValue('site-about-text-3') || s.about.text3;
+                s.about.stat1Value = getValue('site-about-stat-1-value') || s.about.stat1Value;
+                s.about.stat1Label = getValue('site-about-stat-1-label') || s.about.stat1Label;
+                s.about.stat2Value = getValue('site-about-stat-2-value') || s.about.stat2Value;
+                s.about.stat2Label = getValue('site-about-stat-2-label') || s.about.stat2Label;
+                s.about.stat3Value = getValue('site-about-stat-3-value') || s.about.stat3Value;
+                s.about.stat3Label = getValue('site-about-stat-3-label') || s.about.stat3Label;
+                s.about.stat4Value = getValue('site-about-stat-4-value') || s.about.stat4Value;
+                s.about.stat4Label = getValue('site-about-stat-4-label') || s.about.stat4Label;
+                s.about.photo1 = getValue('site-about-photo-1') || s.about.photo1;
+                s.about.photo2 = getValue('site-about-photo-2') || s.about.photo2;
+                s.about.photo3 = getValue('site-about-photo-3') || s.about.photo3;
 
                 s.contact.title = getValue('site-contact-title') || s.contact.title;
                 s.contact.lead = getValue('site-contact-lead') || s.contact.lead;
@@ -4584,6 +4637,39 @@
             
             if (e.target.id === 'close-agent-modal' || e.target.id === 'cancel-agent-edit') {
                 closeAgentEditModal();
+            }
+        });
+
+        // Site content photo inputs: URL + file upload previews
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'site-about-photo-1' || e.target.id === 'site-about-photo-2' || e.target.id === 'site-about-photo-3') {
+                var n = e.target.id.slice(-1);
+                _setSrc('admin-about-photo-preview-' + n, e.target.value.trim());
+                return;
+            }
+
+            if (e.target.id === 'site-about-photo-file-1' || e.target.id === 'site-about-photo-file-2' || e.target.id === 'site-about-photo-file-3') {
+                var nf = e.target.id.slice(-1);
+                if (!e.target.files || !e.target.files[0]) return;
+                var file = e.target.files[0];
+                if (!file.type || !file.type.startsWith('image/')) {
+                    showToast('Выберите файл изображения', 'error');
+                    e.target.value = '';
+                    return;
+                }
+                if (file.size > 8 * 1024 * 1024) {
+                    showToast('Фото слишком большое (макс. 8 МБ)', 'error');
+                    e.target.value = '';
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var url = ev.target.result;
+                    var input = document.getElementById('site-about-photo-' + nf);
+                    if (input) input.value = url;
+                    _setSrc('admin-about-photo-preview-' + nf, url);
+                };
+                reader.readAsDataURL(file);
             }
         });
         

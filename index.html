@@ -409,20 +409,20 @@
                         <p id="about-text-3" class="text-gray-400 mb-6">За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <div class="glass-effect rounded-lg p-4">
-                                <div class="text-3xl font-bold gold-text mb-2">12+</div>
-                                <div class="text-sm text-gray-400">Лет опыта</div>
+                                <div id="about-stat-1-value" class="text-3xl font-bold gold-text mb-2">12+</div>
+                                <div id="about-stat-1-label" class="text-sm text-gray-400">Лет опыта</div>
                             </div>
                             <div class="glass-effect rounded-lg p-4">
-                                <div class="text-3xl font-bold gold-text mb-2">500+</div>
-                                <div class="text-sm text-gray-400">Довольных клиентов</div>
+                                <div id="about-stat-2-value" class="text-3xl font-bold gold-text mb-2">500+</div>
+                                <div id="about-stat-2-label" class="text-sm text-gray-400">Довольных клиентов</div>
                             </div>
                             <div class="glass-effect rounded-lg p-4">
-                                <div class="text-3xl font-bold gold-text mb-2" id="properties-for-sale-count">0</div>
-                                <div class="text-sm text-gray-400">Объектов в продаже</div>
+                                <div id="about-stat-3-value" class="text-3xl font-bold gold-text mb-2">100+</div>
+                                <div id="about-stat-3-label" class="text-sm text-gray-400">Объектов</div>
                             </div>
                             <div class="glass-effect rounded-lg p-4">
-                                <div class="text-3xl font-bold gold-text mb-2">100%</div>
-                                <div class="text-sm text-gray-400">Гарантия надёжности</div>
+                                <div id="about-stat-4-value" class="text-3xl font-bold gold-text mb-2">100%</div>
+                                <div id="about-stat-4-label" class="text-sm text-gray-400">Надёжность</div>
                             </div>
                         </div>
                     </div>
@@ -432,17 +432,17 @@
                     <div class="testimonial-carousel glass-effect rounded-xl overflow-hidden">
                         <!-- Testimonial 1 -->
                         <div class="testimonial-item active">
-                            <img src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                            <img id="about-photo-1" src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
                         </div>
                         
                         <!-- Testimonial 2 -->
                         <div class="testimonial-item">
-                            <img src="https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                            <img id="about-photo-2" src="https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
                         </div>
                         
                         <!-- Testimonial 3 -->
                         <div class="testimonial-item">
-                            <img src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
+                            <img id="about-photo-3" src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Luxury Property" class="w-full h-96 object-cover">
                         </div>
                         
                         <!-- Navigation arrows -->
@@ -1026,9 +1026,9 @@
         <!-- Firebase (Realtime DB) для общей синхронизации между пользователями -->
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-        <script src="script.js?v=9"></script>
-        <script src="admin.js?v=9"></script>
-        <script src="pwa.js?v=9"></script>
+        <script src="script.js?v=10"></script>
+        <script src="admin.js?v=10"></script>
+        <script src="pwa.js?v=10"></script>
     </body>
 </html>
 

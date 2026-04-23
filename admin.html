@@ -1852,6 +1852,30 @@
                     </div>
 
                     <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
+                        <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Фото блока «О компании»</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="glass-effect rounded-xl p-3">
+                                <img id="admin-about-photo-preview-1" src="" alt="Фото 1" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
+                                <input id="site-about-photo-1" type="text" class="cal-input mb-2" placeholder="URL фото 1">
+                                <label class="promo-file-label" for="site-about-photo-file-1"><i class="fas fa-upload mr-1"></i> Загрузить фото 1</label>
+                                <input id="site-about-photo-file-1" type="file" accept="image/*" class="hidden">
+                            </div>
+                            <div class="glass-effect rounded-xl p-3">
+                                <img id="admin-about-photo-preview-2" src="" alt="Фото 2" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
+                                <input id="site-about-photo-2" type="text" class="cal-input mb-2" placeholder="URL фото 2">
+                                <label class="promo-file-label" for="site-about-photo-file-2"><i class="fas fa-upload mr-1"></i> Загрузить фото 2</label>
+                                <input id="site-about-photo-file-2" type="file" accept="image/*" class="hidden">
+                            </div>
+                            <div class="glass-effect rounded-xl p-3">
+                                <img id="admin-about-photo-preview-3" src="" alt="Фото 3" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
+                                <input id="site-about-photo-3" type="text" class="cal-input mb-2" placeholder="URL фото 3">
+                                <label class="promo-file-label" for="site-about-photo-file-3"><i class="fas fa-upload mr-1"></i> Загрузить фото 3</label>
+                                <input id="site-about-photo-file-3" type="file" accept="image/*" class="hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
                         <div class="text-center mb-5">
                             <input id="site-about-title" type="text" class="cal-input text-center font-semibold" placeholder="О компании">
                         </div>
@@ -1865,20 +1889,20 @@
                             <div class="glass-effect rounded-xl p-5 flex-1">
                                 <div class="grid grid-cols-2 gap-3 text-center">
                                     <div class="glass-effect rounded-lg p-4">
-                                        <div class="text-2xl font-bold gold-text mb-1">12+</div>
-                                        <div class="text-xs text-gray-400">Лет опыта</div>
+                                        <input id="site-about-stat-1-value" type="text" class="cal-input text-center mb-2" placeholder="12+">
+                                        <input id="site-about-stat-1-label" type="text" class="cal-input text-center" placeholder="Лет опыта">
                                     </div>
                                     <div class="glass-effect rounded-lg p-4">
-                                        <div class="text-2xl font-bold gold-text mb-1">500+</div>
-                                        <div class="text-xs text-gray-400">Довольных клиентов</div>
+                                        <input id="site-about-stat-2-value" type="text" class="cal-input text-center mb-2" placeholder="500+">
+                                        <input id="site-about-stat-2-label" type="text" class="cal-input text-center" placeholder="Довольных клиентов">
                                     </div>
                                     <div class="glass-effect rounded-lg p-4">
-                                        <div class="text-2xl font-bold gold-text mb-1">100+</div>
-                                        <div class="text-xs text-gray-400">Объектов</div>
+                                        <input id="site-about-stat-3-value" type="text" class="cal-input text-center mb-2" placeholder="100+">
+                                        <input id="site-about-stat-3-label" type="text" class="cal-input text-center" placeholder="Объектов">
                                     </div>
                                     <div class="glass-effect rounded-lg p-4">
-                                        <div class="text-2xl font-bold gold-text mb-1">100%</div>
-                                        <div class="text-xs text-gray-400">Надёжность</div>
+                                        <input id="site-about-stat-4-value" type="text" class="cal-input text-center mb-2" placeholder="100%">
+                                        <input id="site-about-stat-4-label" type="text" class="cal-input text-center" placeholder="Надёжность">
                                     </div>
                                 </div>
                             </div>
@@ -1903,13 +1927,13 @@
                             <div class="glass-effect rounded-xl p-5 flex-1">
                                 <h4 class="font-semibold mb-3 gold-text">Мы в социальных сетях</h4>
                                 <div class="space-y-2">
-                                    <input id="site-social-facebook" type="text" class="cal-input" placeholder="Facebook URL">
-                                    <input id="site-social-instagram" type="text" class="cal-input" placeholder="Instagram URL">
-                                    <input id="site-social-youtube" type="text" class="cal-input" placeholder="YouTube URL">
-                                    <input id="site-social-tiktok" type="text" class="cal-input" placeholder="TikTok URL">
-                                    <input id="site-social-telegram" type="text" class="cal-input" placeholder="Telegram URL">
-                                    <input id="site-social-whatsapp" type="text" class="cal-input" placeholder="WhatsApp URL">
-                                    <input id="site-social-viber" type="text" class="cal-input" placeholder="Viber URL">
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-facebook-f text-blue-500"></i></span><input id="site-social-facebook" type="text" class="cal-input" placeholder="Facebook URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-instagram text-pink-500"></i></span><input id="site-social-instagram" type="text" class="cal-input" placeholder="Instagram URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-youtube text-red-500"></i></span><input id="site-social-youtube" type="text" class="cal-input" placeholder="YouTube URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-tiktok text-gray-300"></i></span><input id="site-social-tiktok" type="text" class="cal-input" placeholder="TikTok URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-telegram text-blue-400"></i></span><input id="site-social-telegram" type="text" class="cal-input" placeholder="Telegram URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-whatsapp text-green-500"></i></span><input id="site-social-whatsapp" type="text" class="cal-input" placeholder="WhatsApp URL"></div>
+                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-viber text-purple-500"></i></span><input id="site-social-viber" type="text" class="cal-input" placeholder="Viber URL"></div>
                                 </div>
                             </div>
                         </div>
@@ -2420,8 +2444,8 @@
         <!-- Firebase (Realtime DB) для общей синхронизации между пользователями -->
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-        <script src="script.js?v=9"></script>
-        <script src="admin.js?v=9"></script>
+        <script src="script.js?v=10"></script>
+        <script src="admin.js?v=10"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 document.body.classList.add('admin-standalone');
