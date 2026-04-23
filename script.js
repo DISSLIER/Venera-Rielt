@@ -4340,6 +4340,19 @@
                 localStorage.setItem(PROMO_HIDDEN_KEY, cur ? '0' : '1');
                 renderPromoAdmin(); renderPromoCarousel();
             }
+            if (e.target.id === 'promo-add-url-btn' || e.target.closest('#promo-add-url-btn')) {
+                var urlInp = document.getElementById('promo-add-url');
+                var linkInp2 = document.getElementById('promo-add-link-url');
+                var typeInp = document.getElementById('promo-url-type');
+                if (!urlInp || !urlInp.value.trim()) { showToast('Введите URL', 'error'); return; }
+                var sl = getPromoSlides();
+                sl.push({ url: urlInp.value.trim(), type: typeInp ? typeInp.value : 'image', link: linkInp2 ? linkInp2.value.trim() : '', alt: '' });
+                savePromoSlides(sl);
+                urlInp.value = ''; if (linkInp2) linkInp2.value = '';
+                renderPromoAdmin(); renderPromoCarousel();
+                showToast('Слайд добавлен', 'success');
+                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+            }
             
             // Close modals
             if (e.target.id === 'close-property-modal' || e.target.id === 'cancel-property-edit') {

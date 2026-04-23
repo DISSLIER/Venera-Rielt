@@ -1784,7 +1784,13 @@
                     </div>
                     <div class="rounded-2xl p-5 mb-6" style="background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.01) 100%);border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(12px);">
                         <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Добавить слайд</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                        <!-- Source toggle tabs -->
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" id="promo-src-file-btn" class="cal-btn-primary" style="padding:4px 14px;font-size:0.8rem;">Файл</button>
+                            <button type="button" id="promo-src-url-btn" class="cal-btn-cancel" style="padding:4px 14px;font-size:0.8rem;">Ссылка</button>
+                        </div>
+                        <!-- File mode -->
+                        <div id="promo-src-file-row" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                             <div class="md:col-span-1">
                                 <label class="block text-gray-400 mb-1 text-xs">Файл (фото или видео) *</label>
                                 <label class="promo-file-label" for="promo-add-file">
@@ -1802,7 +1808,30 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-600 mt-2">После добавления файл сохраняется локально. Рекомендуемый размер: фото до 2 МБ, видео до 10 МБ.</p>
+                        <!-- URL mode -->
+                        <div id="promo-src-url-row" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end hidden">
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">Тип</label>
+                                <select id="promo-url-type" class="cal-select">
+                                    <option value="image">Фото</option>
+                                    <option value="video">Видео</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">URL медиа *</label>
+                                <input id="promo-add-url" type="text" class="cal-input" placeholder="https://example.com/photo.jpg">
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-gray-400 mb-1 text-xs">Ссылка при клике (необязательно)</label>
+                                <input id="promo-add-link-url" type="text" class="cal-input" placeholder="https://...">
+                            </div>
+                            <div>
+                                <button id="promo-add-url-btn" type="button" class="cal-btn-primary w-full">
+                                    <i class="fas fa-plus mr-1"></i> Добавить
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-2">Файл: фото до 5 МБ, видео до 50 МБ. Ссылка: прямой URL на .jpg/.mp4 и т.п.</p>
                     </div>
                     <div id="promo-admin-list" class="space-y-3"></div>
                 </section>
@@ -2443,6 +2472,22 @@
                     if (e.target.id === 'promo-add-file') {
                         var nameSpan = document.getElementById('promo-file-name');
                         if (nameSpan) nameSpan.textContent = e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
+                    }
+                });
+
+                // Promo source tabs
+                document.addEventListener('click', function(e) {
+                    if (e.target.id === 'promo-src-file-btn') {
+                        document.getElementById('promo-src-file-row').classList.remove('hidden');
+                        document.getElementById('promo-src-url-row').classList.add('hidden');
+                        document.getElementById('promo-src-file-btn').className = 'cal-btn-primary';
+                        document.getElementById('promo-src-url-btn').className = 'cal-btn-cancel';
+                    }
+                    if (e.target.id === 'promo-src-url-btn') {
+                        document.getElementById('promo-src-url-row').classList.remove('hidden');
+                        document.getElementById('promo-src-file-row').classList.add('hidden');
+                        document.getElementById('promo-src-url-btn').className = 'cal-btn-primary';
+                        document.getElementById('promo-src-file-btn').className = 'cal-btn-cancel';
                     }
                 });
             });
