@@ -933,7 +933,8 @@
                 stat4Label: 'Надёжность',
                 photo1: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
                 photo2: 'https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-                photo3: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
+                photo3: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+                photos: []
             },
             contact: {
                 title: 'Связаться с нами',
@@ -977,6 +978,69 @@
 
         function saveSiteContentSettings(settings) {
             try { localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(settings)); } catch (_) {}
+        }
+
+        function _getAboutPhotos(settings) {
+            var s = settings || getSiteContentSettings();
+            var list = [];
+            if (Array.isArray(s.about.photos) && s.about.photos.length) {
+                list = s.about.photos.filter(function(x) { return !!x; });
+            } else {
+                list = [s.about.photo1, s.about.photo2, s.about.photo3].filter(function(x) { return !!x; });
+            }
+            return list;
+        }
+
+        function _setAboutPhotos(settings, photos) {
+            var cleaned = (photos || []).filter(function(x) { return !!x; });
+            settings.about.photos = cleaned.slice();
+            settings.about.photo1 = cleaned[0] || DEFAULT_SITE_CONTENT.about.photo1;
+            settings.about.photo2 = cleaned[1] || DEFAULT_SITE_CONTENT.about.photo2;
+            settings.about.photo3 = cleaned[2] || DEFAULT_SITE_CONTENT.about.photo3;
+        }
+
+        function renderAboutPhotosAdmin(settings) {
+            var s = settings || getSiteContentSettings();
+            var list = document.getElementById('site-about-photos-list');
+            if (!list) return;
+            var photos = _getAboutPhotos(s);
+            list.innerHTML = '';
+            photos.forEach(function(url, idx) {
+                var item = document.createElement('div');
+                item.className = 'promo-admin-item';
+                item.innerHTML =
+                    '<img src="' + url + '" class="promo-admin-thumb" style="width:90px;height:60px;object-fit:cover;border-radius:8px;">' +
+                    '<div class="promo-admin-info" style="min-width:0;">' +
+                        '<input type="text" class="cal-input site-about-photo-url-input" data-i="' + idx + '" value="' + url.replace(/"/g, '&quot;') + '">' +
+                        '<div class="text-xs text-gray-500 mt-1">Фото #' + (idx + 1) + '</div>' +
+                    '</div>' +
+                    '<div class="promo-admin-actions">' +
+                        '<label class="promo-file-label" style="padding:6px 10px;font-size:12px;" for="site-about-photo-replace-file-' + idx + '"><i class="fas fa-upload"></i></label>' +
+                        '<input id="site-about-photo-replace-file-' + idx + '" class="site-about-photo-replace-file hidden" data-i="' + idx + '" type="file" accept="image/*">' +
+                        '<button class="site-about-photo-up admin-btn-eye" data-i="' + idx + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
+                        '<button class="site-about-photo-down admin-btn-eye" data-i="' + idx + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
+                        '<button class="site-about-photo-delete admin-btn-del" data-i="' + idx + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
+                    '</div>';
+                list.appendChild(item);
+            });
+            if (!photos.length) {
+                list.innerHTML = '<div class="text-gray-500 text-sm">Пока нет фото. Добавьте первое выше.</div>';
+            }
+        }
+
+        function renderAboutCarouselFromSettings(settings) {
+            var carousel = document.getElementById('about-testimonial-carousel');
+            if (!carousel) return;
+            var photos = _getAboutPhotos(settings);
+            if (!photos.length) return;
+            var slidesHtml = photos.map(function(url, i) {
+                return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><img src="' + url + '" alt="Luxury Property" class="w-full h-96 object-cover"></div>';
+            }).join('');
+            var arrows =
+                '<button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"><i class="fas fa-chevron-left"></i></button>' +
+                '<button class="carousel-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"><i class="fas fa-chevron-right"></i></button>';
+            carousel.innerHTML = slidesHtml + arrows;
+            window.__veneraAboutCarouselNeedsRebind = true;
         }
 
         function _setText(id, value) {
@@ -1045,6 +1109,8 @@
             _setHref('footer-social-whatsapp', s.social.whatsapp);
             _setHref('footer-social-viber', s.social.viber);
 
+            renderAboutCarouselFromSettings(s);
+
             // Keep fallback contact card in overlay in sync
             COMPANY_CONTACT.name = s.about.company || COMPANY_CONTACT.name;
             COMPANY_CONTACT.phone = s.contact.phoneMain || COMPANY_CONTACT.phone;
@@ -1090,9 +1156,7 @@
             setValue('site-social-whatsapp', s.social.whatsapp);
             setValue('site-social-viber', s.social.viber);
 
-            _setSrc('admin-about-photo-preview-1', s.about.photo1);
-            _setSrc('admin-about-photo-preview-2', s.about.photo2);
-            _setSrc('admin-about-photo-preview-3', s.about.photo3);
+            renderAboutPhotosAdmin(s);
         };
 
         function getAgentStatusStore() {
@@ -4512,6 +4576,60 @@
                 if (messageId && typeof window.deleteMessage === 'function') window.deleteMessage(messageId);
             }
 
+            // About photos manager
+            if (e.target.id === 'site-about-photo-add-btn' || e.target.closest('#site-about-photo-add-btn')) {
+                var addUrlInp = document.getElementById('site-about-photo-add-url');
+                var url = addUrlInp ? addUrlInp.value.trim() : '';
+                if (!url) { showToast('Введите URL фото', 'error'); return; }
+                var st = getSiteContentSettings();
+                var ph = _getAboutPhotos(st);
+                ph.push(url);
+                _setAboutPhotos(st, ph);
+                saveSiteContentSettings(st);
+                if (addUrlInp) addUrlInp.value = '';
+                renderAboutPhotosAdmin(st);
+                applySiteContentSettings();
+                return;
+            }
+
+            if (e.target.closest('.site-about-photo-up')) {
+                var iUp = Number(e.target.closest('.site-about-photo-up').dataset.i);
+                var stUp = getSiteContentSettings();
+                var phUp = _getAboutPhotos(stUp);
+                if (iUp > 0) { var t1 = phUp[iUp]; phUp[iUp] = phUp[iUp - 1]; phUp[iUp - 1] = t1; }
+                _setAboutPhotos(stUp, phUp);
+                saveSiteContentSettings(stUp);
+                renderAboutPhotosAdmin(stUp);
+                applySiteContentSettings();
+                return;
+            }
+
+            if (e.target.closest('.site-about-photo-down')) {
+                var iDown = Number(e.target.closest('.site-about-photo-down').dataset.i);
+                var stDown = getSiteContentSettings();
+                var phDown = _getAboutPhotos(stDown);
+                if (iDown < phDown.length - 1) { var t2 = phDown[iDown]; phDown[iDown] = phDown[iDown + 1]; phDown[iDown + 1] = t2; }
+                _setAboutPhotos(stDown, phDown);
+                saveSiteContentSettings(stDown);
+                renderAboutPhotosAdmin(stDown);
+                applySiteContentSettings();
+                return;
+            }
+
+            if (e.target.closest('.site-about-photo-delete')) {
+                var iDel = Number(e.target.closest('.site-about-photo-delete').dataset.i);
+                showConfirm('Удалить это фото из блока «О компании»?', function() {
+                    var stDel = getSiteContentSettings();
+                    var phDel = _getAboutPhotos(stDel);
+                    phDel.splice(iDel, 1);
+                    _setAboutPhotos(stDel, phDel);
+                    saveSiteContentSettings(stDel);
+                    renderAboutPhotosAdmin(stDel);
+                    applySiteContentSettings();
+                });
+                return;
+            }
+
             if (e.target.id === 'save-site-content-btn' || e.target.closest('#save-site-content-btn')) {
                 var s = getSiteContentSettings();
                 function getValue(id) {
@@ -4531,9 +4649,7 @@
                 s.about.stat3Label = getValue('site-about-stat-3-label') || s.about.stat3Label;
                 s.about.stat4Value = getValue('site-about-stat-4-value') || s.about.stat4Value;
                 s.about.stat4Label = getValue('site-about-stat-4-label') || s.about.stat4Label;
-                s.about.photo1 = getValue('site-about-photo-1') || s.about.photo1;
-                s.about.photo2 = getValue('site-about-photo-2') || s.about.photo2;
-                s.about.photo3 = getValue('site-about-photo-3') || s.about.photo3;
+                _setAboutPhotos(s, _getAboutPhotos(s));
 
                 s.contact.title = getValue('site-contact-title') || s.contact.title;
                 s.contact.lead = getValue('site-contact-lead') || s.contact.lead;
@@ -4642,14 +4758,21 @@
 
         // Site content photo inputs: URL + file upload previews
         document.addEventListener('change', function(e) {
-            if (e.target.id === 'site-about-photo-1' || e.target.id === 'site-about-photo-2' || e.target.id === 'site-about-photo-3') {
-                var n = e.target.id.slice(-1);
-                _setSrc('admin-about-photo-preview-' + n, e.target.value.trim());
+            if (e.target.classList.contains('site-about-photo-url-input')) {
+                var iUrl = Number(e.target.dataset.i);
+                var stUrl = getSiteContentSettings();
+                var phUrl = _getAboutPhotos(stUrl);
+                phUrl[iUrl] = e.target.value.trim();
+                _setAboutPhotos(stUrl, phUrl);
+                saveSiteContentSettings(stUrl);
+                renderAboutPhotosAdmin(stUrl);
+                applySiteContentSettings();
                 return;
             }
 
-            if (e.target.id === 'site-about-photo-file-1' || e.target.id === 'site-about-photo-file-2' || e.target.id === 'site-about-photo-file-3') {
-                var nf = e.target.id.slice(-1);
+            if (e.target.id === 'site-about-photo-add-file' || e.target.classList.contains('site-about-photo-replace-file')) {
+                var replaceMode = e.target.classList.contains('site-about-photo-replace-file');
+                var iRep = replaceMode ? Number(e.target.dataset.i) : -1;
                 if (!e.target.files || !e.target.files[0]) return;
                 var file = e.target.files[0];
                 if (!file.type || !file.type.startsWith('image/')) {
@@ -4665,9 +4788,14 @@
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     var url = ev.target.result;
-                    var input = document.getElementById('site-about-photo-' + nf);
-                    if (input) input.value = url;
-                    _setSrc('admin-about-photo-preview-' + nf, url);
+                    var stF = getSiteContentSettings();
+                    var phF = _getAboutPhotos(stF);
+                    if (replaceMode && iRep >= 0) phF[iRep] = url;
+                    else phF.push(url);
+                    _setAboutPhotos(stF, phF);
+                    saveSiteContentSettings(stF);
+                    renderAboutPhotosAdmin(stF);
+                    applySiteContentSettings();
                 };
                 reader.readAsDataURL(file);
             }
@@ -5245,21 +5373,39 @@
 
         // Testimonial carousel
         let currentTestimonial = 0;
-        const testimonials = document.querySelectorAll('.testimonial-item');
-        const testimonialPrev = document.querySelector('.carousel-prev');
-        const testimonialNext = document.querySelector('.carousel-next');
+        let testimonials = document.querySelectorAll('#about-testimonial-carousel .testimonial-item');
+        let testimonialPrev = document.querySelector('#about-testimonial-carousel .carousel-prev');
+        let testimonialNext = document.querySelector('#about-testimonial-carousel .carousel-next');
 
         function showTestimonial(n) {
+            testimonials = document.querySelectorAll('#about-testimonial-carousel .testimonial-item');
+            if (!testimonials.length) return;
             testimonials.forEach(testimonial => testimonial.classList.remove('active'));
             currentTestimonial = (n + testimonials.length) % testimonials.length;
             testimonials[currentTestimonial].classList.add('active');
         }
 
-        testimonialPrev.addEventListener('click', () => showTestimonial(currentTestimonial - 1));
-        testimonialNext.addEventListener('click', () => showTestimonial(currentTestimonial + 1));
+        function bindAboutCarouselControls() {
+            testimonialPrev = document.querySelector('#about-testimonial-carousel .carousel-prev');
+            testimonialNext = document.querySelector('#about-testimonial-carousel .carousel-next');
+            if (testimonialPrev && !testimonialPrev.dataset.bound) {
+                testimonialPrev.dataset.bound = '1';
+                testimonialPrev.addEventListener('click', () => showTestimonial(currentTestimonial - 1));
+            }
+            if (testimonialNext && !testimonialNext.dataset.bound) {
+                testimonialNext.dataset.bound = '1';
+                testimonialNext.addEventListener('click', () => showTestimonial(currentTestimonial + 1));
+            }
+        }
+
+        bindAboutCarouselControls();
 
         // Auto-rotate testimonials
         setInterval(() => {
+            if (window.__veneraAboutCarouselNeedsRebind) {
+                window.__veneraAboutCarouselNeedsRebind = false;
+                bindAboutCarouselControls();
+            }
             showTestimonial(currentTestimonial + 1);
         }, 5000);
 

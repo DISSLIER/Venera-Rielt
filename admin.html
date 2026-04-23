@@ -1853,26 +1853,20 @@
 
                     <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
                         <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Фото блока «О компании»</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div class="glass-effect rounded-xl p-3">
-                                <img id="admin-about-photo-preview-1" src="" alt="Фото 1" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
-                                <input id="site-about-photo-1" type="text" class="cal-input mb-2" placeholder="URL фото 1">
-                                <label class="promo-file-label" for="site-about-photo-file-1"><i class="fas fa-upload mr-1"></i> Загрузить фото 1</label>
-                                <input id="site-about-photo-file-1" type="file" accept="image/*" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end mb-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-400 mb-1 text-xs">Добавить фото по URL</label>
+                                <input id="site-about-photo-add-url" type="text" class="cal-input" placeholder="https://...">
                             </div>
-                            <div class="glass-effect rounded-xl p-3">
-                                <img id="admin-about-photo-preview-2" src="" alt="Фото 2" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
-                                <input id="site-about-photo-2" type="text" class="cal-input mb-2" placeholder="URL фото 2">
-                                <label class="promo-file-label" for="site-about-photo-file-2"><i class="fas fa-upload mr-1"></i> Загрузить фото 2</label>
-                                <input id="site-about-photo-file-2" type="file" accept="image/*" class="hidden">
-                            </div>
-                            <div class="glass-effect rounded-xl p-3">
-                                <img id="admin-about-photo-preview-3" src="" alt="Фото 3" class="w-full h-36 object-cover rounded-lg mb-2" style="background:#111;">
-                                <input id="site-about-photo-3" type="text" class="cal-input mb-2" placeholder="URL фото 3">
-                                <label class="promo-file-label" for="site-about-photo-file-3"><i class="fas fa-upload mr-1"></i> Загрузить фото 3</label>
-                                <input id="site-about-photo-file-3" type="file" accept="image/*" class="hidden">
+                            <div>
+                                <button id="site-about-photo-add-btn" type="button" class="cal-btn-primary w-full"><i class="fas fa-plus mr-1"></i> Добавить по URL</button>
                             </div>
                         </div>
+                        <div class="mb-4">
+                            <label class="promo-file-label" for="site-about-photo-add-file"><i class="fas fa-upload mr-1"></i> Добавить фото файлом</label>
+                            <input id="site-about-photo-add-file" type="file" accept="image/*" class="hidden">
+                        </div>
+                        <div id="site-about-photos-list" class="space-y-3"></div>
                     </div>
 
                     <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
@@ -1927,28 +1921,15 @@
                             <div class="glass-effect rounded-xl p-5 flex-1">
                                 <h4 class="font-semibold mb-3 gold-text">Мы в социальных сетях</h4>
                                 <div class="space-y-2">
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-facebook-f text-blue-500"></i></span><input id="site-social-facebook" type="text" class="cal-input" placeholder="Facebook URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-instagram text-pink-500"></i></span><input id="site-social-instagram" type="text" class="cal-input" placeholder="Instagram URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-youtube text-red-500"></i></span><input id="site-social-youtube" type="text" class="cal-input" placeholder="YouTube URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-tiktok text-gray-300"></i></span><input id="site-social-tiktok" type="text" class="cal-input" placeholder="TikTok URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-telegram text-blue-400"></i></span><input id="site-social-telegram" type="text" class="cal-input" placeholder="Telegram URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-whatsapp text-green-500"></i></span><input id="site-social-whatsapp" type="text" class="cal-input" placeholder="WhatsApp URL"></div>
-                                    <div class="flex items-center gap-2"><span class="w-6 text-center"><i class="fab fa-viber text-purple-500"></i></span><input id="site-social-viber" type="text" class="cal-input" placeholder="Viber URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-facebook-f"></i></span><input id="site-social-facebook" type="text" class="cal-input" placeholder="Facebook URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-instagram"></i></span><input id="site-social-instagram" type="text" class="cal-input" placeholder="Instagram URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-youtube"></i></span><input id="site-social-youtube" type="text" class="cal-input" placeholder="YouTube URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-tiktok"></i></span><input id="site-social-tiktok" type="text" class="cal-input" placeholder="TikTok URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-telegram"></i></span><input id="site-social-telegram" type="text" class="cal-input" placeholder="Telegram URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-whatsapp"></i></span><input id="site-social-whatsapp" type="text" class="cal-input" placeholder="WhatsApp URL"></div>
+                                    <div class="flex items-center gap-2"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid rgba(255,215,0,0.28);background:rgba(255,215,0,0.08);color:#ffd700;"><i class="fab fa-viber"></i></span><input id="site-social-viber" type="text" class="cal-input" placeholder="Viber URL"></div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="rounded-2xl p-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
-                        <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Превью соцсетей футера</h4>
-                        <div class="flex flex-wrap gap-3 text-lg text-gray-300">
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-facebook-f"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-instagram"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-youtube"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-tiktok"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-telegram"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-whatsapp"></i></span>
-                            <span class="px-3 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);"><i class="fab fa-viber"></i></span>
                         </div>
                     </div>
                 </section>
