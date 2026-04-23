@@ -1783,11 +1783,12 @@
                         </button>
                     </div>
                     <div class="rounded-2xl p-5 mb-6" style="background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.01) 100%);border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(12px);">
-                        <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Добавить слайд</h4>
-                        <!-- Source toggle tabs -->
-                        <div class="flex gap-2 mb-3">
-                            <button type="button" id="promo-src-file-btn" class="cal-btn-primary" style="padding:4px 14px;font-size:0.8rem;">Файл</button>
-                            <button type="button" id="promo-src-url-btn" class="cal-btn-cancel" style="padding:4px 14px;font-size:0.8rem;">Ссылка</button>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-semibold" style="color:#ffd700;">Добавить слайд</h4>
+                            <div class="flex gap-2">
+                                <button type="button" id="promo-src-file-btn" class="cal-btn-primary" style="padding:4px 14px;font-size:0.8rem;">Файл</button>
+                                <button type="button" id="promo-src-url-btn" class="cal-btn-cancel" style="padding:4px 14px;font-size:0.8rem;">Ссылка</button>
+                            </div>
                         </div>
                         <!-- File mode -->
                         <div id="promo-src-file-row" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -1809,17 +1810,11 @@
                             </div>
                         </div>
                         <!-- URL mode -->
-                        <div id="promo-src-url-row" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end hidden">
+                        <div id="promo-src-url-row" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end hidden">
                             <div class="md:col-span-1">
-                                <label class="block text-gray-400 mb-1 text-xs">Тип</label>
-                                <select id="promo-url-type" class="cal-select">
-                                    <option value="image">Фото</option>
-                                    <option value="video">Видео</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-1">
-                                <label class="block text-gray-400 mb-1 text-xs">URL медиа *</label>
+                                <label class="block text-gray-400 mb-1 text-xs">URL медиа (фото или видео) *</label>
                                 <input id="promo-add-url" type="text" class="cal-input" placeholder="https://example.com/photo.jpg">
+                                <input id="promo-url-type" type="hidden" value="image">
                             </div>
                             <div class="md:col-span-1">
                                 <label class="block text-gray-400 mb-1 text-xs">Ссылка при клике (необязательно)</label>
