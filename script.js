@@ -915,6 +915,144 @@
             photo: 'https://i.ibb.co/35ZQ5g8X/logo.png'
         };
 
+        const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
+        const DEFAULT_SITE_CONTENT = {
+            about: {
+                title: 'О компании',
+                company: 'Venera Rielt',
+                text1: 'Мы — лидер на рынке элитной недвижимости Молдовы с 2010 года. Наша компания специализируется на премиальном сегменте жилой и коммерческой недвижимости.',
+                text2: 'Наш подход сочетает в себе глубокое знание местного рынка, международные стандарты работы и индивидуальный подход к каждому клиенту.',
+                text3: 'За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.'
+            },
+            contact: {
+                title: 'Связаться с нами',
+                lead: 'Оставьте свои контакты, и наш специалист свяжется с вами в ближайшее время',
+                infoTitle: 'Контактная информация',
+                address: 'Молдова, Кишинёв, ул. Пушкина 42, офис 15',
+                phoneMain: '+373 22 123 456',
+                phoneExtra: '+373 60 123 456 (Viber, WhatsApp)',
+                email: 'info@venera-rielt.md',
+                hours1: 'Пн-Пт: 9:00 - 18:00',
+                hours2: 'Сб: 10:00 - 15:00'
+            },
+            social: {
+                facebook: '#',
+                instagram: '#',
+                youtube: '#',
+                tiktok: 'https://www.tiktok.com/@venera.rielt?_t=ZN-8z4bdlOBmNy&_r=1',
+                telegram: '#',
+                whatsapp: '#',
+                viber: '#'
+            }
+        };
+
+        function _cloneSiteDefaults() {
+            return JSON.parse(JSON.stringify(DEFAULT_SITE_CONTENT));
+        }
+
+        function getSiteContentSettings() {
+            var base = _cloneSiteDefaults();
+            try {
+                var raw = localStorage.getItem(SITE_CONTENT_STORAGE_KEY);
+                var data = raw ? JSON.parse(raw) : null;
+                if (data && typeof data === 'object') {
+                    base.about = Object.assign({}, base.about, data.about || {});
+                    base.contact = Object.assign({}, base.contact, data.contact || {});
+                    base.social = Object.assign({}, base.social, data.social || {});
+                }
+            } catch (_) {}
+            return base;
+        }
+
+        function saveSiteContentSettings(settings) {
+            try { localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(settings)); } catch (_) {}
+        }
+
+        function _setText(id, value) {
+            var el = document.getElementById(id);
+            if (el && value != null) el.textContent = String(value);
+        }
+
+        function _setHref(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var href = (value || '#').trim();
+            if (!href) href = '#';
+            el.setAttribute('href', href);
+            el.setAttribute('target', href === '#' ? '_self' : '_blank');
+            el.setAttribute('rel', href === '#' ? '' : 'noopener noreferrer');
+        }
+
+        function applySiteContentSettings() {
+            var s = getSiteContentSettings();
+
+            _setText('about-section-title', s.about.title);
+            _setText('about-company-name', s.about.company);
+            _setText('about-text-1', s.about.text1);
+            _setText('about-text-2', s.about.text2);
+            _setText('about-text-3', s.about.text3);
+
+            _setText('contact-section-title', s.contact.title);
+            _setText('contact-section-lead', s.contact.lead);
+            _setText('contact-info-title', s.contact.infoTitle);
+            _setText('contact-address', s.contact.address);
+            _setText('contact-phone-main', s.contact.phoneMain);
+            _setText('contact-phone-extra', s.contact.phoneExtra);
+            _setText('contact-email', s.contact.email);
+            _setText('contact-hours-1', s.contact.hours1);
+            _setText('contact-hours-2', s.contact.hours2);
+
+            _setHref('contact-social-facebook', s.social.facebook);
+            _setHref('contact-social-instagram', s.social.instagram);
+            _setHref('contact-social-youtube', s.social.youtube);
+            _setHref('contact-social-tiktok', s.social.tiktok);
+            _setHref('contact-social-telegram', s.social.telegram);
+            _setHref('contact-social-whatsapp', s.social.whatsapp);
+            _setHref('contact-social-viber', s.social.viber);
+
+            _setHref('footer-social-facebook', s.social.facebook);
+            _setHref('footer-social-instagram', s.social.instagram);
+            _setHref('footer-social-youtube', s.social.youtube);
+            _setHref('footer-social-tiktok', s.social.tiktok);
+            _setHref('footer-social-telegram', s.social.telegram);
+            _setHref('footer-social-whatsapp', s.social.whatsapp);
+            _setHref('footer-social-viber', s.social.viber);
+
+            // Keep fallback contact card in overlay in sync
+            COMPANY_CONTACT.name = s.about.company || COMPANY_CONTACT.name;
+            COMPANY_CONTACT.phone = s.contact.phoneMain || COMPANY_CONTACT.phone;
+            COMPANY_CONTACT.whatsapp = s.contact.phoneMain || COMPANY_CONTACT.whatsapp;
+        }
+
+        window.renderSiteContentAdmin = function() {
+            var s = getSiteContentSettings();
+            function setValue(id, value) {
+                var el = document.getElementById(id);
+                if (el) el.value = value || '';
+            }
+            setValue('site-about-title', s.about.title);
+            setValue('site-about-company', s.about.company);
+            setValue('site-about-text-1', s.about.text1);
+            setValue('site-about-text-2', s.about.text2);
+            setValue('site-about-text-3', s.about.text3);
+            setValue('site-contact-title', s.contact.title);
+            setValue('site-contact-lead', s.contact.lead);
+            setValue('site-contact-info-title', s.contact.infoTitle);
+            setValue('site-contact-address', s.contact.address);
+            setValue('site-contact-phone-main', s.contact.phoneMain);
+            setValue('site-contact-phone-extra', s.contact.phoneExtra);
+            setValue('site-contact-email', s.contact.email);
+            setValue('site-contact-hours-1', s.contact.hours1);
+            setValue('site-contact-hours-2', s.contact.hours2);
+            setValue('site-social-facebook', s.social.facebook);
+            setValue('site-social-instagram', s.social.instagram);
+            setValue('site-social-youtube', s.social.youtube);
+            setValue('site-social-tiktok', s.social.tiktok);
+            setValue('site-social-telegram', s.social.telegram);
+            setValue('site-social-whatsapp', s.social.whatsapp);
+            setValue('site-social-viber', s.social.viber);
+        };
+
         function getAgentStatusStore() {
             try {
                 const raw = localStorage.getItem(AGENT_STATUS_KEY);
@@ -4074,6 +4212,7 @@
             initMainMap();
             updateAgentPhotos();
             renderPromoCarousel();
+            applySiteContentSettings();
 
             const saleModeBtn = document.getElementById('listing-sale-btn');
             const allModeBtn = document.getElementById('listing-all-btn');
@@ -4329,6 +4468,42 @@
             if (e.target.closest('.message-delete-btn')) {
                 var messageId = e.target.closest('.message-delete-btn').dataset.messageId;
                 if (messageId && typeof window.deleteMessage === 'function') window.deleteMessage(messageId);
+            }
+
+            if (e.target.id === 'save-site-content-btn' || e.target.closest('#save-site-content-btn')) {
+                var s = getSiteContentSettings();
+                function getValue(id) {
+                    var el = document.getElementById(id);
+                    return el ? el.value.trim() : '';
+                }
+                s.about.title = getValue('site-about-title') || s.about.title;
+                s.about.company = getValue('site-about-company') || s.about.company;
+                s.about.text1 = getValue('site-about-text-1') || s.about.text1;
+                s.about.text2 = getValue('site-about-text-2') || s.about.text2;
+                s.about.text3 = getValue('site-about-text-3') || s.about.text3;
+
+                s.contact.title = getValue('site-contact-title') || s.contact.title;
+                s.contact.lead = getValue('site-contact-lead') || s.contact.lead;
+                s.contact.infoTitle = getValue('site-contact-info-title') || s.contact.infoTitle;
+                s.contact.address = getValue('site-contact-address') || s.contact.address;
+                s.contact.phoneMain = getValue('site-contact-phone-main') || s.contact.phoneMain;
+                s.contact.phoneExtra = getValue('site-contact-phone-extra') || s.contact.phoneExtra;
+                s.contact.email = getValue('site-contact-email') || s.contact.email;
+                s.contact.hours1 = getValue('site-contact-hours-1') || s.contact.hours1;
+                s.contact.hours2 = getValue('site-contact-hours-2') || s.contact.hours2;
+
+                s.social.facebook = getValue('site-social-facebook') || '#';
+                s.social.instagram = getValue('site-social-instagram') || '#';
+                s.social.youtube = getValue('site-social-youtube') || '#';
+                s.social.tiktok = getValue('site-social-tiktok') || '#';
+                s.social.telegram = getValue('site-social-telegram') || '#';
+                s.social.whatsapp = getValue('site-social-whatsapp') || '#';
+                s.social.viber = getValue('site-social-viber') || '#';
+
+                saveSiteContentSettings(s);
+                applySiteContentSettings();
+                showToast('Контент сайта обновлён', 'success');
+                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
 
             // Promo admin actions
@@ -5466,6 +5641,13 @@ window.addEventListener('storage', function(e) {
         var clientsView = document.getElementById('admin-clients-view');
         if (clientsView && !clientsView.classList.contains('hidden')) {
             if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+        }
+    }
+    if (e.key === SITE_CONTENT_STORAGE_KEY) {
+        applySiteContentSettings();
+        var contentView = document.getElementById('admin-site-content-view');
+        if (contentView && !contentView.classList.contains('hidden') && typeof window.renderSiteContentAdmin === 'function') {
+            window.renderSiteContentAdmin();
         }
     }
 });
