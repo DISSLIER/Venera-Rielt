@@ -4319,6 +4319,18 @@
                 }
             }
 
+            // Site requests actions
+            if (e.target.id === 'admin-messages-refresh' || e.target.closest('#admin-messages-refresh')) {
+                if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
+            }
+            if (e.target.id === 'admin-messages-clear-read' || e.target.closest('#admin-messages-clear-read')) {
+                if (typeof window.deleteReadMessages === 'function') window.deleteReadMessages();
+            }
+            if (e.target.closest('.message-delete-btn')) {
+                var messageId = e.target.closest('.message-delete-btn').dataset.messageId;
+                if (messageId && typeof window.deleteMessage === 'function') window.deleteMessage(messageId);
+            }
+
             // Promo admin actions
             if (e.target.closest('.promo-slide-toggle')) {
                 var idx = Number(e.target.closest('.promo-slide-toggle').dataset.i);
@@ -5405,7 +5417,7 @@ window.renderMessagesAdmin = function() {
             (m.email ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.75);margin-bottom:4px;"><i class="fas fa-envelope mr-2" style="color:#ffd700;"></i>' + _escMsg(m.email) + '</div>' : '') +
             (m.message ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.5);margin-top:10px;white-space:pre-wrap;line-height:1.6;border-top:1px solid rgba(255,255,255,0.07);padding-top:10px;">' + _escMsg(m.message) + '</div>' : '') +
             '<div style="margin-top:14px;">' +
-            '<button onclick="window.deleteMessage(\'' + m.id + '\')" class="admin-btn-del">Удалить</button>' +
+            '<button type="button" class="admin-btn-del message-delete-btn" data-message-id="' + m.id + '">Удалить</button>' +
             '</div>' +
             '</div>';
     }).join('');
