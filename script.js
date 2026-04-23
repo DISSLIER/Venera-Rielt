@@ -3876,6 +3876,7 @@
             if (dotsContainer) dotsContainer.innerHTML = '';
 
             slides.forEach(function(slide, i) {
+                if (slide.hidden) return; // skip hidden slides
                 var el = document.createElement('div');
                 el.className = 'promo-slide' + (i === 0 ? ' active' : '');
                 if (slide.type === 'video') {
@@ -3935,9 +3936,10 @@
                 startPromoAutoplay();
             }
 
-            // Hide nav if only 1 slide
+            // Hide nav if only 1 visible slide
+            var visibleCount = slides.filter(function(s) { return !s.hidden; }).length;
             var navBtns = section.querySelectorAll('.promo-nav');
-            navBtns.forEach(function(b) { b.style.display = slides.length > 1 ? '' : 'none'; });
+            navBtns.forEach(function(b) { b.style.display = visibleCount > 1 ? '' : 'none'; });
         }
 
         var _promoAutoplayTimer = null;
@@ -4013,13 +4015,16 @@
                 div.innerHTML = preview +
                     '<div class="promo-admin-info">' +
                         '<span class="promo-admin-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                        (slide.hidden ? '<span style="color:#f97316;font-size:0.75rem;margin-left:6px;"><i class="fas fa-eye-slash"></i> Скрыт</span>' : '') +
                         (slide.link ? '<span class="promo-admin-link" title="' + slide.link + '"><i class="fas fa-link"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
+                        '<button class="promo-slide-toggle admin-btn-eye" data-i="' + i + '" title="' + (slide.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (slide.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
                         '<button class="promo-move-up admin-btn-eye" data-i="' + i + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
                         '<button class="promo-move-down admin-btn-eye" data-i="' + i + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
                         '<button class="promo-delete admin-btn-del" data-i="' + i + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
+                if (slide.hidden) div.style.opacity = '0.45';
                 list.appendChild(div);
             });
         }
@@ -4282,6 +4287,13 @@
             }
 
             // Promo admin actions
+            if (e.target.closest('.promo-slide-toggle')) {
+                var idx = Number(e.target.closest('.promo-slide-toggle').dataset.i);
+                var sl = getPromoSlides();
+                sl[idx].hidden = !sl[idx].hidden;
+                savePromoSlides(sl);
+                renderPromoAdmin(); renderPromoCarousel();
+            }
             if (e.target.closest('.promo-delete')) {
                 var idx = Number(e.target.closest('.promo-delete').dataset.i);
                 var sl = getPromoSlides(); sl.splice(idx, 1); savePromoSlides(sl);
