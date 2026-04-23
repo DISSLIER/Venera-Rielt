@@ -3835,6 +3835,7 @@
 
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
         const PROMO_STORAGE_KEY = 'venera_promo_slides_v7';
+        const PROMO_HIDDEN_KEY = 'venera_promo_hidden_v1';
 
         function getPromoSlides() {
             try {
@@ -3859,12 +3860,13 @@
 
         function renderPromoCarousel() {
             var slides = getPromoSlides();
+            var hidden = localStorage.getItem(PROMO_HIDDEN_KEY) === '1';
             var section = document.getElementById('promo-section');
             var container = document.getElementById('promo-carousel');
             var dotsContainer = document.getElementById('promo-dots');
             if (!section || !container) return;
 
-            if (!slides.length) {
+            if (!slides.length || hidden) {
                 section.style.display = 'none';
                 return;
             }
@@ -3989,6 +3991,17 @@
         function renderPromoAdmin() {
             var list = document.getElementById('promo-admin-list');
             if (!list) return;
+            // Update visibility toggle button
+            var isHidden = localStorage.getItem(PROMO_HIDDEN_KEY) === '1';
+            var toggleBtn = document.getElementById('promo-toggle-visibility-btn');
+            var toggleLabel = document.getElementById('promo-toggle-label');
+            var toggleIcon = document.getElementById('promo-toggle-icon');
+            if (toggleBtn) {
+                toggleBtn.style.borderColor = isHidden ? '#ffd700' : '';
+                toggleBtn.style.color = isHidden ? '#ffd700' : '';
+            }
+            if (toggleLabel) toggleLabel.textContent = isHidden ? 'Показать раздел' : 'Скрыть раздел';
+            if (toggleIcon) { toggleIcon.className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash'; }
             var slides = getPromoSlides();
             list.innerHTML = '';
             slides.forEach(function(slide, i) {
@@ -4284,16 +4297,36 @@
                 var sl = getPromoSlides(); if (idx < sl.length - 1) { var t = sl[idx]; sl[idx] = sl[idx+1]; sl[idx+1] = t; savePromoSlides(sl); renderPromoAdmin(); renderPromoCarousel(); }
             }
             if (e.target.id === 'promo-add-btn' || e.target.closest('#promo-add-btn')) {
-                var urlInp = document.getElementById('promo-add-url');
+                var fileInp = document.getElementById('promo-add-file');
                 var linkInp = document.getElementById('promo-add-link');
-                var typeInp = document.getElementById('promo-add-type');
-                if (!urlInp || !urlInp.value.trim()) return;
-                var sl = getPromoSlides();
-                sl.push({ url: urlInp.value.trim(), type: (typeInp && typeInp.value) || 'image', link: linkInp ? linkInp.value.trim() : '', alt: '' });
-                savePromoSlides(sl);
-                urlInp.value = ''; if (linkInp) linkInp.value = '';
+                if (!fileInp || !fileInp.files || !fileInp.files[0]) {
+                    showToast('Выберите файл для загрузки', 'error'); return;
+                }
+                var file = fileInp.files[0];
+                var fileType = file.type.startsWith('video/') ? 'video' : 'image';
+                var maxMB = fileType === 'video' ? 50 : 5;
+                if (file.size > maxMB * 1024 * 1024) {
+                    showToast('Файл слишком большой (макс. ' + maxMB + ' МБ)', 'error'); return;
+                }
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var sl = getPromoSlides();
+                    sl.push({ url: ev.target.result, type: fileType, link: linkInp ? linkInp.value.trim() : '', alt: file.name });
+                    savePromoSlides(sl);
+                    fileInp.value = '';
+                    var nameSpan = document.getElementById('promo-file-name');
+                    if (nameSpan) nameSpan.textContent = 'Выбрать файл...';
+                    if (linkInp) linkInp.value = '';
+                    renderPromoAdmin(); renderPromoCarousel();
+                    showToast('Слайд добавлен', 'success');
+                    if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                };
+                reader.readAsDataURL(file);
+            }
+            if (e.target.id === 'promo-toggle-visibility-btn' || e.target.closest('#promo-toggle-visibility-btn')) {
+                var cur = localStorage.getItem(PROMO_HIDDEN_KEY) === '1';
+                localStorage.setItem(PROMO_HIDDEN_KEY, cur ? '0' : '1');
                 renderPromoAdmin(); renderPromoCarousel();
-                if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
             
             // Close modals

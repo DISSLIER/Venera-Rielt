@@ -1777,24 +1777,24 @@
                             <h3 class="text-2xl font-semibold gold-text">Рекламная карусель</h3>
                             <p class="text-xs text-gray-500 mt-1">Фото и видео между поиском и каталогом на главной</p>
                         </div>
+                        <button id="promo-toggle-visibility-btn" type="button" class="cal-btn-cancel flex items-center gap-2" style="min-width:180px;">
+                            <i class="fas fa-eye-slash" id="promo-toggle-icon"></i>
+                            <span id="promo-toggle-label">Скрыть раздел</span>
+                        </button>
                     </div>
                     <div class="rounded-2xl p-5 mb-6" style="background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.01) 100%);border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(12px);">
                         <h4 class="text-sm font-semibold mb-3" style="color:#ffd700;">Добавить слайд</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                             <div class="md:col-span-1">
-                                <label class="block text-gray-400 mb-1 text-xs">Тип</label>
-                                <select id="promo-add-type" class="cal-select">
-                                    <option value="image">Фото</option>
-                                    <option value="video">Видео</option>
-                                </select>
+                                <label class="block text-gray-400 mb-1 text-xs">Файл (фото или видео) *</label>
+                                <label class="promo-file-label" for="promo-add-file">
+                                    <i class="fas fa-upload mr-1"></i> <span id="promo-file-name">Выбрать файл...</span>
+                                </label>
+                                <input id="promo-add-file" type="file" accept="image/*,video/*" class="hidden">
                             </div>
                             <div class="md:col-span-1">
-                                <label class="block text-gray-400 mb-1 text-xs">URL медиа *</label>
-                                <input id="promo-add-url" type="text" class="cal-input" placeholder="https://...">
-                            </div>
-                            <div class="md:col-span-1">
-                                <label class="block text-gray-400 mb-1 text-xs">Ссылка (клик)</label>
-                                <input id="promo-add-link" type="text" class="cal-input" placeholder="https://... (необязательно)">
+                                <label class="block text-gray-400 mb-1 text-xs">Ссылка при клике (необязательно)</label>
+                                <input id="promo-add-link" type="text" class="cal-input" placeholder="https://...">
                             </div>
                             <div>
                                 <button id="promo-add-btn" type="button" class="cal-btn-primary w-full">
@@ -1802,6 +1802,7 @@
                                 </button>
                             </div>
                         </div>
+                        <p class="text-xs text-gray-600 mt-2">После добавления файл сохраняется локально. Рекомендуемый размер: фото до 2 МБ, видео до 10 МБ.</p>
                     </div>
                     <div id="promo-admin-list" class="space-y-3"></div>
                 </section>
@@ -2436,6 +2437,14 @@
                 }
 
                 switchAdminView('admin-properties-view');
+
+                // File input label update for promo
+                document.addEventListener('change', function(e) {
+                    if (e.target.id === 'promo-add-file') {
+                        var nameSpan = document.getElementById('promo-file-name');
+                        if (nameSpan) nameSpan.textContent = e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
+                    }
+                });
             });
         </script>
 
