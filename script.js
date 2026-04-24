@@ -1042,10 +1042,10 @@
                 var item = document.createElement('div');
                 item.className = 'promo-admin-item';
                 item.innerHTML =
-                    '<img src="' + photo.url + '" class="promo-admin-thumb" style="width:90px;height:60px;object-fit:cover;border-radius:8px;">' +
+                    '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
                         '<div class="text-sm text-gray-200">Слайд</div>' +
-                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '<div class="text-xs text-emerald-400 mt-1"><i class="fas fa-eye"></i> Видимый</div>') +
+                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
                         '<button class="site-about-photo-toggle admin-btn-eye" data-i="' + idx + '" title="' + (photo.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (photo.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
@@ -4303,6 +4303,46 @@
             if (e.target.closest('.promo-next')) goToPromoSlide(_promoCurrentIndex + 1);
         });
 
+        function ensureAdminMediaPreviewModal() {
+            var existing = document.getElementById('admin-media-preview-modal');
+            if (existing) return existing;
+
+            var modal = document.createElement('div');
+            modal.id = 'admin-media-preview-modal';
+            modal.className = 'hidden';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:350;display:flex;align-items:center;justify-content:center;padding:24px;';
+            modal.innerHTML =
+                '<button id="admin-media-preview-close" type="button" aria-label="Закрыть" style="position:absolute;top:16px;right:18px;color:#fff;font-size:32px;line-height:1;background:transparent;border:none;cursor:pointer;">&times;</button>' +
+                '<div id="admin-media-preview-content" style="max-width:min(1200px,95vw);max-height:90vh;width:auto;height:auto;"></div>';
+            document.body.appendChild(modal);
+            return modal;
+        }
+
+        function closeAdminMediaPreview() {
+            var modal = document.getElementById('admin-media-preview-modal');
+            var content = document.getElementById('admin-media-preview-content');
+            if (!modal || !content) return;
+            content.innerHTML = '';
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+
+        function openAdminMediaPreview(type, src) {
+            if (!src) return;
+            var modal = ensureAdminMediaPreviewModal();
+            var content = document.getElementById('admin-media-preview-content');
+            if (!modal || !content) return;
+
+            if (type === 'video') {
+                content.innerHTML = '<video src="' + src + '" controls autoplay style="max-width:95vw;max-height:90vh;border-radius:12px;display:block;"></video>';
+            } else {
+                content.innerHTML = '<img src="' + src + '" alt="Превью" style="max-width:95vw;max-height:90vh;border-radius:12px;display:block;object-fit:contain;">';
+            }
+
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+        }
+
         // ─── Promo Admin ────────────────────────────────────────────────────────────
         function renderPromoAdmin() {
             var list = document.getElementById('promo-admin-list');
@@ -4324,8 +4364,8 @@
                 var div = document.createElement('div');
                 div.className = 'promo-admin-item';
                 var preview = slide.type === 'video'
-                    ? '<video src="' + slide.url + '" muted class="promo-admin-thumb"></video>'
-                    : '<img src="' + slide.url + '" class="promo-admin-thumb">';
+                    ? '<video src="' + slide.url + '" muted class="promo-admin-thumb admin-click-preview" data-preview-type="video" data-preview-src="' + slide.url + '" style="cursor:zoom-in;"></video>'
+                    : '<img src="' + slide.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + slide.url + '" style="cursor:zoom-in;">';
                 div.innerHTML = preview +
                     '<div class="promo-admin-info">' +
                         '<span class="promo-admin-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
@@ -4724,6 +4764,23 @@
                 if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
 
+            if (e.target.id === 'admin-media-preview-close' || e.target.closest('#admin-media-preview-close')) {
+                closeAdminMediaPreview();
+                return;
+            }
+
+            var previewModal = document.getElementById('admin-media-preview-modal');
+            if (previewModal && e.target === previewModal) {
+                closeAdminMediaPreview();
+                return;
+            }
+
+            var previewThumb = e.target.closest('.admin-click-preview');
+            if (previewThumb) {
+                openAdminMediaPreview(previewThumb.dataset.previewType || 'image', previewThumb.dataset.previewSrc || previewThumb.getAttribute('src') || '');
+                return;
+            }
+
             // Promo admin actions
             if (e.target.closest('.promo-slide-toggle')) {
                 var idx = Number(e.target.closest('.promo-slide-toggle').dataset.i);
@@ -4833,6 +4890,10 @@
                 };
                 reader.readAsDataURL(file);
             }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAdminMediaPreview();
         });
         
         // Form submissions - отключены, используются новые из admin.js
