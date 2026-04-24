@@ -987,22 +987,26 @@
                 list = s.about.photos
                     .map(function(item) {
                         if (!item) return null;
-                        if (typeof item === 'string') return { url: item, hidden: false };
-                        if (typeof item === 'object' && item.url) return { url: item.url, hidden: !!item.hidden };
+                        if (typeof item === 'string') return { url: item, type: 'image', hidden: false };
+                        if (typeof item === 'object' && item.url) return { url: item.url, type: item.type === 'video' ? 'video' : 'image', hidden: !!item.hidden };
                         return null;
                     })
                     .filter(function(x) { return !!x && !!x.url; });
             } else {
                 list = [s.about.photo1, s.about.photo2, s.about.photo3]
                     .filter(function(x) { return !!x; })
-                    .map(function(url) { return { url: url, hidden: false }; });
+                    .map(function(url) { return { url: url, type: 'image', hidden: false }; });
             }
             return list;
         }
 
-        function _getAboutPhotos(settings) {
+        function _getAboutVisibleEntries(settings) {
             return _getAboutPhotoEntries(settings)
-                .filter(function(entry) { return !entry.hidden; })
+                .filter(function(entry) { return !entry.hidden; });
+        }
+
+        function _getAboutPhotos(settings) {
+            return _getAboutVisibleEntries(settings)
                 .map(function(entry) { return entry.url; });
         }
 
@@ -1011,19 +1015,19 @@
                 .map(function(item) {
                     if (!item) return null;
                     if (typeof item === 'string') {
-                        return item.trim() ? { url: item.trim(), hidden: false } : null;
+                        return item.trim() ? { url: item.trim(), type: 'image', hidden: false } : null;
                     }
                     if (typeof item === 'object' && item.url) {
                         var normalizedUrl = String(item.url || '').trim();
                         if (!normalizedUrl) return null;
-                        return { url: normalizedUrl, hidden: !!item.hidden };
+                        return { url: normalizedUrl, type: item.type === 'video' ? 'video' : 'image', hidden: !!item.hidden };
                     }
                     return null;
                 })
                 .filter(function(x) { return !!x; });
 
             settings.about.photos = cleaned.map(function(item) {
-                return { url: item.url, hidden: !!item.hidden };
+                return { url: item.url, type: item.type === 'video' ? 'video' : 'image', hidden: !!item.hidden };
             });
 
             var visible = cleaned.filter(function(item) { return !item.hidden; }).map(function(item) { return item.url; });
@@ -1041,13 +1045,17 @@
             photos.forEach(function(photo, idx) {
                 var item = document.createElement('div');
                 item.className = 'promo-admin-item';
+                var previewMedia = photo.type === 'video'
+                    ? '<video src="' + photo.url + '" muted class="promo-admin-thumb admin-click-preview" data-preview-type="video" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;"></video>'
+                    : '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">';
                 item.innerHTML =
                     '<div class="promo-admin-media-wrap promo-admin-media-wrap--about">' +
-                        '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">' +
+                        previewMedia +
+                        '<span class="promo-admin-overlay-type">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                         (photo.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<div class="text-sm text-gray-200 promo-admin-mobile-hide">Слайд</div>' +
+                        '<div class="text-sm text-gray-200 promo-admin-mobile-hide">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</div>' +
                         (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
@@ -1060,21 +1068,24 @@
                 list.appendChild(item);
             });
             if (!photos.length) {
-                list.innerHTML = '<div class="text-gray-500 text-sm">Пока нет фото. Добавьте первое выше.</div>';
+                list.innerHTML = '<div class="text-gray-500 text-sm">Пока нет слайдов. Добавьте первый выше.</div>';
             }
         }
 
         function renderAboutCarouselFromSettings(settings) {
             var carousel = document.getElementById('about-testimonial-carousel');
             if (!carousel) return;
-            var photos = _getAboutPhotos(settings);
-            if (!photos.length) {
+            var entries = _getAboutVisibleEntries(settings);
+            if (!entries.length) {
                 carousel.innerHTML = '';
                 window.__veneraAboutCarouselNeedsRebind = true;
                 return;
             }
-            var slidesHtml = photos.map(function(url, i) {
-                return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><img src="' + url + '" alt="Luxury Property" class="w-full h-96 object-cover"></div>';
+            var slidesHtml = entries.map(function(entry, i) {
+                if (entry.type === 'video') {
+                    return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><video src="' + entry.url + '" class="w-full h-96 object-cover" autoplay muted loop playsinline></video></div>';
+                }
+                return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><img src="' + entry.url + '" alt="Luxury Property" class="w-full h-96 object-cover"></div>';
             }).join('');
             var arrows =
                 '<button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"><i class="fas fa-chevron-left"></i></button>' +
@@ -4662,19 +4673,74 @@
                 if (messageId && typeof window.deleteMessage === 'function') window.deleteMessage(messageId);
             }
 
-            // About photos manager
+            // About media manager
+            if (e.target.id === 'site-about-src-file-btn' || e.target.closest('#site-about-src-file-btn')) {
+                var aboutFileBtn = document.getElementById('site-about-src-file-btn');
+                var aboutUrlBtn = document.getElementById('site-about-src-url-btn');
+                var aboutFileRow = document.getElementById('site-about-src-file-row');
+                var aboutUrlRow = document.getElementById('site-about-src-url-row');
+                if (aboutFileBtn) { aboutFileBtn.classList.remove('cal-btn-cancel'); aboutFileBtn.classList.add('cal-btn-primary'); }
+                if (aboutUrlBtn) { aboutUrlBtn.classList.remove('cal-btn-primary'); aboutUrlBtn.classList.add('cal-btn-cancel'); }
+                if (aboutFileRow) aboutFileRow.classList.remove('hidden');
+                if (aboutUrlRow) aboutUrlRow.classList.add('hidden');
+                return;
+            }
+
+            if (e.target.id === 'site-about-src-url-btn' || e.target.closest('#site-about-src-url-btn')) {
+                var aboutFileBtn2 = document.getElementById('site-about-src-file-btn');
+                var aboutUrlBtn2 = document.getElementById('site-about-src-url-btn');
+                var aboutFileRow2 = document.getElementById('site-about-src-file-row');
+                var aboutUrlRow2 = document.getElementById('site-about-src-url-row');
+                if (aboutUrlBtn2) { aboutUrlBtn2.classList.remove('cal-btn-cancel'); aboutUrlBtn2.classList.add('cal-btn-primary'); }
+                if (aboutFileBtn2) { aboutFileBtn2.classList.remove('cal-btn-primary'); aboutFileBtn2.classList.add('cal-btn-cancel'); }
+                if (aboutUrlRow2) aboutUrlRow2.classList.remove('hidden');
+                if (aboutFileRow2) aboutFileRow2.classList.add('hidden');
+                return;
+            }
+
             if (e.target.id === 'site-about-photo-add-btn' || e.target.closest('#site-about-photo-add-btn')) {
+                var aboutFileInp = document.getElementById('site-about-photo-add-file');
+                if (!aboutFileInp || !aboutFileInp.files || !aboutFileInp.files[0]) {
+                    showToast('Выберите файл для загрузки', 'error'); return;
+                }
+                var aboutFile = aboutFileInp.files[0];
+                var aboutType = aboutFile.type.startsWith('video/') ? 'video' : 'image';
+                var aboutMaxMB = aboutType === 'video' ? 50 : 5;
+                if (aboutFile.size > aboutMaxMB * 1024 * 1024) {
+                    showToast('Файл слишком большой (макс. ' + aboutMaxMB + ' МБ)', 'error'); return;
+                }
+                var aboutReader = new FileReader();
+                aboutReader.onload = function(ev) {
+                    var stFile = getSiteContentSettings();
+                    var media = _getAboutPhotoEntries(stFile);
+                    media.push({ url: ev.target.result, type: aboutType, hidden: false });
+                    _setAboutPhotos(stFile, media);
+                    saveSiteContentSettings(stFile);
+                    aboutFileInp.value = '';
+                    var aboutNameSpan = document.getElementById('site-about-file-name');
+                    if (aboutNameSpan) aboutNameSpan.textContent = 'Выбрать файл...';
+                    renderAboutPhotosAdmin(stFile);
+                    applySiteContentSettings();
+                    showToast('Слайд добавлен', 'success');
+                };
+                aboutReader.readAsDataURL(aboutFile);
+                return;
+            }
+
+            if (e.target.id === 'site-about-photo-add-url-btn' || e.target.closest('#site-about-photo-add-url-btn')) {
                 var addUrlInp = document.getElementById('site-about-photo-add-url');
                 var url = addUrlInp ? addUrlInp.value.trim() : '';
-                if (!url) { showToast('Введите URL фото', 'error'); return; }
+                if (!url) { showToast('Введите URL', 'error'); return; }
+                var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url) ? 'video' : 'image';
                 var st = getSiteContentSettings();
                 var ph = _getAboutPhotoEntries(st);
-                ph.push({ url: url, hidden: false });
+                ph.push({ url: url, type: detectedType, hidden: false });
                 _setAboutPhotos(st, ph);
                 saveSiteContentSettings(st);
                 if (addUrlInp) addUrlInp.value = '';
                 renderAboutPhotosAdmin(st);
                 applySiteContentSettings();
+                showToast('Слайд добавлен', 'success');
                 return;
             }
 
@@ -4747,7 +4813,7 @@
                 s.about.stat3Label = getValue('site-about-stat-3-label') || s.about.stat3Label;
                 s.about.stat4Value = getValue('site-about-stat-4-value') || s.about.stat4Value;
                 s.about.stat4Label = getValue('site-about-stat-4-label') || s.about.stat4Label;
-                _setAboutPhotos(s, _getAboutPhotos(s));
+                _setAboutPhotos(s, _getAboutPhotoEntries(s));
 
                 s.contact.title = getValue('site-contact-title') || s.contact.title;
                 s.contact.lead = getValue('site-contact-lead') || s.contact.lead;
@@ -4874,30 +4940,8 @@
         // Site content photo inputs: URL + file upload previews
         document.addEventListener('change', function(e) {
             if (e.target.id === 'site-about-photo-add-file') {
-                if (!e.target.files || !e.target.files[0]) return;
-                var file = e.target.files[0];
-                if (!file.type || !file.type.startsWith('image/')) {
-                    showToast('Выберите файл изображения', 'error');
-                    e.target.value = '';
-                    return;
-                }
-                if (file.size > 8 * 1024 * 1024) {
-                    showToast('Фото слишком большое (макс. 8 МБ)', 'error');
-                    e.target.value = '';
-                    return;
-                }
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var url = ev.target.result;
-                    var stF = getSiteContentSettings();
-                    var phF = _getAboutPhotoEntries(stF);
-                    phF.push({ url: url, hidden: false });
-                    _setAboutPhotos(stF, phF);
-                    saveSiteContentSettings(stF);
-                    renderAboutPhotosAdmin(stF);
-                    applySiteContentSettings();
-                };
-                reader.readAsDataURL(file);
+                var nameSpan = document.getElementById('site-about-file-name');
+                if (nameSpan) nameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
             }
         });
 
