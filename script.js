@@ -6821,6 +6821,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ====================== КАЛЕНДАРЬ АДМИНКИ ======================
 var CALENDAR_STORAGE_KEY = 'venera_calendar_notes_v1';
+var CALENDAR_TARGET_COMPANY = 'company';
+var CALENDAR_TARGET_ALL_REALTORS = 'all_realtors';
+
+function _calendarTargetLabel(targetId) {
+    if (String(targetId || '') === CALENDAR_TARGET_COMPANY) return 'Компания';
+    if (String(targetId || '') === CALENDAR_TARGET_ALL_REALTORS) return 'Все риелторы';
+    return '';
+}
 
 function _getCalendarNotes() {
     try { return JSON.parse(localStorage.getItem(CALENDAR_STORAGE_KEY) || '[]'); } catch(e) { return []; }
@@ -6853,6 +6861,9 @@ function _calendarState() {
 
 function _getCalendarRealtors() {
     var map = {};
+
+    map[CALENDAR_TARGET_COMPANY] = 'Компания';
+    map[CALENDAR_TARGET_ALL_REALTORS] = 'Все риелторы';
 
     try {
         var runtimeAgents = _getAgentListForClientOwner();
@@ -6890,7 +6901,7 @@ function _renderCalendarRealtorSelects() {
             filter.disabled = true;
         } else {
             var prev = filter.value || st.realtorFilter || 'all';
-            filter.innerHTML = '<option value="all">Все риелторы</option>' + realtors.map(function(r) {
+            filter.innerHTML = '<option value="all">Все события</option>' + realtors.map(function(r) {
                 return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
             }).join('');
             filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
@@ -6921,7 +6932,16 @@ function _getFilteredCalendarNotes() {
     var st = _calendarState();
     var notes = _getCalendarNotes();
     if (!st.realtorFilter || st.realtorFilter === 'all') return notes;
-    return notes.filter(function(n) { return String(n.realtorId || '') === String(st.realtorFilter); });
+    var filterId = String(st.realtorFilter || '');
+    var realtorSess = getRealtorSession();
+    if (realtorSess && realtorSess.rieltor_id) {
+        var rid = String(realtorSess.rieltor_id);
+        return notes.filter(function(n) {
+            var target = String(n.realtorId || '');
+            return target === rid || target === CALENDAR_TARGET_ALL_REALTORS;
+        });
+    }
+    return notes.filter(function(n) { return String(n.realtorId || '') === filterId; });
 }
 
 function _renderCalendarDayEntries() {
@@ -6947,13 +6967,17 @@ function _renderCalendarDayEntries() {
 
     list.innerHTML = notes.map(function(n) {
         var time = n.time ? _escMsg(n.time) : '--:--';
-        var realtor = n.realtorName ? _escMsg(n.realtorName) : 'Не назначен';
+        var realtorTargetId = String(n.realtorId || '');
+        var realtorLabel = _calendarTargetLabel(realtorTargetId);
+        var realtor = realtorLabel ? _escMsg(realtorLabel) : (n.realtorName ? _escMsg(n.realtorName) : 'Не назначен');
         var type = _escMsg(n.type || 'Другое');
         var icon = typeIcons[n.type] || 'fa-bookmark';
         var color = typeColors[n.type] || '#fbbf24';
         var runtimeAgents = _getAgentListForClientOwner();
-        var agentObj = n.realtorId ? runtimeAgents.find(function(a) { return String(a.rieltor_id) === String(n.realtorId); }) : null;
+        var agentObj = realtorTargetId ? runtimeAgents.find(function(a) { return String(a.rieltor_id) === realtorTargetId; }) : null;
         var agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
+        var realtorSessView = getRealtorSession();
+        var canEditNote = !(realtorSessView && realtorSessView.rieltor_id) || realtorTargetId === String(realtorSessView.rieltor_id);
         return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
             'onmouseover="this.style.boxShadow=\'0 4px 24px rgba(255,215,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
             '<div class="flex items-center gap-3">' +
@@ -6977,14 +7001,16 @@ function _renderCalendarDayEntries() {
             '</div>' +
             '<div class="cal-entry-title-mob font-semibold text-white text-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' + _escMsg(n.title || '') + '</div>' +
             (n.note ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;white-space:pre-wrap;">' + _escMsg(n.note) + '</div>' : '') +
-            '<div style="display:flex;gap:8px;margin-top:10px;">' +
-                '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
-                    'onmouseover="this.style.background=\'rgba(96,165,250,0.18)\'" onmouseout="this.style.background=\'rgba(96,165,250,0.08)\'">' +
-                    '<i class="fas fa-pen mr-1" style="font-size:9px;"></i>Изменить</button>' +
-                '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;transition:background 0.2s;" ' +
-                    'onmouseover="this.style.background=\'rgba(239,68,68,0.18)\'" onmouseout="this.style.background=\'rgba(239,68,68,0.08)\'">' +
-                    '<i class="fas fa-trash mr-1" style="font-size:9px;"></i>Удалить</button>' +
-            '</div>' +
+            (canEditNote
+                ? '<div style="display:flex;gap:8px;margin-top:10px;">' +
+                    '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
+                        'onmouseover="this.style.background=\'rgba(96,165,250,0.18)\'" onmouseout="this.style.background=\'rgba(96,165,250,0.08)\'">' +
+                        '<i class="fas fa-pen mr-1" style="font-size:9px;"></i>Изменить</button>' +
+                    '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;transition:background 0.2s;" ' +
+                        'onmouseover="this.style.background=\'rgba(239,68,68,0.18)\'" onmouseout="this.style.background=\'rgba(239,68,68,0.08)\'">' +
+                        '<i class="fas fa-trash mr-1" style="font-size:9px;"></i>Удалить</button>' +
+                '</div>'
+                : '') +
         '</div>';
     }).join('');
 }
@@ -7186,6 +7212,8 @@ window.initCalendarAdmin = function() {
                 realtorName = realtorSel.options[realtorSel.selectedIndex].textContent || '';
                 if (realtorId === '') realtorName = '';
             }
+            if (realtorId === CALENDAR_TARGET_COMPANY) realtorName = 'Компания';
+            if (realtorId === CALENDAR_TARGET_ALL_REALTORS) realtorName = 'Все риелторы';
             var type = (document.getElementById('calendar-note-type') || {}).value || 'Встреча';
             var title = ((document.getElementById('calendar-note-title') || {}).value || '').trim();
             var note = ((document.getElementById('calendar-note-text') || {}).value || '').trim();
@@ -7236,6 +7264,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.addEventListener('storage', function(e) {
+    if (e.key === CLIENTS_STORAGE_KEY) {
+        var clientsView = document.getElementById('admin-clients-view');
+        if (clientsView && !clientsView.classList.contains('hidden')) {
+            window.renderClientsAdmin && window.renderClientsAdmin();
+        }
+    }
     if (e.key === CALENDAR_STORAGE_KEY) {
         var calendarView = document.getElementById('admin-calendar-view');
         if (calendarView && !calendarView.classList.contains('hidden')) {
