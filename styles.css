@@ -646,7 +646,7 @@
             }
 
             .promo-admin-overlay-type {
-                display: inline-flex;
+                display: inline-flex !important;
                 position: absolute;
                 left: 4px;
                 right: 4px;
@@ -664,7 +664,7 @@
             }
 
             .promo-admin-overlay-icon {
-                display: inline-flex;
+                display: inline-flex !important;
                 position: absolute;
                 top: 4px;
                 right: 4px;
@@ -749,10 +749,21 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
         }
 
         .promo-admin-media-wrap .promo-admin-thumb {
             display: block;
+        }
+
+        .promo-admin-item--hidden .promo-admin-thumb {
+            opacity: 0.45;
+        }
+
+        .promo-admin-item--hidden .promo-admin-overlay-type,
+        .promo-admin-item--hidden .promo-admin-overlay-icon {
+            opacity: 1;
         }
 
         .promo-admin-overlay-type,

@@ -1056,7 +1056,7 @@
                         '<button class="site-about-photo-down admin-btn-eye" data-i="' + idx + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
                         '<button class="site-about-photo-delete admin-btn-del" data-i="' + idx + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
-                if (photo.hidden) item.style.opacity = '0.5';
+                if (photo.hidden) item.classList.add('promo-admin-item--hidden');
                 list.appendChild(item);
             });
             if (!photos.length) {
@@ -4387,7 +4387,7 @@
                         '<button class="promo-move-down admin-btn-eye" data-i="' + i + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
                         '<button class="promo-delete admin-btn-del" data-i="' + i + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
-                if (slide.hidden) div.style.opacity = '0.45';
+                if (slide.hidden) div.classList.add('promo-admin-item--hidden');
                 list.appendChild(div);
             });
         }
