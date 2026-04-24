@@ -6252,7 +6252,7 @@ function _saveClients(items) {
 }
 
 function _getAgentListForClientOwner() {
-    if (Array.isArray(agents) && agents.length) return agents;
+    if (typeof agents !== 'undefined' && Array.isArray(agents) && agents.length) return agents;
     if (Array.isArray(window.VENERA_AGENTS_CONFIG)) return window.VENERA_AGENTS_CONFIG;
     return [];
 }
