@@ -980,47 +980,80 @@
             try { localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(settings)); } catch (_) {}
         }
 
-        function _getAboutPhotos(settings) {
+        function _getAboutPhotoEntries(settings) {
             var s = settings || getSiteContentSettings();
             var list = [];
             if (Array.isArray(s.about.photos) && s.about.photos.length) {
-                list = s.about.photos.filter(function(x) { return !!x; });
+                list = s.about.photos
+                    .map(function(item) {
+                        if (!item) return null;
+                        if (typeof item === 'string') return { url: item, hidden: false };
+                        if (typeof item === 'object' && item.url) return { url: item.url, hidden: !!item.hidden };
+                        return null;
+                    })
+                    .filter(function(x) { return !!x && !!x.url; });
             } else {
-                list = [s.about.photo1, s.about.photo2, s.about.photo3].filter(function(x) { return !!x; });
+                list = [s.about.photo1, s.about.photo2, s.about.photo3]
+                    .filter(function(x) { return !!x; })
+                    .map(function(url) { return { url: url, hidden: false }; });
             }
             return list;
         }
 
+        function _getAboutPhotos(settings) {
+            return _getAboutPhotoEntries(settings)
+                .filter(function(entry) { return !entry.hidden; })
+                .map(function(entry) { return entry.url; });
+        }
+
         function _setAboutPhotos(settings, photos) {
-            var cleaned = (photos || []).filter(function(x) { return !!x; });
-            settings.about.photos = cleaned.slice();
-            settings.about.photo1 = cleaned[0] || DEFAULT_SITE_CONTENT.about.photo1;
-            settings.about.photo2 = cleaned[1] || DEFAULT_SITE_CONTENT.about.photo2;
-            settings.about.photo3 = cleaned[2] || DEFAULT_SITE_CONTENT.about.photo3;
+            var cleaned = (photos || [])
+                .map(function(item) {
+                    if (!item) return null;
+                    if (typeof item === 'string') {
+                        return item.trim() ? { url: item.trim(), hidden: false } : null;
+                    }
+                    if (typeof item === 'object' && item.url) {
+                        var normalizedUrl = String(item.url || '').trim();
+                        if (!normalizedUrl) return null;
+                        return { url: normalizedUrl, hidden: !!item.hidden };
+                    }
+                    return null;
+                })
+                .filter(function(x) { return !!x; });
+
+            settings.about.photos = cleaned.map(function(item) {
+                return { url: item.url, hidden: !!item.hidden };
+            });
+
+            var visible = cleaned.filter(function(item) { return !item.hidden; }).map(function(item) { return item.url; });
+            settings.about.photo1 = visible[0] || DEFAULT_SITE_CONTENT.about.photo1;
+            settings.about.photo2 = visible[1] || DEFAULT_SITE_CONTENT.about.photo2;
+            settings.about.photo3 = visible[2] || DEFAULT_SITE_CONTENT.about.photo3;
         }
 
         function renderAboutPhotosAdmin(settings) {
             var s = settings || getSiteContentSettings();
             var list = document.getElementById('site-about-photos-list');
             if (!list) return;
-            var photos = _getAboutPhotos(s);
+            var photos = _getAboutPhotoEntries(s);
             list.innerHTML = '';
-            photos.forEach(function(url, idx) {
+            photos.forEach(function(photo, idx) {
                 var item = document.createElement('div');
                 item.className = 'promo-admin-item';
                 item.innerHTML =
-                    '<img src="' + url + '" class="promo-admin-thumb" style="width:90px;height:60px;object-fit:cover;border-radius:8px;">' +
+                    '<img src="' + photo.url + '" class="promo-admin-thumb" style="width:90px;height:60px;object-fit:cover;border-radius:8px;">' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<input type="text" class="cal-input site-about-photo-url-input" data-i="' + idx + '" value="' + url.replace(/"/g, '&quot;') + '">' +
-                        '<div class="text-xs text-gray-500 mt-1">Фото #' + (idx + 1) + '</div>' +
+                        '<div class="text-sm text-gray-200">Слайд</div>' +
+                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '<div class="text-xs text-emerald-400 mt-1"><i class="fas fa-eye"></i> Видимый</div>') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
-                        '<label class="promo-file-label" style="padding:6px 10px;font-size:12px;" for="site-about-photo-replace-file-' + idx + '"><i class="fas fa-upload"></i></label>' +
-                        '<input id="site-about-photo-replace-file-' + idx + '" class="site-about-photo-replace-file hidden" data-i="' + idx + '" type="file" accept="image/*">' +
+                        '<button class="site-about-photo-toggle admin-btn-eye" data-i="' + idx + '" title="' + (photo.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (photo.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
                         '<button class="site-about-photo-up admin-btn-eye" data-i="' + idx + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
                         '<button class="site-about-photo-down admin-btn-eye" data-i="' + idx + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
                         '<button class="site-about-photo-delete admin-btn-del" data-i="' + idx + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
+                if (photo.hidden) item.style.opacity = '0.5';
                 list.appendChild(item);
             });
             if (!photos.length) {
@@ -1032,7 +1065,11 @@
             var carousel = document.getElementById('about-testimonial-carousel');
             if (!carousel) return;
             var photos = _getAboutPhotos(settings);
-            if (!photos.length) return;
+            if (!photos.length) {
+                carousel.innerHTML = '';
+                window.__veneraAboutCarouselNeedsRebind = true;
+                return;
+            }
             var slidesHtml = photos.map(function(url, i) {
                 return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><img src="' + url + '" alt="Luxury Property" class="w-full h-96 object-cover"></div>';
             }).join('');
@@ -4582,8 +4619,8 @@
                 var url = addUrlInp ? addUrlInp.value.trim() : '';
                 if (!url) { showToast('Введите URL фото', 'error'); return; }
                 var st = getSiteContentSettings();
-                var ph = _getAboutPhotos(st);
-                ph.push(url);
+                var ph = _getAboutPhotoEntries(st);
+                ph.push({ url: url, hidden: false });
                 _setAboutPhotos(st, ph);
                 saveSiteContentSettings(st);
                 if (addUrlInp) addUrlInp.value = '';
@@ -4592,10 +4629,22 @@
                 return;
             }
 
+            if (e.target.closest('.site-about-photo-toggle')) {
+                var iToggle = Number(e.target.closest('.site-about-photo-toggle').dataset.i);
+                var stToggle = getSiteContentSettings();
+                var phToggle = _getAboutPhotoEntries(stToggle);
+                if (phToggle[iToggle]) phToggle[iToggle].hidden = !phToggle[iToggle].hidden;
+                _setAboutPhotos(stToggle, phToggle);
+                saveSiteContentSettings(stToggle);
+                renderAboutPhotosAdmin(stToggle);
+                applySiteContentSettings();
+                return;
+            }
+
             if (e.target.closest('.site-about-photo-up')) {
                 var iUp = Number(e.target.closest('.site-about-photo-up').dataset.i);
                 var stUp = getSiteContentSettings();
-                var phUp = _getAboutPhotos(stUp);
+                var phUp = _getAboutPhotoEntries(stUp);
                 if (iUp > 0) { var t1 = phUp[iUp]; phUp[iUp] = phUp[iUp - 1]; phUp[iUp - 1] = t1; }
                 _setAboutPhotos(stUp, phUp);
                 saveSiteContentSettings(stUp);
@@ -4607,7 +4656,7 @@
             if (e.target.closest('.site-about-photo-down')) {
                 var iDown = Number(e.target.closest('.site-about-photo-down').dataset.i);
                 var stDown = getSiteContentSettings();
-                var phDown = _getAboutPhotos(stDown);
+                var phDown = _getAboutPhotoEntries(stDown);
                 if (iDown < phDown.length - 1) { var t2 = phDown[iDown]; phDown[iDown] = phDown[iDown + 1]; phDown[iDown + 1] = t2; }
                 _setAboutPhotos(stDown, phDown);
                 saveSiteContentSettings(stDown);
@@ -4620,7 +4669,7 @@
                 var iDel = Number(e.target.closest('.site-about-photo-delete').dataset.i);
                 showConfirm('Удалить это фото из блока «О компании»?', function() {
                     var stDel = getSiteContentSettings();
-                    var phDel = _getAboutPhotos(stDel);
+                    var phDel = _getAboutPhotoEntries(stDel);
                     phDel.splice(iDel, 1);
                     _setAboutPhotos(stDel, phDel);
                     saveSiteContentSettings(stDel);
@@ -4758,21 +4807,7 @@
 
         // Site content photo inputs: URL + file upload previews
         document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('site-about-photo-url-input')) {
-                var iUrl = Number(e.target.dataset.i);
-                var stUrl = getSiteContentSettings();
-                var phUrl = _getAboutPhotos(stUrl);
-                phUrl[iUrl] = e.target.value.trim();
-                _setAboutPhotos(stUrl, phUrl);
-                saveSiteContentSettings(stUrl);
-                renderAboutPhotosAdmin(stUrl);
-                applySiteContentSettings();
-                return;
-            }
-
-            if (e.target.id === 'site-about-photo-add-file' || e.target.classList.contains('site-about-photo-replace-file')) {
-                var replaceMode = e.target.classList.contains('site-about-photo-replace-file');
-                var iRep = replaceMode ? Number(e.target.dataset.i) : -1;
+            if (e.target.id === 'site-about-photo-add-file') {
                 if (!e.target.files || !e.target.files[0]) return;
                 var file = e.target.files[0];
                 if (!file.type || !file.type.startsWith('image/')) {
@@ -4789,9 +4824,8 @@
                 reader.onload = function(ev) {
                     var url = ev.target.result;
                     var stF = getSiteContentSettings();
-                    var phF = _getAboutPhotos(stF);
-                    if (replaceMode && iRep >= 0) phF[iRep] = url;
-                    else phF.push(url);
+                    var phF = _getAboutPhotoEntries(stF);
+                    phF.push({ url: url, hidden: false });
                     _setAboutPhotos(stF, phF);
                     saveSiteContentSettings(stF);
                     renderAboutPhotosAdmin(stF);
