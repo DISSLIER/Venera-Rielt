@@ -1486,16 +1486,20 @@
             <aside class="admin-sidebar">
                 <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="admin-sidebar-logo">
                 <nav class="admin-nav" aria-label="Разделы админ-панели">
-                    <button type="button" class="admin-nav-btn active" data-admin-view-target="admin-properties-view" aria-selected="true" title="Объекты" aria-label="Редактирование объектов">
+                    <!-- Кнопка статистики для риелтора (скрыта для admin) -->
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="realtor-stats-view" data-realtor-only="1" aria-selected="false" title="Моя статистика" aria-label="Статистика риелтора" style="display:none;">
+                        <i class="fas fa-chart-pie"></i>
+                    </button>
+                    <button type="button" class="admin-nav-btn active" data-admin-view-target="admin-properties-view" data-admin-only="1" aria-selected="true" title="Объекты" aria-label="Редактирование объектов">
                         <i class="fas fa-building"></i>
                     </button>
-                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-agents-view" aria-selected="false" title="Агенты" aria-label="Редактирование агентов">
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-agents-view" data-admin-only="1" aria-selected="false" title="Агенты" aria-label="Редактирование агентов">
                         <i class="fas fa-users"></i>
                     </button>
-                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-analytics-view" aria-selected="false" title="Аналитика" aria-label="Аналитика сайта">
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-analytics-view" data-admin-only="1" aria-selected="false" title="Аналитика" aria-label="Аналитика сайта">
                         <i class="fas fa-chart-line"></i>
                     </button>
-                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-messages-view" aria-selected="false" title="Заявки" aria-label="Заявки с сайта" style="position:relative;">
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-messages-view" data-admin-only="1" aria-selected="false" title="Заявки" aria-label="Заявки с сайта" style="position:relative;">
                         <i class="fas fa-envelope"></i>
                         <span id="admin-messages-badge" class="hidden" style="position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>
                     </button>
@@ -1505,13 +1509,19 @@
                     <button type="button" class="admin-nav-btn" data-admin-view-target="admin-calendar-view" aria-selected="false" title="Календарь" aria-label="Календарь встреч и показов">
                         <i class="fas fa-calendar-alt"></i>
                     </button>
-                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-promo-view" aria-selected="false" title="Реклама" aria-label="Управление рекламой">
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-promo-view" data-admin-only="1" aria-selected="false" title="Реклама" aria-label="Управление рекламой">
                         <i class="fas fa-bullhorn"></i>
                     </button>
-                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-site-content-view" aria-selected="false" title="Контент" aria-label="Управление контентом сайта">
+                    <button type="button" class="admin-nav-btn" data-admin-view-target="admin-site-content-view" data-admin-only="1" aria-selected="false" title="Контент" aria-label="Управление контентом сайта">
                         <i class="fa-solid fa-gear"></i>
                     </button>
                 </nav>
+
+                <!-- Информация о риелторе (видна только в режиме риелтора) -->
+                <div id="realtor-panel-info" class="hidden" style="padding:8px 4px;border-top:1px solid rgba(255,215,0,0.15);margin-top:4px;">
+                    <img class="realtor-panel-photo" src="" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,0.5);display:block;margin:0 auto 6px;">
+                    <div class="realtor-panel-name" style="font-size:0.65rem;color:rgba(255,215,0,0.8);text-align:center;font-weight:600;line-height:1.2;word-break:break-word;"></div>
+                </div>
 
                 <button id="close-admin-panel" class="admin-exit-btn" title="Выход" aria-label="Выйти из админ-панели">
                     <i class="fas fa-power-off"></i>
@@ -1520,8 +1530,39 @@
 
             <main class="admin-content">
                 <div class="mb-6">
-                    <h1 class="text-3xl font-bold gold-text">Venera Админ-панель</h1>
+                    <h1 class="text-3xl font-bold gold-text" id="admin-panel-title">Venera Админ-панель</h1>
                 </div>
+
+                <!-- Статистика риелтора (видна только в режиме риелтора) -->
+                <section id="realtor-stats-view" class="admin-view hidden">
+                    <h3 class="text-2xl font-semibold gold-text mb-6">Моя статистика</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,215,0,0.04));border:1px solid rgba(255,215,0,0.25);border-radius:16px;padding:20px 16px;text-align:center;">
+                            <div id="realtor-stat-clients" style="font-size:2rem;font-weight:800;color:#ffd700;line-height:1;">0</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">Моих клиентов</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,rgba(251,191,36,0.1),rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.2);border-radius:16px;padding:20px 16px;text-align:center;">
+                            <div id="realtor-stat-pending" style="font-size:2rem;font-weight:800;color:#f59e0b;line-height:1;">0</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">В ожидании</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.04));border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:20px 16px;text-align:center;">
+                            <div id="realtor-stat-success" style="font-size:2rem;font-weight:800;color:#22c55e;line-height:1;">0</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">Успешных сделок</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,rgba(96,165,250,0.1),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:20px 16px;text-align:center;">
+                            <div id="realtor-stat-upcoming" style="font-size:2rem;font-weight:800;color:#60a5fa;line-height:1;">0</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">Предстоящих событий</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button type="button" onclick="document.querySelector('[data-admin-view-target=admin-clients-view]').click()" class="cal-btn-primary" style="display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-address-book"></i> Моя база клиентов
+                        </button>
+                        <button type="button" onclick="document.querySelector('[data-admin-view-target=admin-calendar-view]').click()" class="cal-btn-cancel" style="display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-calendar-alt"></i> Мой календарь
+                        </button>
+                    </div>
+                </section>
 
                 <section id="admin-properties-view" class="admin-view">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -2522,6 +2563,9 @@
                     }
                     if (targetId === 'admin-calendar-view') {
                         if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
+                    }
+                    if (targetId === 'realtor-stats-view') {
+                        if (typeof window.renderRealtorStats === 'function') window.renderRealtorStats();
                     }
                     if (targetId === 'admin-promo-view') {
                         if (typeof renderPromoAdmin === 'function') renderPromoAdmin();

@@ -2044,6 +2044,87 @@
         // === Пароль доступа в админ-панель (можно изменить) ===
         const ADMIN_PASSWORD = 'venera2026';
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
+        const REALTOR_SESSION_KEY = 'venera_realtor_session';
+
+        function clearRealtorSession() {
+            try { sessionStorage.removeItem(REALTOR_SESSION_KEY); } catch(e) {}
+        }
+
+        function getRealtorSession() {
+            try { return JSON.parse(sessionStorage.getItem(REALTOR_SESSION_KEY) || 'null'); } catch(e) { return null; }
+        }
+
+        function renderRealtorStats() {
+            var session = getRealtorSession();
+            if (!session) return;
+            var ridStr = String(session.rieltor_id);
+            var allClients = typeof _getClients === 'function' ? _getClients() : [];
+            var myClients = allClients.filter(function(c) { return String(c.rieltor_id || '') === ridStr; });
+            var pending = myClients.filter(function(c) { return (c.status || 'pending') === 'pending'; }).length;
+            var success = myClients.filter(function(c) { return c.status === 'success'; }).length;
+            var today = new Date().toISOString().slice(0, 10);
+            var allNotes = typeof _getCalendarNotes === 'function' ? _getCalendarNotes() : [];
+            var upcoming = allNotes.filter(function(n) { return String(n.realtorId || '') === ridStr && String(n.date || '') >= today; }).length;
+            function setEl(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+            setEl('realtor-stat-clients', myClients.length);
+            setEl('realtor-stat-pending', pending);
+            setEl('realtor-stat-success', success);
+            setEl('realtor-stat-upcoming', upcoming);
+        }
+        window.renderRealtorStats = renderRealtorStats;
+
+        function _applyAdminPanelMode() {
+            var panel = document.getElementById('admin-panel');
+            if (!panel) return;
+            panel.removeAttribute('data-realtor-mode');
+            var header = document.getElementById('admin-panel-title');
+            if (header) header.textContent = 'Venera Админ-панель';
+            var ri = document.getElementById('realtor-panel-info');
+            if (ri) ri.classList.add('hidden');
+            panel.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = ''; });
+            panel.querySelectorAll('[data-realtor-only]').forEach(function(el) { el.style.display = 'none'; });
+        }
+
+        function _applyRealtorPanelMode(rieltor_id, name, photo) {
+            var panel = document.getElementById('admin-panel');
+            if (!panel) return;
+            panel.setAttribute('data-realtor-mode', '1');
+            var header = document.getElementById('admin-panel-title');
+            if (header) header.textContent = 'Панель риелтора';
+            var ri = document.getElementById('realtor-panel-info');
+            if (ri) {
+                var nameEl = ri.querySelector('.realtor-panel-name');
+                var photoEl = ri.querySelector('.realtor-panel-photo');
+                if (nameEl) nameEl.textContent = name;
+                if (photoEl && photo) photoEl.src = photo;
+                ri.classList.remove('hidden');
+            }
+            panel.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = 'none'; });
+            panel.querySelectorAll('[data-realtor-only]').forEach(function(el) { el.style.display = ''; });
+            // Set calendar realtor filter
+            var st = _calendarState();
+            st.realtorFilter = String(rieltor_id);
+        }
+
+        function _openRealtorPanelAfterAuth(agent) {
+            try {
+                sessionStorage.setItem(REALTOR_SESSION_KEY, JSON.stringify({
+                    rieltor_id: agent.rieltor_id,
+                    name: agent.name,
+                    photo: agent.photo || ''
+                }));
+            } catch(e) {}
+            var adminPanel = document.getElementById('admin-panel');
+            if (!adminPanel) return;
+            _applyRealtorPanelMode(agent.rieltor_id, agent.name, agent.photo || '');
+            adminPanel.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            initAdminPanel();
+            // Switch to realtor stats view
+            var statsBtn = document.querySelector('[data-admin-view-target="realtor-stats-view"]');
+            if (statsBtn) statsBtn.click();
+            renderRealtorStats();
+        }
 
         function getUniqueCitiesAndDistricts() {
             const cities = new Set();
@@ -2185,10 +2266,23 @@
                 authModal.classList.add('hidden');
                 const adminPanel = document.getElementById('admin-panel');
                 if (!adminPanel) return;
+                _applyAdminPanelMode();
                 adminPanel.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
                 initAdminPanel();
                 return;
+            }
+
+            // Check for active realtor session
+            const realtorSession = getRealtorSession();
+            if (realtorSession && realtorSession.rieltor_id) {
+                const agents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+                const realtorAgent = agents.find(function(a) { return String(a.rieltor_id) === String(realtorSession.rieltor_id); });
+                if (realtorAgent) {
+                    authModal.classList.add('hidden');
+                    _openRealtorPanelAfterAuth(realtorAgent);
+                    return;
+                }
             }
 
             const authInput = document.getElementById('admin-password-input');
@@ -2205,12 +2299,14 @@
             const adminPanel = document.getElementById('admin-panel');
             if (!adminPanel) return;
 
+            clearRealtorSession();
             try {
                 sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
             } catch (e) {
                 console.log('SessionStorage not available');
             }
 
+            _applyAdminPanelMode();
             adminPanel.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             initAdminPanel();
@@ -2237,6 +2333,9 @@
 
             // Close admin panel
             closeAdminPanel.addEventListener('click', function() {
+                clearRealtorSession();
+                sessionStorage.removeItem(ADMIN_SESSION_KEY);
+                _applyAdminPanelMode();
                 if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
                     window.location.href = 'index.html';
                     return;
@@ -2258,13 +2357,24 @@
                 if (!authInput || !authError) return;
 
                 if (authInput.value === ADMIN_PASSWORD) {
+                    clearRealtorSession();
                     openAdminPanelAfterAuth();
                     if (authModal) authModal.classList.add('hidden');
-                } else {
-                    authError.classList.remove('hidden');
-                    authInput.value = '';
-                    authInput.focus();
+                    return;
                 }
+
+                // Check realtor passwords
+                const allAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+                const matchedAgent = allAgents.find(function(a) { return a.password && authInput.value === a.password; });
+                if (matchedAgent) {
+                    if (authModal) authModal.classList.add('hidden');
+                    _openRealtorPanelAfterAuth(matchedAgent);
+                    return;
+                }
+
+                authError.classList.remove('hidden');
+                authInput.value = '';
+                authInput.focus();
             }
 
             const passwordToggleBtn = document.getElementById('admin-password-toggle');
@@ -2299,6 +2409,8 @@
 
             if (authModal && authCancelBtn) {
                 authCancelBtn.addEventListener('click', function() {
+                    clearRealtorSession();
+                    sessionStorage.removeItem(ADMIN_SESSION_KEY);
                     if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
                         window.location.href = 'index.html';
                         return;
@@ -6327,6 +6439,12 @@ window.renderClientsAdmin = function() {
     var list = document.getElementById('admin-clients-list');
     if (!list) return;
     var items = _getClients();
+    // В режиме риелтора — показываем только его клиентов
+    var realtorSess = getRealtorSession();
+    if (realtorSess && realtorSess.rieltor_id) {
+        var ridFilter = String(realtorSess.rieltor_id);
+        items = items.filter(function(item) { return String(item.rieltor_id || '') === ridFilter; });
+    }
     var filters = _getClientFilterValues();
     var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
@@ -6449,10 +6567,15 @@ window.initClientsAdmin = function() {
                 return Object.assign({}, item, data);
             });
         } else {
-            items.unshift(Object.assign({
+            var newClientBase = {
                 id: 'client_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                 createdAt: Date.now()
-            }, data));
+            };
+            var realtorSessForClient = getRealtorSession();
+            if (realtorSessForClient && realtorSessForClient.rieltor_id) {
+                newClientBase.rieltor_id = realtorSessForClient.rieltor_id;
+            }
+            items.unshift(Object.assign(newClientBase, data));
         }
 
         _saveClients(items);
@@ -6769,6 +6892,15 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
     typeEl.value = note ? (note.type || 'Встреча') : 'Встреча';
     titleEl.value = note ? (note.title || '') : '';
     textEl.value = note ? (note.note || '') : '';
+
+    // В режиме риелтора — предзаполняем и блокируем поле выбора риелтора
+    var realtorSessForCal = getRealtorSession();
+    if (realtorSessForCal && realtorSessForCal.rieltor_id) {
+        realtorEl.value = String(realtorSessForCal.rieltor_id);
+        realtorEl.disabled = true;
+    } else {
+        realtorEl.disabled = false;
+    }
 
     modal.classList.remove('hidden');
 };

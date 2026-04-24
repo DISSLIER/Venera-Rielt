@@ -19,6 +19,7 @@ window.VENERA_AGENT_TEMPLATE = {
     telegram: "",
     viber: "",
     photo: "",
+    password: "",
     properties_count: 0
 };
 
@@ -35,7 +36,8 @@ window.VENERA_AGENTS_CONFIG = [
         whatsapp: "+37322111111",
         telegram: "anna_venera_rielt",
         viber: "+37322111111",
-        photo: "https://randomuser.me/api/portraits/women/44.jpg"
+        photo: "https://randomuser.me/api/portraits/women/44.jpg",
+        password: "anna2026"
     },
     {
         ...window.VENERA_AGENT_TEMPLATE,
@@ -48,7 +50,8 @@ window.VENERA_AGENTS_CONFIG = [
         whatsapp: "+37322111112",
         telegram: "viktor_venera_rielt",
         viber: "+37322111112",
-        photo: "https://randomuser.me/api/portraits/men/32.jpg"
+        photo: "https://randomuser.me/api/portraits/men/32.jpg",
+        password: "viktor2026"
     },
     {
         ...window.VENERA_AGENT_TEMPLATE,
@@ -61,7 +64,8 @@ window.VENERA_AGENTS_CONFIG = [
         whatsapp: "+37322111113",
         telegram: "elena_venera_rielt",
         viber: "+37322111113",
-        photo: "https://randomuser.me/api/portraits/women/68.jpg"
+        photo: "https://randomuser.me/api/portraits/women/68.jpg",
+        password: "elena2026"
     },
     {
         ...window.VENERA_AGENT_TEMPLATE,
@@ -74,7 +78,8 @@ window.VENERA_AGENTS_CONFIG = [
         whatsapp: "+37322111114",
         telegram: "dmitri_venera_rielt",
         viber: "+37322111114",
-        photo: "https://randomuser.me/api/portraits/men/75.jpg"
+        photo: "https://randomuser.me/api/portraits/men/75.jpg",
+        password: "dmitri2026"
     }
 ];
 
