@@ -3022,6 +3022,14 @@
         }
         window.generateAgentPassword = generateAgentPassword;
 
+        function getConfiguredAgentPassword(rieltorId) {
+            var rid = String(rieltorId || '').trim();
+            if (!rid) return '';
+            var cfgAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+            var cfgAgent = cfgAgents.find(function(a) { return String(a.rieltor_id || '').trim() === rid; });
+            return cfgAgent && cfgAgent.password ? String(cfgAgent.password).trim() : '';
+        }
+
         function validateAgentFormData(agent, modeLabel) {
             const requiredFields = ['rieltor_id', 'name', 'position'];
             const missing = requiredFields.filter(field => !agent[field]);
@@ -3105,7 +3113,7 @@
                 document.getElementById('agent-viber').value = agent.viber || '';
                 document.getElementById('agent-photo').value = agent.photo || '';
                 document.getElementById('agent-rieltor-id').value = agent.rieltor_id || '';
-                if (passwordField) passwordField.value = String(agent.password || '').trim();
+                if (passwordField) passwordField.value = String(agent.password || '').trim() || getConfiguredAgentPassword(agent.rieltor_id);
             } else {
                 // Add new agent
                 title.textContent = 'Добавить риелтора';
