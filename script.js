@@ -6597,7 +6597,7 @@ window.renderClientsAdmin = function() {
                 var selected = opt.value === ownerId ? ' selected' : '';
                 return '<option value="' + _escMsg(opt.value) + '"' + selected + '>' + _escMsg(opt.label) + '</option>';
             }).join('');
-            ownerCellHtml = '<select class="cal-select" onchange="window.changeClientOwner(\'' + item.id + '\', this.value)" style="min-width:140px;padding:6px 28px 6px 10px;font-size:0.8rem;">' + ownerSelectOptions + '</select>';
+            ownerCellHtml = '<select onchange="window.changeClientOwner(\'' + item.id + '\', this.value)" style="min-width:140px;padding:6px 28px 6px 10px;font-size:0.8rem;background:rgba(20,20,20,0.92);color:#fff;border:1px solid rgba(255,215,0,0.25);border-radius:10px;">' + ownerSelectOptions + '</select>';
         } else {
             ownerCellHtml = ownerAgent && ownerAgent.photo
                 ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;">'
