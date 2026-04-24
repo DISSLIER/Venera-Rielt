@@ -2107,9 +2107,16 @@
         }
 
         function _lockBodyForPanel() {
-            // Prevent body scroll but keep touch events active so panel can scroll on mobile
-            document.body.style.overflow = 'hidden';
-            document.body.style.touchAction = '';
+            // In standalone admin page the panel is position:static, body scroll is needed
+            var isStandalone = /admin\.html$/i.test(window.location.pathname || '') || document.body.classList.contains('admin-standalone');
+            if (isStandalone) {
+                document.body.style.overflow = '';
+                document.body.style.touchAction = '';
+            } else {
+                // Fixed overlay panel — block body scroll, but keep touchAction so panel scrolls on mobile
+                document.body.style.overflow = 'hidden';
+                document.body.style.touchAction = '';
+            }
         }
 
         function _openRealtorPanelAfterAuth(agent) {
@@ -2349,6 +2356,7 @@
                 adminPanel.classList.add('hidden');
                 document.body.style.overflow = '';
                 document.body.style.touchAction = '';
+                document.body.style.position = '';
             });
 
             // Initialize admin panel
