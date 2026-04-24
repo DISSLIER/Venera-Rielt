@@ -6325,7 +6325,9 @@ function _applyClientOwnerControlForMode(prefillOwnerId) {
     }
 
     var options = [{ value: CLIENT_OWNER_COMPANY_ID, label: 'Компания' }].concat(_getClientOwnerOptions());
-    _populateSelect('client-rieltor-id', options, 'Компания', true);
+    ownerEl.innerHTML = options.map(function(opt) {
+        return '<option value="' + _escMsg(opt.value) + '">' + _escMsg(opt.label) + '</option>';
+    }).join('');
     ownerEl.disabled = false;
     var wanted = _normalizeClientOwnerId(prefillOwnerId || ownerEl.value || CLIENT_OWNER_COMPANY_ID);
     ownerEl.value = wanted;
