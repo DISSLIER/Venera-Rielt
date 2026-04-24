@@ -6646,6 +6646,13 @@ window.renderClientsAdmin = function() {
     }).join('');
 };
 
+function _refreshRealtorStatsIfVisible() {
+    var statsView = document.getElementById('realtor-stats-view');
+    if (statsView && !statsView.classList.contains('hidden') && typeof window.renderRealtorStats === 'function') {
+        window.renderRealtorStats();
+    }
+}
+
 window.cycleClientStatus = function(id) {
     var order = ['pending', 'success', 'reject'];
     var items = _getClients();
@@ -6657,6 +6664,7 @@ window.cycleClientStatus = function(id) {
     });
     _saveClients(items);
     window.renderClientsAdmin();
+    _refreshRealtorStatsIfVisible();
 };
 
 window.deleteClient = function(id) {
@@ -6664,6 +6672,7 @@ window.deleteClient = function(id) {
         var items = _getClients().filter(function(item) { return item.id !== id; });
         _saveClients(items);
         window.renderClientsAdmin();
+        _refreshRealtorStatsIfVisible();
     });
 };
 
@@ -6765,6 +6774,7 @@ window.initClientsAdmin = function() {
         if (editIdEl) editIdEl.value = '';
         window.closeClientModal();
         window.renderClientsAdmin();
+        _refreshRealtorStatsIfVisible();
     });
 
     var filterIds = [
@@ -7167,6 +7177,7 @@ window.deleteCalendarNote = function(id) {
         var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
         _saveCalendarNotes(items);
         window.renderCalendarAdmin();
+        _refreshRealtorStatsIfVisible();
     });
 };
 
@@ -7279,6 +7290,7 @@ window.initCalendarAdmin = function() {
             st.month = dt.getMonth();
             window.closeCalendarNoteModal();
             window.renderCalendarAdmin();
+            _refreshRealtorStatsIfVisible();
         });
     }
 };
@@ -7293,12 +7305,14 @@ window.addEventListener('storage', function(e) {
         if (clientsView && !clientsView.classList.contains('hidden')) {
             window.renderClientsAdmin && window.renderClientsAdmin();
         }
+        _refreshRealtorStatsIfVisible();
     }
     if (e.key === CALENDAR_STORAGE_KEY) {
         var calendarView = document.getElementById('admin-calendar-view');
         if (calendarView && !calendarView.classList.contains('hidden')) {
             window.renderCalendarAdmin && window.renderCalendarAdmin();
         }
+        _refreshRealtorStatsIfVisible();
     }
 });
 
