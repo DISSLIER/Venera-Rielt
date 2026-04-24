@@ -2276,6 +2276,7 @@
 
             const isAuthenticated = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
             if (isAuthenticated) {
+                clearRealtorSession();
                 authModal.classList.add('hidden');
                 const adminPanel = document.getElementById('admin-panel');
                 if (!adminPanel) return;
@@ -6311,7 +6312,9 @@ function _applyClientOwnerControlForMode(prefillOwnerId) {
     var ownerEl = document.getElementById('client-rieltor-id');
     if (!ownerEl) return;
 
-    var realtorSess = getRealtorSession();
+    var panel = document.getElementById('admin-panel');
+    var isRealtorMode = !!(panel && panel.getAttribute('data-realtor-mode') === '1');
+    var realtorSess = isRealtorMode ? getRealtorSession() : null;
     if (realtorSess && realtorSess.rieltor_id) {
         var rid = String(realtorSess.rieltor_id);
         ownerEl.innerHTML = '<option value="' + _escMsg(rid) + '">' + _escMsg(realtorSess.name || rid) + '</option>';
