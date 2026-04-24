@@ -6559,9 +6559,17 @@ window.renderClientsAdmin = function() {
     var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
     if (filteredItems.length === 0) {
-        list.innerHTML = '<tr><td colspan="7" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
+        list.innerHTML = '<tr><td colspan="8" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
         return;
     }
+
+    var ownerAgents = _getAgentListForClientOwner();
+    var ownerMap = {};
+    ownerAgents.forEach(function(a) {
+        var rid = String((a && a.rieltor_id) || '').trim();
+        if (!rid) return;
+        ownerMap[rid] = a;
+    });
 
     list.innerHTML = filteredItems.map(function(item) {
         var meta = _clientStatusMeta(item.status);
@@ -6575,6 +6583,12 @@ window.renderClientsAdmin = function() {
                 ? ('Цена: ' + _escMsg(item.priceFrom || '0') + ' - ' + _escMsg(item.priceTo || '0'))
                 : null
         ].filter(function(v) { return !!v; }).join('<br>');
+
+        var ownerId = _normalizeClientOwnerId(item.rieltor_id);
+        var ownerAgent = ownerMap[ownerId] || null;
+        var ownerCellHtml = ownerAgent && ownerAgent.photo
+            ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;">'
+            : '<span style="display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:rgba(255,215,0,0.9);font-size:0.72rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">Компания</span>';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
@@ -6592,6 +6606,7 @@ window.renderClientsAdmin = function() {
                 '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="margin-right:6px;">Изменить</button>' +
                 '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del">Удалить</button>' +
             '</td>' +
+            '<td style="padding:10px 16px;text-align:center;">' + ownerCellHtml + '</td>' +
         '</tr>';
     }).join('');
 };
