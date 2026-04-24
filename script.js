@@ -2106,6 +2106,12 @@
             st.realtorFilter = String(rieltor_id);
         }
 
+        function _lockBodyForPanel() {
+            // Prevent body scroll but keep touch events active so panel can scroll on mobile
+            document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = '';
+        }
+
         function _openRealtorPanelAfterAuth(agent) {
             try {
                 sessionStorage.setItem(REALTOR_SESSION_KEY, JSON.stringify({
@@ -2118,7 +2124,7 @@
             if (!adminPanel) return;
             _applyRealtorPanelMode(agent.rieltor_id, agent.name, agent.photo || '');
             adminPanel.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            _lockBodyForPanel();
             initAdminPanel();
             // Switch to realtor stats view
             var statsBtn = document.querySelector('[data-admin-view-target="realtor-stats-view"]');
@@ -2268,7 +2274,7 @@
                 if (!adminPanel) return;
                 _applyAdminPanelMode();
                 adminPanel.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+                _lockBodyForPanel();
                 initAdminPanel();
                 return;
             }
@@ -2308,7 +2314,7 @@
 
             _applyAdminPanelMode();
             adminPanel.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            _lockBodyForPanel();
             initAdminPanel();
         }
 
@@ -2341,7 +2347,8 @@
                     return;
                 }
                 adminPanel.classList.add('hidden');
-                document.body.style.overflow = 'auto';
+                document.body.style.overflow = '';
+                document.body.style.touchAction = '';
             });
 
             // Initialize admin panel

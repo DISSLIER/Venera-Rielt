@@ -75,6 +75,13 @@
             padding-top: 0;
         }
 
+        /* Ensure the admin panel scrolls on mobile touch devices */
+        #admin-panel {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: auto !important;
+        }
+
         .admin-shell {
             display: flex;
             min-height: 100vh;
