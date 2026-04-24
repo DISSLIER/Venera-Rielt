@@ -6901,7 +6901,19 @@ function _renderCalendarRealtorSelects() {
             filter.disabled = true;
         } else {
             var prev = filter.value || st.realtorFilter || 'all';
-            filter.innerHTML = '<option value="all">Все события</option>' + realtors.map(function(r) {
+            var orderedFilterRealtors = [];
+            var filterCompanyOpt = realtors.find(function(r) { return String(r.id) === CALENDAR_TARGET_COMPANY; });
+            var filterAllOpt = realtors.find(function(r) { return String(r.id) === CALENDAR_TARGET_ALL_REALTORS; });
+            if (filterCompanyOpt) orderedFilterRealtors.push(filterCompanyOpt);
+            if (filterAllOpt) orderedFilterRealtors.push(filterAllOpt);
+            realtors
+                .filter(function(r) {
+                    var id = String(r.id);
+                    return id !== CALENDAR_TARGET_COMPANY && id !== CALENDAR_TARGET_ALL_REALTORS;
+                })
+                .forEach(function(r) { orderedFilterRealtors.push(r); });
+
+            filter.innerHTML = '<option value="all">Все события</option>' + orderedFilterRealtors.map(function(r) {
                 return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
             }).join('');
             filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
