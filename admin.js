@@ -489,6 +489,9 @@ function updateAgentSaveHandler() {
         if (typeof renderAgents === 'function') renderAgents();
         if (typeof renderAgentsList === 'function') renderAgentsList();
         if (typeof updateAgentPhotos === 'function') updateAgentPhotos();
+        if (typeof _refreshClientCatalogSelects === 'function') _refreshClientCatalogSelects();
+        if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+        if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
 
         pushSharedSnapshot();
 

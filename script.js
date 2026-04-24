@@ -2054,6 +2054,13 @@
             try { return JSON.parse(sessionStorage.getItem(REALTOR_SESSION_KEY) || 'null'); } catch(e) { return null; }
         }
 
+        function _getCurrentAgentsRuntime() {
+            try {
+                if (Array.isArray(agents)) return agents;
+            } catch (_) {}
+            return Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+        }
+
         function renderRealtorStats() {
             var session = getRealtorSession();
             if (!session) return;
@@ -2290,8 +2297,8 @@
             // Check for active realtor session
             const realtorSession = getRealtorSession();
             if (realtorSession && realtorSession.rieltor_id) {
-                const agents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
-                const realtorAgent = agents.find(function(a) { return String(a.rieltor_id) === String(realtorSession.rieltor_id); });
+                const agentsList = _getCurrentAgentsRuntime();
+                const realtorAgent = agentsList.find(function(a) { return String(a.rieltor_id) === String(realtorSession.rieltor_id); });
                 if (realtorAgent) {
                     authModal.classList.add('hidden');
                     _openRealtorPanelAfterAuth(realtorAgent);
@@ -2380,9 +2387,13 @@
                 }
 
                 // Check realtor passwords
-                const allAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
-                const matchedAgent = allAgents.find(function(a) { return a.password && authInput.value === a.password; });
-                if (matchedAgent) {
+                const allAgentsCfg = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
+                const matchedCfgAgent = allAgentsCfg.find(function(a) { return a.password && authInput.value === a.password; });
+                if (matchedCfgAgent) {
+                    const runtimeAgent = _getCurrentAgentsRuntime().find(function(a) { return String(a.rieltor_id) === String(matchedCfgAgent.rieltor_id); });
+                    const matchedAgent = runtimeAgent
+                        ? Object.assign({}, matchedCfgAgent, runtimeAgent, { password: matchedCfgAgent.password })
+                        : matchedCfgAgent;
                     if (authModal) authModal.classList.add('hidden');
                     _openRealtorPanelAfterAuth(matchedAgent);
                     return;
@@ -3289,6 +3300,9 @@
                     _forceClientOwnerToCompany(removedRid);
                     if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
                 }
+                if (typeof _refreshClientCatalogSelects === 'function') _refreshClientCatalogSelects();
+                if (typeof populateRealtorDropdown === 'function') populateRealtorDropdown();
+                if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
                 if (typeof countAgentProperties === 'function') countAgentProperties();
                 if (typeof renderAgents === 'function') renderAgents();
                 if (typeof renderAgentsList === 'function') renderAgentsList();
@@ -4865,6 +4879,9 @@
                     renderAgents();
                     updateAgentPhotos();
                     if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+                    if (typeof _refreshClientCatalogSelects === 'function') _refreshClientCatalogSelects();
+                    if (typeof populateRealtorDropdown === 'function') populateRealtorDropdown();
+                    if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
                 }
             }
 
@@ -6252,9 +6269,11 @@ function _saveClients(items) {
 }
 
 function _getAgentListForClientOwner() {
+    if (typeof _getCurrentAgentsRuntime === 'function') {
+        return _getCurrentAgentsRuntime();
+    }
     if (typeof agents !== 'undefined' && Array.isArray(agents) && agents.length) return agents;
-    if (Array.isArray(window.VENERA_AGENTS_CONFIG)) return window.VENERA_AGENTS_CONFIG;
-    return [];
+    return Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
 }
 
 function _getClientOwnerOptions() {
@@ -6836,8 +6855,8 @@ function _getCalendarRealtors() {
     var map = {};
 
     try {
-        var cfgAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
-        cfgAgents.forEach(function(a) {
+        var runtimeAgents = _getAgentListForClientOwner();
+        runtimeAgents.forEach(function(a) {
             var id = String(a.rieltor_id || '').trim();
             if (!id) return;
             map[id] = String(a.name || id).trim();
@@ -6932,8 +6951,8 @@ function _renderCalendarDayEntries() {
         var type = _escMsg(n.type || 'Другое');
         var icon = typeIcons[n.type] || 'fa-bookmark';
         var color = typeColors[n.type] || '#fbbf24';
-        var cfgAgents = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
-        var agentObj = n.realtorId ? cfgAgents.find(function(a) { return String(a.rieltor_id) === String(n.realtorId); }) : null;
+        var runtimeAgents = _getAgentListForClientOwner();
+        var agentObj = n.realtorId ? runtimeAgents.find(function(a) { return String(a.rieltor_id) === String(n.realtorId); }) : null;
         var agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
         return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
             'onmouseover="this.style.boxShadow=\'0 4px 24px rgba(255,215,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
