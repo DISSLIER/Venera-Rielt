@@ -1049,13 +1049,13 @@
                     ? '<video src="' + photo.url + '" muted class="promo-admin-thumb admin-click-preview" data-preview-type="video" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;"></video>'
                     : '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">';
                 item.innerHTML =
-                    '<div class="promo-admin-media-wrap promo-admin-media-wrap--about">' +
+                    '<div class="promo-admin-media-wrap">' +
                         previewMedia +
                         '<span class="promo-admin-overlay-type">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                         (photo.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<span class="promo-admin-type promo-admin-mobile-hide">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                        '<span class="promo-admin-type">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                         (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +

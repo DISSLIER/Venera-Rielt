@@ -630,13 +630,9 @@
                 height: 60px;
             }
 
-            .promo-admin-media-wrap:not(.promo-admin-media-wrap--about) .promo-admin-thumb {
+            .promo-admin-media-wrap .promo-admin-thumb {
                 width: 90px;
                 height: 60px;
-            }
-
-            .promo-admin-media-wrap--about + .promo-admin-info {
-                display: none;
             }
 
             .promo-admin-type,
