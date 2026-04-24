@@ -1055,7 +1055,7 @@
                         (photo.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<div class="text-sm text-gray-200 promo-admin-mobile-hide">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</div>' +
+                        '<span class="promo-admin-type promo-admin-mobile-hide">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                         (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
