@@ -6611,7 +6611,7 @@ window.renderClientsAdmin = function() {
         var ownerId = _normalizeClientOwnerId(item.rieltor_id);
         var ownerAgent = ownerMap[ownerId] || null;
         var ownerCellHtml = ownerAgent && ownerAgent.photo
-            ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;">'
+            ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
             : '<span style="display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:rgba(255,215,0,0.9);font-size:0.72rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">Компания</span>';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
@@ -6620,7 +6620,7 @@ window.renderClientsAdmin = function() {
                     '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
                     '<span style="color:rgba(255,255,255,0.7);font-size:0.75rem;">' + meta.label + '</span>' +
                 '</button>' +
-                '<div style="display:flex;gap:6px;margin-top:8px;">' +
+                '<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">' +
                     '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="font-size:0.7rem;padding:4px 8px;">Изменить</button>' +
                     '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del" style="font-size:0.7rem;padding:4px 8px;">Удалить</button>' +
                 '</div>' +
@@ -6630,7 +6630,7 @@ window.renderClientsAdmin = function() {
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.65);">' + (item.email ? _escMsg(item.email) : '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;line-height:1.6;">' + (params || '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
-            '<td style="padding:10px 16px;text-align:center;">' + ownerCellHtml + '</td>' +
+            '<td style="padding:10px 12px;min-width:88px;width:88px;text-align:center;">' + ownerCellHtml + '</td>' +
         '</tr>';
     }).join('');
 };
