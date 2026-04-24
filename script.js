@@ -2041,13 +2041,9 @@
             return hasMatches;
         }
 
-        // === Доступ к админ-панели только в локальной среде (без пароля в клиентском коде) ===
+        // === Пароль доступа в админ-панель (можно изменить) ===
+        const ADMIN_PASSWORD = 'venera2026';
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
-
-        function isLocalEnvironment() {
-            const host = window.location.hostname;
-            return host === 'localhost' || host === '127.0.0.1';
-        }
 
         function getUniqueCitiesAndDistricts() {
             const cities = new Set();
@@ -2181,11 +2177,31 @@
         }
 
         function openAdminPanelWithAuth() {
-            if (!isLocalEnvironment()) {
-                alert('Админ-панель доступна только в локальной версии сайта.');
+            const authModal = document.getElementById('admin-auth-modal');
+            if (!authModal) return;
+
+            const isAuthenticated = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+            if (isAuthenticated) {
+                authModal.classList.add('hidden');
+                const adminPanel = document.getElementById('admin-panel');
+                if (!adminPanel) return;
+                adminPanel.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                initAdminPanel();
                 return;
             }
 
+            const authInput = document.getElementById('admin-password-input');
+            const authError = document.getElementById('admin-auth-error');
+            if (authInput) authInput.value = '';
+            if (authError) authError.classList.add('hidden');
+            authModal.classList.remove('hidden');
+            setTimeout(() => {
+                if (authInput) authInput.focus();
+            }, 50);
+        }
+
+        function openAdminPanelAfterAuth() {
             const adminPanel = document.getElementById('admin-panel');
             if (!adminPanel) return;
 
@@ -2231,13 +2247,67 @@
             // Initialize admin panel
             initAdminPanel();
 
-            // Оставляем только кнопку закрытия legacy-модала авторизации.
             const authModal = document.getElementById('admin-auth-modal');
+            const authInput = document.getElementById('admin-password-input');
+            const authError = document.getElementById('admin-auth-error');
+            const authSubmitBtn = document.getElementById('admin-auth-submit');
             const authCancelBtn = document.getElementById('admin-auth-cancel');
+
+            function attemptAdminLogin() {
+                if (!authInput || !authError) return;
+
+                if (authInput.value === ADMIN_PASSWORD) {
+                    openAdminPanelAfterAuth();
+                    if (authModal) authModal.classList.add('hidden');
+                } else {
+                    authError.classList.remove('hidden');
+                    authInput.value = '';
+                    authInput.focus();
+                }
+            }
+
+            const passwordToggleBtn = document.getElementById('admin-password-toggle');
+            if (passwordToggleBtn && authInput) {
+                passwordToggleBtn.addEventListener('click', function() {
+                    const icon = passwordToggleBtn.querySelector('i');
+                    if (authInput.type === 'password') {
+                        authInput.type = 'text';
+                        if (icon) {
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        }
+                    } else {
+                        authInput.type = 'password';
+                        if (icon) {
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        }
+                    }
+                });
+            }
+
+            if (authSubmitBtn) {
+                authSubmitBtn.addEventListener('click', attemptAdminLogin);
+            }
+
+            if (authInput) {
+                authInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') attemptAdminLogin();
+                });
+            }
+
             if (authModal && authCancelBtn) {
                 authCancelBtn.addEventListener('click', function() {
+                    if (document.body.classList.contains('admin-standalone')) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
                     authModal.classList.add('hidden');
                 });
+            }
+
+            if (document.body.classList.contains('admin-standalone')) {
+                openAdminPanelWithAuth();
             }
         });
         
