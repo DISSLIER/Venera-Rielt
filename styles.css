@@ -620,6 +620,65 @@
         @media (max-width: 768px) {
             .promo-carousel { aspect-ratio: 16 / 9; }
             .promo-nav { width: 30px; height: 30px; font-size: 0.75rem; }
+
+            .promo-admin-item {
+                align-items: flex-start;
+            }
+
+            .promo-admin-media-wrap {
+                width: 90px;
+                height: 60px;
+            }
+
+            .promo-admin-media-wrap:not(.promo-admin-media-wrap--about) .promo-admin-thumb {
+                width: 90px;
+                height: 60px;
+            }
+
+            .promo-admin-media-wrap--about + .promo-admin-info {
+                display: none;
+            }
+
+            .promo-admin-type,
+            .promo-admin-hidden-label,
+            .promo-admin-mobile-hide {
+                display: none !important;
+            }
+
+            .promo-admin-overlay-type {
+                display: inline-flex;
+                position: absolute;
+                left: 4px;
+                right: 4px;
+                bottom: 4px;
+                justify-content: center;
+                padding: 3px 6px;
+                border-radius: 999px;
+                background: rgba(0,0,0,0.62);
+                color: #fff;
+                font-size: 0.64rem;
+                font-weight: 700;
+                line-height: 1;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+            }
+
+            .promo-admin-overlay-icon {
+                display: inline-flex;
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 22px;
+                height: 22px;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                background: rgba(0,0,0,0.62);
+                color: #f97316;
+                font-size: 0.72rem;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+            }
         }
 
         /* Promo file upload label */
@@ -682,6 +741,23 @@
             display: flex;
             gap: 6px;
             flex-shrink: 0;
+        }
+
+        .promo-admin-media-wrap {
+            position: relative;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .promo-admin-media-wrap .promo-admin-thumb {
+            display: block;
+        }
+
+        .promo-admin-overlay-type,
+        .promo-admin-overlay-icon {
+            display: none;
         }
 
         /* Eye button in admin property list */

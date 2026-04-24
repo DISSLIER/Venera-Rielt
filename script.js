@@ -1042,10 +1042,13 @@
                 var item = document.createElement('div');
                 item.className = 'promo-admin-item';
                 item.innerHTML =
-                    '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">' +
+                    '<div class="promo-admin-media-wrap promo-admin-media-wrap--about">' +
+                        '<img src="' + photo.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + photo.url + '" style="width:90px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;">' +
+                        (photo.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '') +
+                    '</div>' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<div class="text-sm text-gray-200">Слайд</div>' +
-                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
+                        '<div class="text-sm text-gray-200 promo-admin-mobile-hide">Слайд</div>' +
+                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
                         '<button class="site-about-photo-toggle admin-btn-eye" data-i="' + idx + '" title="' + (photo.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (photo.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
@@ -4366,10 +4369,16 @@
                 var preview = slide.type === 'video'
                     ? '<video src="' + slide.url + '" muted class="promo-admin-thumb admin-click-preview" data-preview-type="video" data-preview-src="' + slide.url + '" style="cursor:zoom-in;"></video>'
                     : '<img src="' + slide.url + '" class="promo-admin-thumb admin-click-preview" data-preview-type="image" data-preview-src="' + slide.url + '" style="cursor:zoom-in;">';
-                div.innerHTML = preview +
+                var mediaWrap = document.createElement('div');
+                mediaWrap.className = 'promo-admin-media-wrap';
+                mediaWrap.innerHTML = preview +
+                    '<span class="promo-admin-overlay-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                    (slide.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '');
+                div.innerHTML =
+                    mediaWrap.outerHTML +
                     '<div class="promo-admin-info">' +
                         '<span class="promo-admin-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
-                        (slide.hidden ? '<span style="color:#f97316;font-size:0.75rem;margin-left:6px;"><i class="fas fa-eye-slash"></i> Скрыт</span>' : '') +
+                        (slide.hidden ? '<span class="promo-admin-hidden-label" style="color:#f97316;font-size:0.75rem;margin-left:6px;"><i class="fas fa-eye-slash"></i> Скрыт</span>' : '') +
                         (slide.link ? '<span class="promo-admin-link" title="' + slide.link + '"><i class="fas fa-link"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
