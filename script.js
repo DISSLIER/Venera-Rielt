@@ -6583,7 +6583,7 @@ window.renderClientsAdmin = function() {
     var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
     if (filteredItems.length === 0) {
-        list.innerHTML = '<tr><td colspan="8" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
+        list.innerHTML = '<tr><td colspan="7" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
         return;
     }
 
@@ -6620,16 +6620,16 @@ window.renderClientsAdmin = function() {
                     '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
                     '<span style="color:rgba(255,255,255,0.7);font-size:0.75rem;">' + meta.label + '</span>' +
                 '</button>' +
+                '<div style="display:flex;gap:6px;margin-top:8px;">' +
+                    '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="font-size:0.7rem;padding:4px 8px;">Изменить</button>' +
+                    '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del" style="font-size:0.7rem;padding:4px 8px;">Удалить</button>' +
+                '</div>' +
             '</td>' +
             '<td style="padding:10px 16px;color:#fff;font-weight:500;">' + _escMsg(item.fullName) + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.8);">' + _escMsg(item.phone) + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.65);">' + (item.email ? _escMsg(item.email) : '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;line-height:1.6;">' + (params || '<span style="color:rgba(255,255,255,0.2);">-</span>') + '</td>' +
             '<td style="padding:10px 16px;color:rgba(255,255,255,0.6);font-size:0.8rem;white-space:pre-wrap;">' + _escMsg(item.note) + '</td>' +
-            '<td style="padding:10px 16px;white-space:nowrap;">' +
-                '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="margin-right:6px;">Изменить</button>' +
-                '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del">Удалить</button>' +
-            '</td>' +
             '<td style="padding:10px 16px;text-align:center;">' + ownerCellHtml + '</td>' +
         '</tr>';
     }).join('');
