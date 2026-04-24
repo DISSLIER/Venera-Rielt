@@ -2387,12 +2387,21 @@
                 }
 
                 // Check realtor passwords
+                const runtimeAgents = _getCurrentAgentsRuntime();
+                const matchedRuntimeAgent = runtimeAgents.find(function(a) { return a && a.password && authInput.value === a.password; });
+                if (matchedRuntimeAgent) {
+                    if (authModal) authModal.classList.add('hidden');
+                    _openRealtorPanelAfterAuth(matchedRuntimeAgent);
+                    return;
+                }
+
+                // Fallback for legacy static config passwords
                 const allAgentsCfg = Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
                 const matchedCfgAgent = allAgentsCfg.find(function(a) { return a.password && authInput.value === a.password; });
                 if (matchedCfgAgent) {
-                    const runtimeAgent = _getCurrentAgentsRuntime().find(function(a) { return String(a.rieltor_id) === String(matchedCfgAgent.rieltor_id); });
+                    const runtimeAgent = runtimeAgents.find(function(a) { return String(a.rieltor_id) === String(matchedCfgAgent.rieltor_id); });
                     const matchedAgent = runtimeAgent
-                        ? Object.assign({}, matchedCfgAgent, runtimeAgent, { password: matchedCfgAgent.password })
+                        ? Object.assign({}, matchedCfgAgent, runtimeAgent, { password: runtimeAgent.password || matchedCfgAgent.password })
                         : matchedCfgAgent;
                     if (authModal) authModal.classList.add('hidden');
                     _openRealtorPanelAfterAuth(matchedAgent);
@@ -3001,9 +3010,17 @@
                 whatsapp: document.getElementById('agent-whatsapp').value.trim(),
                 telegram: document.getElementById('agent-telegram').value.trim(),
                 viber: document.getElementById('agent-viber').value.trim(),
-                photo: document.getElementById('agent-photo').value.trim()
+                photo: document.getElementById('agent-photo').value.trim(),
+                password: ((document.getElementById('agent-password') || {}).value || '').trim()
             };
         }
+
+        function generateAgentPassword(rieltorId) {
+            var rid = String(rieltorId || '').replace(/\D/g, '').trim() || String(Math.floor(1000 + Math.random() * 9000));
+            var suffix = Math.random().toString(36).slice(2, 6);
+            return 'agent' + rid + suffix;
+        }
+        window.generateAgentPassword = generateAgentPassword;
 
         function validateAgentFormData(agent, modeLabel) {
             const requiredFields = ['rieltor_id', 'name', 'position'];
@@ -3052,6 +3069,21 @@
             const modal = document.getElementById('agent-edit-modal');
             const title = document.getElementById('agent-modal-title');
             const statusEl = document.getElementById('agent-edit-status');
+            const passwordWrap = document.getElementById('agent-password-wrap');
+            const passwordField = document.getElementById('agent-password');
+            const passwordGenerateBtn = document.getElementById('agent-password-generate');
+
+            var panel = document.getElementById('admin-panel');
+            var isRealtorMode = !!(panel && panel.getAttribute('data-realtor-mode') === '1');
+            if (passwordWrap) passwordWrap.style.display = isRealtorMode ? 'none' : '';
+
+            if (passwordGenerateBtn && !passwordGenerateBtn.dataset.bound) {
+                passwordGenerateBtn.dataset.bound = '1';
+                passwordGenerateBtn.addEventListener('click', function() {
+                    var ridVal = ((document.getElementById('agent-rieltor-id') || {}).value || '').trim();
+                    if (passwordField) passwordField.value = generateAgentPassword(ridVal);
+                });
+            }
 
             if (statusEl) {
                 statusEl.classList.add('hidden');
@@ -3073,6 +3105,7 @@
                 document.getElementById('agent-viber').value = agent.viber || '';
                 document.getElementById('agent-photo').value = agent.photo || '';
                 document.getElementById('agent-rieltor-id').value = agent.rieltor_id || '';
+                if (passwordField) passwordField.value = String(agent.password || '').trim();
             } else {
                 // Add new agent
                 title.textContent = 'Добавить риелтора';
@@ -3082,6 +3115,7 @@
                 const nextRieltorId = getCurrentMaxAgentIdNumber(agents) + 1;
                 const rieltorIdField = document.getElementById('agent-rieltor-id');
                 if (rieltorIdField) rieltorIdField.value = nextRieltorId;
+                if (passwordField) passwordField.value = generateAgentPassword(nextRieltorId);
             }
             
             modal.classList.remove('hidden');
@@ -3248,7 +3282,8 @@
                 telegram: document.getElementById('agent-telegram').value,
                 viber: document.getElementById('agent-viber').value,
                 photo: document.getElementById('agent-photo').value,
-                rieltor_id: document.getElementById('agent-rieltor-id').value
+                rieltor_id: document.getElementById('agent-rieltor-id').value,
+                password: ((document.getElementById('agent-password') || {}).value || '').trim() || generateAgentPassword(document.getElementById('agent-rieltor-id').value)
             };
             
             // Update realtor dropdown in property edit form
@@ -3330,6 +3365,7 @@
                 rieltor_id: rieltorId,
                 name,
                 position,
+                password: String(agent.password || '').trim(),
                 phone: String(agent.phone || '').trim(),
                 email: String(agent.email || '').trim(),
                 whatsapp: String(agent.whatsapp || '').trim(),

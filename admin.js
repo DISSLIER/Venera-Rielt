@@ -471,12 +471,23 @@ function updateAgentSaveHandler() {
             telegram: document.getElementById('agent-telegram').value.trim(),
             viber: document.getElementById('agent-viber').value.trim(),
             photo: document.getElementById('agent-photo').value.trim(),
+            password: document.getElementById('agent-password')
+                ? document.getElementById('agent-password').value.trim()
+                : '',
             properties_count: 0
         };
 
         let currentAgents = getCurrentAgentsArray();
         const existingIndex = currentAgents.findIndex(a => String(a.rieltor_id) === String(rieltorId));
         const isNew = existingIndex === -1;
+
+        if (!formData.password) {
+            if (!isNew && currentAgents[existingIndex] && currentAgents[existingIndex].password) {
+                formData.password = String(currentAgents[existingIndex].password).trim();
+            } else if (typeof window.generateAgentPassword === 'function') {
+                formData.password = window.generateAgentPassword(rieltorId);
+            }
+        }
 
         if (isNew) {
             currentAgents.push(formData);
