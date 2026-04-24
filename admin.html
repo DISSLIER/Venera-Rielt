@@ -1561,14 +1561,6 @@
                             <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">Предстоящих событий</div>
                         </div>
                     </div>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <button type="button" onclick="document.querySelector('[data-admin-view-target=admin-clients-view]').click()" class="cal-btn-primary" style="display:flex;align-items:center;gap:8px;">
-                            <i class="fas fa-address-book"></i> Моя база клиентов
-                        </button>
-                        <button type="button" onclick="document.querySelector('[data-admin-view-target=admin-calendar-view]').click()" class="cal-btn-cancel" style="display:flex;align-items:center;gap:8px;">
-                            <i class="fas fa-calendar-alt"></i> Мой календарь
-                        </button>
-                    </div>
                 </section>
 
                 <section id="admin-properties-view" class="admin-view">
@@ -2040,6 +2032,12 @@
                         <option value="pending">⏳ В ожидании</option>
                         <option value="success">✅ Сделка/готов</option>
                         <option value="reject">❌ Отказ</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="client-rieltor-id" class="block text-gray-400 mb-2">Ответственный</label>
+                    <select id="client-rieltor-id" class="cal-select">
+                        <option value="company">Компания</option>
                     </select>
                 </div>
 

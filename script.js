@@ -3280,8 +3280,14 @@
         // Delete agent - реально удаляет риелтора из списка
         function deleteAgent(index) {
             showConfirm('Удалить этого риелтора?', function() {
+                var removed = agents[index] || null;
+                var removedRid = removed ? String(removed.rieltor_id || '').trim() : '';
                 agents.splice(index, 1);
                 agentCounter = getCurrentMaxAgentIdNumber(agents);
+                if (removedRid) {
+                    _forceClientOwnerToCompany(removedRid);
+                    if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
+                }
                 if (typeof countAgentProperties === 'function') countAgentProperties();
                 if (typeof renderAgents === 'function') renderAgents();
                 if (typeof renderAgentsList === 'function') renderAgentsList();
@@ -4851,11 +4857,13 @@
                         delete store[rid];
                     } else {
                         store[rid] = { hidden: true };
+                        _forceClientOwnerToCompany(rid);
                     }
                     saveAgentStatusStore(store);
                     renderAgentsList();
                     renderAgents();
                     updateAgentPhotos();
+                    if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
                 }
             }
 
@@ -6232,6 +6240,7 @@ window.addEventListener('storage', function(e) {
 
 // ====================== БАЗА КЛИЕНТОВ ======================
 var CLIENTS_STORAGE_KEY = 'venera_clients_db_v1';
+var CLIENT_OWNER_COMPANY_ID = 'company';
 
 function _getClients() {
     try { return JSON.parse(localStorage.getItem(CLIENTS_STORAGE_KEY) || '[]'); } catch(e) { return []; }
@@ -6239,6 +6248,85 @@ function _getClients() {
 
 function _saveClients(items) {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(items));
+}
+
+function _getAgentListForClientOwner() {
+    if (Array.isArray(agents) && agents.length) return agents;
+    if (Array.isArray(window.VENERA_AGENTS_CONFIG)) return window.VENERA_AGENTS_CONFIG;
+    return [];
+}
+
+function _getClientOwnerOptions() {
+    var store = (typeof getAgentStatusStore === 'function') ? getAgentStatusStore() : {};
+    var map = {};
+    _getAgentListForClientOwner().forEach(function(a) {
+        var rid = String((a && a.rieltor_id) || '').trim();
+        if (!rid) return;
+        if (store[rid] && store[rid].hidden) return;
+        map[rid] = String((a && a.name) || rid).trim() || rid;
+    });
+    return Object.keys(map)
+        .sort(function(a, b) { return map[a].localeCompare(map[b], 'ru'); })
+        .map(function(id) { return { value: id, label: map[id] }; });
+}
+
+function _normalizeClientOwnerId(rawOwnerId) {
+    var ownerId = String(rawOwnerId || '').trim();
+    if (!ownerId) return CLIENT_OWNER_COMPANY_ID;
+    if (ownerId === CLIENT_OWNER_COMPANY_ID) return CLIENT_OWNER_COMPANY_ID;
+    var allowed = _getClientOwnerOptions().some(function(opt) { return opt.value === ownerId; });
+    return allowed ? ownerId : CLIENT_OWNER_COMPANY_ID;
+}
+
+function _reassignHiddenOrDeletedClientsToCompany() {
+    var items = _getClients();
+    var changed = false;
+    items = items.map(function(item) {
+        var normalized = _normalizeClientOwnerId(item && item.rieltor_id);
+        if (String((item && item.rieltor_id) || '') !== normalized) {
+            changed = true;
+            return Object.assign({}, item, { rieltor_id: normalized });
+        }
+        return item;
+    });
+    if (changed) _saveClients(items);
+    return changed;
+}
+
+function _forceClientOwnerToCompany(rieltorId) {
+    var rid = String(rieltorId || '').trim();
+    if (!rid) return false;
+    var items = _getClients();
+    var changed = false;
+    items = items.map(function(item) {
+        if (String((item && item.rieltor_id) || '') !== rid) return item;
+        changed = true;
+        return Object.assign({}, item, { rieltor_id: CLIENT_OWNER_COMPANY_ID });
+    });
+    if (changed) _saveClients(items);
+    return changed;
+}
+
+function _applyClientOwnerControlForMode(prefillOwnerId) {
+    var ownerEl = document.getElementById('client-rieltor-id');
+    if (!ownerEl) return;
+
+    var realtorSess = getRealtorSession();
+    if (realtorSess && realtorSess.rieltor_id) {
+        var rid = String(realtorSess.rieltor_id);
+        ownerEl.innerHTML = '<option value="' + _escMsg(rid) + '">' + _escMsg(realtorSess.name || rid) + '</option>';
+        ownerEl.value = rid;
+        ownerEl.disabled = true;
+        if (typeof _cselSync === 'function') _cselSync('client-rieltor-id');
+        return;
+    }
+
+    var options = [{ value: CLIENT_OWNER_COMPANY_ID, label: 'Компания' }].concat(_getClientOwnerOptions());
+    _populateSelect('client-rieltor-id', options, 'Компания', true);
+    ownerEl.disabled = false;
+    var wanted = _normalizeClientOwnerId(prefillOwnerId || ownerEl.value || CLIENT_OWNER_COMPANY_ID);
+    ownerEl.value = wanted;
+    if (typeof _cselSync === 'function') _cselSync('client-rieltor-id');
 }
 
 function _toClientNumber(v) {
@@ -6314,8 +6402,10 @@ function _refreshClientCatalogSelects() {
     var cityForFilter = (document.getElementById('clients-filter-city') || {}).value || '';
     _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), 'Фильтр: район (все)', true);
 
+    _applyClientOwnerControlForMode();
+
     if (typeof _cselSync === 'function') {
-        ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type'].forEach(function(id) { _cselSync(id); });
+        ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type', 'client-rieltor-id'].forEach(function(id) { _cselSync(id); });
     }
 }
 
@@ -6382,6 +6472,7 @@ function _collectClientFormData() {
         fullName: getVal('client-fullname'),
         phone: getVal('client-phone'),
         email: getVal('client-email'),
+        rieltor_id: _normalizeClientOwnerId(getVal('client-rieltor-id')),
         note: getVal('client-note'),
         rooms: getVal('client-rooms'),
         city: getVal('client-city'),
@@ -6413,6 +6504,7 @@ function _setClientFormData(item) {
     setVal('client-price-from', item && item.priceFrom !== null && item.priceFrom !== undefined ? item.priceFrom : '');
     setVal('client-price-to', item && item.priceTo !== null && item.priceTo !== undefined ? item.priceTo : '');
     setVal('client-status', item ? (item.status || 'pending') : 'pending');
+    setVal('client-rieltor-id', item ? _normalizeClientOwnerId(item.rieltor_id) : CLIENT_OWNER_COMPANY_ID);
 }
 
 window.openClientModal = function(mode, id) {
@@ -6431,6 +6523,7 @@ window.openClientModal = function(mode, id) {
         titleEl.textContent = 'Изменить покупателя';
         saveBtn.textContent = 'Сохранить изменения';
         _setClientFormData(target);
+        _applyClientOwnerControlForMode(target.rieltor_id);
         _populateSelect('client-district', _getDistrictOptions(target.city || ''), '-- Выберите район --', false);
         var districtEl = document.getElementById('client-district');
         if (districtEl) districtEl.value = target.district || '';
@@ -6439,6 +6532,7 @@ window.openClientModal = function(mode, id) {
         titleEl.textContent = 'Добавить покупателя';
         saveBtn.textContent = 'Сохранить';
         _setClientFormData(null);
+        _applyClientOwnerControlForMode(CLIENT_OWNER_COMPANY_ID);
     }
 
     modal.classList.remove('hidden');
@@ -6453,6 +6547,7 @@ window.closeClientModal = function() {
 window.renderClientsAdmin = function() {
     var list = document.getElementById('admin-clients-list');
     if (!list) return;
+    _reassignHiddenOrDeletedClientsToCompany();
     var items = _getClients();
     // В режиме риелтора — показываем только его клиентов
     var realtorSess = getRealtorSession();
@@ -6589,6 +6684,8 @@ window.initClientsAdmin = function() {
             var realtorSessForClient = getRealtorSession();
             if (realtorSessForClient && realtorSessForClient.rieltor_id) {
                 newClientBase.rieltor_id = realtorSessForClient.rieltor_id;
+            } else {
+                newClientBase.rieltor_id = _normalizeClientOwnerId(data.rieltor_id);
             }
             items.unshift(Object.assign(newClientBase, data));
         }
@@ -6646,6 +6743,7 @@ window.initClientsAdmin = function() {
     }
 
     _refreshClientCatalogSelects();
+    _reassignHiddenOrDeletedClientsToCompany();
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -6713,23 +6811,40 @@ function _renderCalendarRealtorSelects() {
     var filter = document.getElementById('calendar-realtor-filter');
     var modalSel = document.getElementById('calendar-note-realtor');
     var st = _calendarState();
+    var realtorSess = getRealtorSession();
+    var realtorSessId = realtorSess && realtorSess.rieltor_id ? String(realtorSess.rieltor_id) : '';
 
     if (filter) {
-        var prev = filter.value || st.realtorFilter || 'all';
-        filter.innerHTML = '<option value="all">Все риелторы</option>' + realtors.map(function(r) {
-            return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
-        }).join('');
-        filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
-        st.realtorFilter = filter.value;
+        if (realtorSessId) {
+            filter.innerHTML = '<option value="' + _escMsg(realtorSessId) + '">' + _escMsg(realtorSess.name || realtorSessId) + '</option>';
+            filter.value = realtorSessId;
+            st.realtorFilter = realtorSessId;
+            filter.disabled = true;
+        } else {
+            var prev = filter.value || st.realtorFilter || 'all';
+            filter.innerHTML = '<option value="all">Все риелторы</option>' + realtors.map(function(r) {
+                return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
+            }).join('');
+            filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
+            st.realtorFilter = filter.value;
+            filter.disabled = false;
+        }
     }
 
     if (modalSel) {
-        var prevModal = modalSel.value || '';
-        modalSel.innerHTML = '<option value="">Не выбран</option>' + realtors.map(function(r) {
-            return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
-        }).join('');
-        if (prevModal && Array.from(modalSel.options).some(function(o) { return o.value === prevModal; })) {
-            modalSel.value = prevModal;
+        if (realtorSessId) {
+            modalSel.innerHTML = '<option value="' + _escMsg(realtorSessId) + '">' + _escMsg(realtorSess.name || realtorSessId) + '</option>';
+            modalSel.value = realtorSessId;
+            modalSel.disabled = true;
+        } else {
+            var prevModal = modalSel.value || '';
+            modalSel.innerHTML = '<option value="">Не выбран</option>' + realtors.map(function(r) {
+                return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
+            }).join('');
+            if (prevModal && Array.from(modalSel.options).some(function(o) { return o.value === prevModal; })) {
+                modalSel.value = prevModal;
+            }
+            modalSel.disabled = false;
         }
     }
 }
