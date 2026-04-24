@@ -2218,6 +2218,7 @@
 
         // Admin panel functionality
         document.addEventListener('DOMContentLoaded', function() {
+            const isStandaloneAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             // Admin property search handler
             document.getElementById('admin-property-search').addEventListener('input', function(e) {
                 filterAdminProperties(e.target.value);
@@ -2236,7 +2237,7 @@
 
             // Close admin panel
             closeAdminPanel.addEventListener('click', function() {
-                if (document.body.classList.contains('admin-standalone')) {
+                if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
                     window.location.href = 'index.html';
                     return;
                 }
@@ -2298,7 +2299,7 @@
 
             if (authModal && authCancelBtn) {
                 authCancelBtn.addEventListener('click', function() {
-                    if (document.body.classList.contains('admin-standalone')) {
+                    if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
                         window.location.href = 'index.html';
                         return;
                     }
@@ -2306,7 +2307,7 @@
                 });
             }
 
-            if (document.body.classList.contains('admin-standalone')) {
+            if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
                 openAdminPanelWithAuth();
             }
         });
