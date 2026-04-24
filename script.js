@@ -6612,7 +6612,7 @@ window.renderClientsAdmin = function() {
         var ownerAgent = ownerMap[ownerId] || null;
         var ownerCellHtml = ownerAgent && ownerAgent.photo
             ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
-            : '<span style="display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:rgba(255,215,0,0.9);font-size:0.72rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">Компания</span>';
+            : '<img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Компания" title="Компания" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
