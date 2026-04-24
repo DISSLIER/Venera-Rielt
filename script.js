@@ -6570,6 +6570,8 @@ window.renderClientsAdmin = function() {
         if (!rid) return;
         ownerMap[rid] = a;
     });
+    var ownerOptions = [{ value: CLIENT_OWNER_COMPANY_ID, label: 'Компания' }].concat(_getClientOwnerOptions());
+    var canEditOwnerInline = !(realtorSess && realtorSess.rieltor_id);
 
     list.innerHTML = filteredItems.map(function(item) {
         var meta = _clientStatusMeta(item.status);
@@ -6586,9 +6588,18 @@ window.renderClientsAdmin = function() {
 
         var ownerId = _normalizeClientOwnerId(item.rieltor_id);
         var ownerAgent = ownerMap[ownerId] || null;
-        var ownerCellHtml = ownerAgent && ownerAgent.photo
-            ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;">'
-            : '<span style="display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:rgba(255,215,0,0.9);font-size:0.72rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">Компания</span>';
+        var ownerCellHtml = '';
+        if (canEditOwnerInline) {
+            var ownerSelectOptions = ownerOptions.map(function(opt) {
+                var selected = opt.value === ownerId ? ' selected' : '';
+                return '<option value="' + _escMsg(opt.value) + '"' + selected + '>' + _escMsg(opt.label) + '</option>';
+            }).join('');
+            ownerCellHtml = '<select class="cal-select" onchange="window.changeClientOwner(\'' + item.id + '\', this.value)" style="min-width:140px;padding:6px 28px 6px 10px;font-size:0.8rem;">' + ownerSelectOptions + '</select>';
+        } else {
+            ownerCellHtml = ownerAgent && ownerAgent.photo
+                ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;">'
+                : '<span style="display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:rgba(255,215,0,0.9);font-size:0.72rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">Компания</span>';
+        }
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
@@ -6634,6 +6645,24 @@ window.deleteClient = function(id) {
 
 window.editClient = function(id) {
     window.openClientModal('edit', id);
+};
+
+window.changeClientOwner = function(id, newOwnerId) {
+    var realtorSess = getRealtorSession();
+    if (realtorSess && realtorSess.rieltor_id) return;
+
+    var normalizedOwner = _normalizeClientOwnerId(newOwnerId);
+    var changed = false;
+    var items = _getClients().map(function(item) {
+        if (item.id !== id) return item;
+        if (_normalizeClientOwnerId(item.rieltor_id) === normalizedOwner) return item;
+        changed = true;
+        return Object.assign({}, item, { rieltor_id: normalizedOwner });
+    });
+
+    if (!changed) return;
+    _saveClients(items);
+    window.renderClientsAdmin();
 };
 
 window.initClientsAdmin = function() {
