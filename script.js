@@ -2069,14 +2069,190 @@
             var myClients = allClients.filter(function(c) { return String(c.rieltor_id || '') === ridStr; });
             var pending = myClients.filter(function(c) { return (c.status || 'pending') === 'pending'; }).length;
             var success = myClients.filter(function(c) { return c.status === 'success'; }).length;
+            var reject = myClients.filter(function(c) { return c.status === 'reject'; }).length;
             var today = new Date().toISOString().slice(0, 10);
             var allNotes = typeof _getCalendarNotes === 'function' ? _getCalendarNotes() : [];
-            var upcoming = allNotes.filter(function(n) { return String(n.realtorId || '') === ridStr && String(n.date || '') >= today; }).length;
+            var sharedTarget = typeof CALENDAR_TARGET_ALL_REALTORS !== 'undefined' ? CALENDAR_TARGET_ALL_REALTORS : 'all_realtors';
+            var myNotes = allNotes.filter(function(n) {
+                var target = String(n.realtorId || '');
+                return target === ridStr || target === sharedTarget;
+            });
+            var upcoming = myNotes.filter(function(n) { return String(n.date || '') >= today; }).length;
+
+            var analytics = getAnalyticsStore ? getAnalyticsStore() : { events: [] };
+            var events = Array.isArray(analytics.events) ? analytics.events : [];
+            var now = Date.now();
+            var dayMs = 24 * 60 * 60 * 1000;
+            var from30 = now - 30 * dayMs;
+            var from14 = now - 14 * dayMs;
+            var from28 = now - 28 * dayMs;
+
+            var views30 = 0;
+            var added30 = 0;
+            var dailyViewsMap = {};
+            for (var i = 13; i >= 0; i -= 1) {
+                var d = new Date(now - i * dayMs);
+                var key = d.toISOString().slice(0, 10);
+                dailyViewsMap[key] = 0;
+            }
+
+            events.forEach(function(ev) {
+                var ts = Number(ev.ts || 0);
+                if (!ts) return;
+                var payload = ev.payload || {};
+                var evRid = String(payload.rieltorId || '').trim();
+
+                if (String(ev.type || '') === 'property_view' && evRid === ridStr) {
+                    if (ts >= from30) views30 += 1;
+                    if (ts >= from14) {
+                        var dKey = new Date(ts).toISOString().slice(0, 10);
+                        if (Object.prototype.hasOwnProperty.call(dailyViewsMap, dKey)) {
+                            dailyViewsMap[dKey] += 1;
+                        }
+                    }
+                }
+
+                if (String(ev.type || '') === 'property_added' && evRid === ridStr && ts >= from30) {
+                    added30 += 1;
+                }
+            });
+
+            var recentNotes = myNotes.filter(function(n) {
+                var dts = Date.parse(String(n.date || '') + 'T00:00:00');
+                return Number.isFinite(dts) && dts >= from28;
+            });
+            var weeklyEventsAvg = recentNotes.length ? (recentNotes.length / 4) : 0;
+            var conversion = myClients.length ? (success / myClients.length) * 100 : 0;
+
+            var typeCounts = {};
+            myNotes.forEach(function(n) {
+                var t = String(n.type || 'Другое');
+                typeCounts[t] = (typeCounts[t] || 0) + 1;
+            });
+
             function setEl(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
             setEl('realtor-stat-clients', myClients.length);
             setEl('realtor-stat-pending', pending);
             setEl('realtor-stat-success', success);
             setEl('realtor-stat-upcoming', upcoming);
+
+            setEl('realtor-stat-views-30', Number(views30 || 0).toLocaleString('ru-RU'));
+            setEl('realtor-stat-added-30', Number(added30 || 0).toLocaleString('ru-RU'));
+            setEl('realtor-stat-conversion', Math.round(conversion) + '%');
+            setEl('realtor-stat-weekly-events', weeklyEventsAvg.toFixed(1));
+
+            if (typeof Chart !== 'undefined') {
+                var chartState = window.__veneraRealtorCharts || {};
+                window.__veneraRealtorCharts = chartState;
+
+                function setChart(chartKey, canvasId, config) {
+                    if (chartState[chartKey]) {
+                        chartState[chartKey].destroy();
+                    }
+                    var canvas = document.getElementById(canvasId);
+                    if (!canvas) return;
+                    chartState[chartKey] = new Chart(canvas, config);
+                }
+
+                var viewsLabels = Object.keys(dailyViewsMap);
+                var viewsValues = viewsLabels.map(function(k) { return dailyViewsMap[k]; });
+                setChart('realtorViewsDaily', 'realtor-views-daily-chart', {
+                    type: 'line',
+                    data: {
+                        labels: viewsLabels.map(function(k) { return k.slice(5); }),
+                        datasets: [{
+                            label: 'Просмотры',
+                            data: viewsValues,
+                            borderColor: '#FFD700',
+                            backgroundColor: 'rgba(255,215,0,0.2)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                        scales: {
+                            x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.08)' }, beginAtZero: true }
+                        }
+                    }
+                });
+
+                setChart('realtorClientFunnel', 'realtor-client-funnel-chart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['В ожидании', 'Сделка', 'Отказ'],
+                        datasets: [{
+                            data: [pending, success, reject],
+                            backgroundColor: ['#f59e0b', '#22c55e', '#ef4444']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.08)' }, beginAtZero: true }
+                        }
+                    }
+                });
+
+                var typeLabels = Object.keys(typeCounts);
+                var typeValues = typeLabels.map(function(k) { return typeCounts[k]; });
+                if (!typeLabels.length) {
+                    typeLabels = ['Нет данных'];
+                    typeValues = [1];
+                }
+                setChart('realtorCalendarTypes', 'realtor-calendar-type-chart', {
+                    type: 'doughnut',
+                    data: {
+                        labels: typeLabels,
+                        datasets: [{
+                            data: typeValues,
+                            backgroundColor: ['#a78bfa', '#34d399', '#60a5fa', '#fbbf24', '#64748b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                    }
+                });
+
+                var engagementViews = Math.min(100, Math.round((views30 / 120) * 100));
+                var engagementEvents = Math.min(100, Math.round((weeklyEventsAvg / 10) * 100));
+                var engagementConv = Math.min(100, Math.round(conversion));
+                var engagementNew = Math.min(100, Math.round((added30 / 8) * 100));
+                setChart('realtorEngagement', 'realtor-engagement-chart', {
+                    type: 'radar',
+                    data: {
+                        labels: ['Просмотры', 'Планирование', 'Конверсия', 'Новые объекты'],
+                        datasets: [{
+                            label: 'Ваш индекс',
+                            data: [engagementViews, engagementEvents, engagementConv, engagementNew],
+                            borderColor: '#FFD700',
+                            backgroundColor: 'rgba(255,215,0,0.18)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(255,255,255,0.12)' },
+                                grid: { color: 'rgba(255,255,255,0.12)' },
+                                pointLabels: { color: '#d1d5db' },
+                                ticks: { color: '#9ca3af', backdropColor: 'transparent', beginAtZero: true, max: 100 }
+                            }
+                        }
+                    }
+                });
+            }
         }
         window.renderRealtorStats = renderRealtorStats;
 

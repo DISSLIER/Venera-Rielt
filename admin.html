@@ -1562,6 +1562,44 @@
                             <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:500;">Предстоящих событий</div>
                         </div>
                     </div>
+
+                    <div class="analytics-top-grid mb-6">
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Просмотры моих объектов (30д)</div>
+                            <div id="realtor-stat-views-30" class="text-2xl font-bold text-white">0</div>
+                        </div>
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Добавлено объектов (30д)</div>
+                            <div id="realtor-stat-added-30" class="text-2xl font-bold text-white">0</div>
+                        </div>
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Конверсия клиентов</div>
+                            <div id="realtor-stat-conversion" class="text-2xl font-bold text-white">0%</div>
+                        </div>
+                        <div class="analytics-stat-card">
+                            <div class="text-xs text-gray-400">Среднее событий / неделя</div>
+                            <div id="realtor-stat-weekly-events" class="text-2xl font-bold text-white">0</div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-chart-grid">
+                        <div class="analytics-chart-card">
+                            <h4>Динамика просмотров (14 дней)</h4>
+                            <div class="analytics-chart-wrap"><canvas id="realtor-views-daily-chart"></canvas></div>
+                        </div>
+                        <div class="analytics-chart-card">
+                            <h4>Воронка клиентов</h4>
+                            <div class="analytics-chart-wrap"><canvas id="realtor-client-funnel-chart"></canvas></div>
+                        </div>
+                        <div class="analytics-chart-card">
+                            <h4>Типы моих событий</h4>
+                            <div class="analytics-chart-wrap"><canvas id="realtor-calendar-type-chart"></canvas></div>
+                        </div>
+                        <div class="analytics-chart-card">
+                            <h4>Индекс вовлеченности</h4>
+                            <div class="analytics-chart-wrap"><canvas id="realtor-engagement-chart"></canvas></div>
+                        </div>
+                    </div>
                 </section>
 
                 <section id="admin-properties-view" class="admin-view">
