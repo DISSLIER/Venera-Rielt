@@ -12,6 +12,18 @@
   "categories": ["business", "lifestyle"],
   "icons": [
     {
+      "src": "image/components/AppIcon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "image/components/AppIcon1.png",
+      "sizes": "994x994",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "image/components/appicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
