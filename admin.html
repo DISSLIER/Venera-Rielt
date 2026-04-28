@@ -1543,7 +1543,27 @@
 
                 <!-- Статистика риелтора (видна только в режиме риелтора) -->
                 <section id="realtor-stats-view" class="admin-view hidden">
-                    <h3 class="text-2xl font-semibold gold-text mb-6">Моя статистика</h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-2xl font-semibold gold-text">Моя статистика</h3>
+                    </div>
+
+                    <div class="analytics-period-bar" id="realtor-period-bar" role="tablist" aria-label="Период статистики риелтора">
+                        <button type="button" class="analytics-period-btn" data-realtor-days="1">1 день</button>
+                        <button type="button" class="analytics-period-btn" data-realtor-days="7">7 дней</button>
+                        <button type="button" class="analytics-period-btn active" data-realtor-days="30">30 дней</button>
+                        <button type="button" class="analytics-period-btn" data-realtor-days="90">90 дней</button>
+                        <button type="button" class="analytics-period-btn" data-realtor-days="180">180 дней</button>
+                        <button type="button" class="analytics-period-btn" data-realtor-days="365">1 год</button>
+                        <button type="button" id="realtor-custom-range-toggle" class="analytics-period-btn">Выбрать</button>
+                        <div id="realtor-custom-range-panel" class="analytics-custom-range-panel hidden" aria-label="Выбор пользовательского периода">
+                            <label class="text-xs text-gray-400" for="realtor-date-from">С даты</label>
+                            <input type="date" id="realtor-date-from" class="analytics-date-input">
+                            <label class="text-xs text-gray-400" for="realtor-date-to">По дату</label>
+                            <input type="date" id="realtor-date-to" class="analytics-date-input">
+                            <button type="button" id="realtor-custom-range-apply" class="analytics-apply-btn">Показать</button>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         <div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,215,0,0.04));border:1px solid rgba(255,215,0,0.25);border-radius:16px;padding:20px 16px;text-align:center;">
                             <div id="realtor-stat-clients" style="font-size:2rem;font-weight:800;color:#ffd700;line-height:1;">0</div>
@@ -1565,11 +1585,11 @@
 
                     <div class="analytics-top-grid mb-6">
                         <div class="analytics-stat-card">
-                            <div class="text-xs text-gray-400">Просмотры моих объектов (30д)</div>
+                            <div class="text-xs text-gray-400">Просмотры моих объектов (<span id="realtor-period-label">30д</span>)</div>
                             <div id="realtor-stat-views-30" class="text-2xl font-bold text-white">0</div>
                         </div>
                         <div class="analytics-stat-card">
-                            <div class="text-xs text-gray-400">Добавлено объектов (30д)</div>
+                            <div class="text-xs text-gray-400">Добавлено объектов (<span id="realtor-period-label-2">30д</span>)</div>
                             <div id="realtor-stat-added-30" class="text-2xl font-bold text-white">0</div>
                         </div>
                         <div class="analytics-stat-card">
@@ -1584,7 +1604,7 @@
 
                     <div class="analytics-chart-grid">
                         <div class="analytics-chart-card">
-                            <h4>Динамика просмотров (14 дней)</h4>
+                            <h4 id="realtor-views-daily-chart-title">Динамика просмотров (14 дней)</h4>
                             <div class="analytics-chart-wrap"><canvas id="realtor-views-daily-chart"></canvas></div>
                         </div>
                         <div class="analytics-chart-card">
@@ -2616,7 +2636,7 @@
                         if (typeof window.renderCalendarAdmin === 'function') window.renderCalendarAdmin();
                     }
                     if (targetId === 'realtor-stats-view') {
-                        if (typeof window.renderRealtorStats === 'function') window.renderRealtorStats();
+                        if (typeof window.renderRealtorStats === 'function') window.renderRealtorStats(currentRealtorPeriod);
                     }
                     if (targetId === 'admin-promo-view') {
                         if (typeof renderPromoAdmin === 'function') renderPromoAdmin();
@@ -2685,6 +2705,64 @@
                 }
 
                 switchAdminView('admin-properties-view');
+
+                // === Realtor stats period bar ===
+                var currentRealtorPeriod = 30;
+                var realtorPeriodBtns = document.querySelectorAll('#realtor-period-bar [data-realtor-days]');
+                var realtorCustomToggle = document.getElementById('realtor-custom-range-toggle');
+                var realtorCustomPanel = document.getElementById('realtor-custom-range-panel');
+                var realtorDateFrom = document.getElementById('realtor-date-from');
+                var realtorDateTo = document.getElementById('realtor-date-to');
+                var realtorCustomApply = document.getElementById('realtor-custom-range-apply');
+
+                function setActiveRealtorPeriodBtn(activeBtn) {
+                    document.querySelectorAll('#realtor-period-bar .analytics-period-btn').forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    if (activeBtn) activeBtn.classList.add('active');
+                }
+
+                function hideRealtorCustomPanel() {
+                    if (realtorCustomPanel) realtorCustomPanel.classList.add('hidden');
+                }
+
+                realtorPeriodBtns.forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var days = Number(btn.getAttribute('data-realtor-days')) || 30;
+                        currentRealtorPeriod = days;
+                        setActiveRealtorPeriodBtn(btn);
+                        hideRealtorCustomPanel();
+                        if (typeof window.renderRealtorStats === 'function') window.renderRealtorStats(currentRealtorPeriod);
+                    });
+                });
+
+                if (realtorCustomToggle && realtorCustomPanel && realtorDateFrom && realtorDateTo && realtorCustomApply) {
+                    var todayR = new Date();
+                    var toIsoR = function(date) {
+                        var y = date.getFullYear();
+                        var m = String(date.getMonth() + 1).padStart(2, '0');
+                        var dv = String(date.getDate()).padStart(2, '0');
+                        return y + '-' + m + '-' + dv;
+                    };
+                    realtorDateFrom.value = toIsoR(new Date(todayR.getTime() - 29 * 24 * 60 * 60 * 1000));
+                    realtorDateTo.value = toIsoR(todayR);
+
+                    realtorCustomToggle.addEventListener('click', function() {
+                        realtorCustomPanel.classList.toggle('hidden');
+                    });
+
+                    realtorCustomApply.addEventListener('click', function() {
+                        var startDate = realtorDateFrom.value;
+                        var endDate = realtorDateTo.value;
+                        if (!startDate || !endDate) { alert('Выберите обе даты.'); return; }
+                        if (startDate > endDate) { alert('Дата начала должна быть раньше даты окончания.'); return; }
+                        currentRealtorPeriod = { mode: 'custom', startDate: startDate, endDate: endDate };
+                        setActiveRealtorPeriodBtn(realtorCustomToggle);
+                        hideRealtorCustomPanel();
+                        if (typeof window.renderRealtorStats === 'function') window.renderRealtorStats(currentRealtorPeriod);
+                    });
+                }
+                // === end realtor period bar ===
 
                 // File input label update for promo
                 document.addEventListener('change', function(e) {

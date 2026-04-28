@@ -2061,7 +2061,7 @@
             return Array.isArray(window.VENERA_AGENTS_CONFIG) ? window.VENERA_AGENTS_CONFIG : [];
         }
 
-        function renderRealtorStats() {
+        function renderRealtorStats(period) {
             var session = getRealtorSession();
             if (!session) return;
             var ridStr = String(session.rieltor_id);
@@ -2083,52 +2083,83 @@
             var events = Array.isArray(analytics.events) ? analytics.events : [];
             var now = Date.now();
             var dayMs = 24 * 60 * 60 * 1000;
-            var from30 = now - 30 * dayMs;
-            var from14 = now - 14 * dayMs;
-            var from28 = now - 28 * dayMs;
 
-            var views30 = 0;
-            var added30 = 0;
+            // Resolve period to fromTs / toTs
+            var periodDays = 30;
+            var fromTs, toTs;
+            var periodLabel = '30д';
+            var viewsDaysWindow = 14;
+
+            if (period && typeof period === 'object' && period.mode === 'custom') {
+                fromTs = new Date(period.startDate + 'T00:00:00').getTime();
+                toTs = new Date(period.endDate + 'T23:59:59').getTime();
+                var diffDays = Math.round((toTs - fromTs) / dayMs);
+                periodDays = diffDays || 1;
+                var fmt = function(iso) {
+                    var d = new Date(iso + 'T00:00:00');
+                    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+                };
+                periodLabel = fmt(period.startDate) + '–' + fmt(period.endDate);
+                viewsDaysWindow = Math.min(periodDays, 60);
+            } else {
+                periodDays = Number(period) || 30;
+                fromTs = now - periodDays * dayMs;
+                toTs = now;
+                if (periodDays === 1) { periodLabel = '1д'; }
+                else if (periodDays === 365) { periodLabel = '1 год'; }
+                else { periodLabel = periodDays + 'д'; }
+                viewsDaysWindow = Math.min(periodDays, 60);
+            }
+
+            // Build daily views map for chart
             var dailyViewsMap = {};
-            for (var i = 13; i >= 0; i -= 1) {
-                var d = new Date(now - i * dayMs);
+            for (var i = viewsDaysWindow - 1; i >= 0; i -= 1) {
+                var d = new Date(toTs - i * dayMs);
                 var key = d.toISOString().slice(0, 10);
                 dailyViewsMap[key] = 0;
             }
 
+            var views30 = 0;
+            var added30 = 0;
             events.forEach(function(ev) {
                 var ts = Number(ev.ts || 0);
-                if (!ts) return;
+                if (!ts || ts < fromTs || ts > toTs) return;
                 var payload = ev.payload || {};
                 var evRid = String(payload.rieltorId || '').trim();
-
                 if (String(ev.type || '') === 'property_view' && evRid === ridStr) {
-                    if (ts >= from30) views30 += 1;
-                    if (ts >= from14) {
-                        var dKey = new Date(ts).toISOString().slice(0, 10);
-                        if (Object.prototype.hasOwnProperty.call(dailyViewsMap, dKey)) {
-                            dailyViewsMap[dKey] += 1;
-                        }
+                    views30 += 1;
+                    var dKey = new Date(ts).toISOString().slice(0, 10);
+                    if (Object.prototype.hasOwnProperty.call(dailyViewsMap, dKey)) {
+                        dailyViewsMap[dKey] += 1;
                     }
                 }
-
-                if (String(ev.type || '') === 'property_added' && evRid === ridStr && ts >= from30) {
+                if (String(ev.type || '') === 'property_added' && evRid === ridStr) {
                     added30 += 1;
                 }
             });
 
+            // Calendar notes inside period
             var recentNotes = myNotes.filter(function(n) {
                 var dts = Date.parse(String(n.date || '') + 'T00:00:00');
-                return Number.isFinite(dts) && dts >= from28;
+                return Number.isFinite(dts) && dts >= fromTs && dts <= toTs;
             });
-            var weeklyEventsAvg = recentNotes.length ? (recentNotes.length / 4) : 0;
+            var weeksInPeriod = Math.max(1, periodDays / 7);
+            var weeklyEventsAvg = recentNotes.length ? (recentNotes.length / weeksInPeriod) : 0;
             var conversion = myClients.length ? (success / myClients.length) * 100 : 0;
 
             var typeCounts = {};
-            myNotes.forEach(function(n) {
+            recentNotes.forEach(function(n) {
                 var t = String(n.type || 'Другое');
                 typeCounts[t] = (typeCounts[t] || 0) + 1;
             });
+
+            // Update period labels in KPI cards
+            var pLblEl = document.getElementById('realtor-period-label');
+            var pLblEl2 = document.getElementById('realtor-period-label-2');
+            if (pLblEl) pLblEl.textContent = periodLabel;
+            if (pLblEl2) pLblEl2.textContent = periodLabel;
+            var chartTitleEl = document.getElementById('realtor-views-daily-chart-title');
+            if (chartTitleEl) chartTitleEl.textContent = 'Динамика просмотров (' + (viewsDaysWindow <= 1 ? '1 день' : viewsDaysWindow + ' дн') + ')';
 
             function setEl(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
             setEl('realtor-stat-clients', myClients.length);
@@ -6858,7 +6889,9 @@ window.renderClientsAdmin = function() {
 function _refreshRealtorStatsIfVisible() {
     var statsView = document.getElementById('realtor-stats-view');
     if (statsView && !statsView.classList.contains('hidden') && typeof window.renderRealtorStats === 'function') {
-        window.renderRealtorStats();
+        var periodBtn = document.querySelector('#realtor-period-bar .analytics-period-btn.active[data-realtor-days]');
+        var period = periodBtn ? (Number(periodBtn.getAttribute('data-realtor-days')) || 30) : 30;
+        window.renderRealtorStats(period);
     }
 }
 
