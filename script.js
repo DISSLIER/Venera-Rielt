@@ -7314,8 +7314,18 @@ function _renderCalendarDayEntries() {
         var icon = typeIcons[n.type] || 'fa-bookmark';
         var color = typeColors[n.type] || '#fbbf24';
         var runtimeAgents = _getAgentListForClientOwner();
-        var agentObj = realtorTargetId ? runtimeAgents.find(function(a) { return String(a.rieltor_id) === realtorTargetId; }) : null;
-        var agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
+        var agentPhoto = null;
+        
+        // Special targets: company and all realtors
+        if (realtorTargetId === CALENDAR_TARGET_COMPANY) {
+            agentPhoto = 'https://i.ibb.co/35ZQ5g8X/logo.png';
+        } else if (realtorTargetId === CALENDAR_TARGET_ALL_REALTORS) {
+            agentPhoto = null; // Will show group icon
+        } else {
+            var agentObj = runtimeAgents.find(function(a) { return String(a.rieltor_id) === realtorTargetId; });
+            agentPhoto = agentObj && agentObj.photo ? agentObj.photo : null;
+        }
+        
         var realtorSessView = getRealtorSession();
         var canEditNote = !(realtorSessView && realtorSessView.rieltor_id) || realtorTargetId === String(realtorSessView.rieltor_id);
         return '<div style="background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,215,0,0.12);border-radius:14px;padding:14px 16px;transition:box-shadow 0.2s;" ' +
@@ -7336,7 +7346,9 @@ function _renderCalendarDayEntries() {
                     '<span style="font-size:12px;color:rgba(255,255,255,0.8);text-align:right;font-weight:500;max-width:80px;line-height:1.3;">' + realtor + '</span>' +
                     (agentPhoto
                         ? '<img src="' + agentPhoto + '" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,0.3);flex-shrink:0;">'
-                        : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>') +
+                        : (realtorTargetId === CALENDAR_TARGET_ALL_REALTORS
+                            ? '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-users" style="color:rgba(255,215,0,0.6);font-size:0.9rem;"></i></div>'
+                            : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:rgba(255,215,0,0.5);font-size:0.9rem;"></i></div>')) +
                 '</div>' +
             '</div>' +
             '<div class="cal-entry-title-mob font-semibold text-white text-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' + _escMsg(n.title || '') + '</div>' +
