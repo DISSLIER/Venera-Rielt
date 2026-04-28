@@ -1083,6 +1083,54 @@
             }).join('');
         }
 
+        function _initHistoryPanelsDelegation() {
+            if (window.__veneraHistoryPanelsBound) return;
+            window.__veneraHistoryPanelsBound = true;
+
+            document.addEventListener('click', function(e) {
+                var clientsToggle = e.target.closest('#history-clients-toggle-btn');
+                if (clientsToggle) {
+                    var clientsPanel = document.getElementById('clients-history-panel');
+                    if (!clientsPanel) return;
+                    var clientsHidden = clientsPanel.classList.contains('hidden');
+                    if (clientsHidden) {
+                        clientsPanel.classList.remove('hidden');
+                        _renderHistoryLogs('База клиентов');
+                    } else {
+                        clientsPanel.classList.add('hidden');
+                    }
+                    return;
+                }
+
+                var calendarToggle = e.target.closest('#history-calendar-toggle-btn');
+                if (calendarToggle) {
+                    var calendarPanel = document.getElementById('calendar-history-panel');
+                    if (!calendarPanel) return;
+                    var calendarHidden = calendarPanel.classList.contains('hidden');
+                    if (calendarHidden) {
+                        calendarPanel.classList.remove('hidden');
+                        _renderHistoryLogs('Календарь встреч и показов');
+                    } else {
+                        calendarPanel.classList.add('hidden');
+                    }
+                    return;
+                }
+
+                var clientsClose = e.target.closest('#clients-history-close-btn');
+                if (clientsClose) {
+                    var cp = document.getElementById('clients-history-panel');
+                    if (cp) cp.classList.add('hidden');
+                    return;
+                }
+
+                var calendarClose = e.target.closest('#calendar-history-close-btn');
+                if (calendarClose) {
+                    var kp = document.getElementById('calendar-history-panel');
+                    if (kp) kp.classList.add('hidden');
+                }
+            });
+        }
+
         function _getAboutPhotoEntries(settings) {
             var s = settings || getSiteContentSettings();
             var list = [];
@@ -7233,33 +7281,12 @@ window.initClientsAdmin = function() {
         });
     }
 
-    var historyToggleBtn = document.getElementById('history-clients-toggle-btn');
-    var historyPanel = document.getElementById('clients-history-panel');
-    var historyCloseBtn = document.getElementById('clients-history-close-btn');
-    
-    if (historyToggleBtn && historyPanel) {
-        historyToggleBtn.addEventListener('click', function() {
-            var isHidden = historyPanel.classList.contains('hidden');
-            if (isHidden) {
-                historyPanel.classList.remove('hidden');
-                _renderHistoryLogs('\u0411\u0430\u0437\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u043e\u0432');
-            } else {
-                historyPanel.classList.add('hidden');
-            }
-        });
-    }
-    
-    if (historyCloseBtn) {
-        historyCloseBtn.addEventListener('click', function() {
-            historyPanel.classList.add('hidden');
-        });
-    }
-
     _refreshClientCatalogSelects();
     _reassignHiddenOrDeletedClientsToCompany();
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    _initHistoryPanelsDelegation();
     window.initClientsAdmin && window.initClientsAdmin();
     window.renderClientsAdmin && window.renderClientsAdmin();
 });
@@ -7748,30 +7775,10 @@ window.initCalendarAdmin = function() {
         });
     }
 
-    var historyToggleBtn = document.getElementById('history-calendar-toggle-btn');
-    var historyPanel = document.getElementById('calendar-history-panel');
-    var historyCloseBtn = document.getElementById('calendar-history-close-btn');
-    
-    if (historyToggleBtn && historyPanel) {
-        historyToggleBtn.addEventListener('click', function() {
-            var isHidden = historyPanel.classList.contains('hidden');
-            if (isHidden) {
-                historyPanel.classList.remove('hidden');
-                _renderHistoryLogs('\u041a\u0430\u043b\u0435\u043d\u0434\u0430\u0440\u044c \u0432\u0441\u0442\u0440\u0435\u0447 \u0438 \u043f\u043e\u043a\u0430\u0437\u043e\u0432');
-            } else {
-                historyPanel.classList.add('hidden');
-            }
-        });
-    }
-    
-    if (historyCloseBtn) {
-        historyCloseBtn.addEventListener('click', function() {
-            historyPanel.classList.add('hidden');
-        });
-    }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    _initHistoryPanelsDelegation();
     window.initCalendarAdmin && window.initCalendarAdmin();
 });
 
