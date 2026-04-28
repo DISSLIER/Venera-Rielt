@@ -921,6 +921,7 @@
         const REALTOR_SESSION_KEY = 'venera_realtor_session';
         const ACTIONS_LOG_KEY = 'venera_actions_log_v1';
         const ACTIONS_BADGE_STATE_KEY = 'venera_actions_badge_state_v1';
+        const ACTIONS_SYNC_CHANNEL_KEY = 'venera_actions_sync_v1';
         const ACTIONS_SECTION_CLIENTS = 'База клиентов';
         const ACTIONS_SECTION_CALENDAR = 'Календарь встреч и показов';
         const DEFAULT_SITE_CONTENT = {
@@ -1025,6 +1026,13 @@
                 if (logs.length > 500) logs = logs.slice(0, 500);
                 localStorage.setItem(ACTIONS_LOG_KEY, JSON.stringify(logs));
                 window._updateActionBadges && window._updateActionBadges();
+                try {
+                    if (typeof BroadcastChannel !== 'undefined') {
+                        var ch = new BroadcastChannel(ACTIONS_SYNC_CHANNEL_KEY);
+                        ch.postMessage({ type: 'action-log-updated', ts: Date.now() });
+                        ch.close();
+                    }
+                } catch (_) {}
             } catch(_) {}
         }
 
@@ -1090,7 +1098,7 @@
             if (viewer.role === 'realtor') {
                 if (actorType !== 'admin') return false;
                 var targetId = _normalizeActionTargetId(entry);
-                if (!targetId) return true;
+                if (!targetId) return false;
                 if (targetId === viewer.realtorId) return true;
                 if (targetId === CALENDAR_TARGET_ALL_REALTORS) return true;
                 if (targetId === CALENDAR_TARGET_COMPANY) return true;
@@ -1136,6 +1144,40 @@
             state[viewer.key + '::' + section] = Date.now();
             _saveActionBadgeState(state);
             window._updateActionBadges && window._updateActionBadges();
+        }
+
+        function _refreshOpenHistoryPanels() {
+            var cp = document.getElementById('clients-history-panel');
+            if (cp && !cp.classList.contains('hidden')) {
+                _renderHistoryLogs(ACTIONS_SECTION_CLIENTS);
+            }
+            var kp = document.getElementById('calendar-history-panel');
+            if (kp && !kp.classList.contains('hidden')) {
+                _renderHistoryLogs(ACTIONS_SECTION_CALENDAR);
+            }
+        }
+
+        function _initActionRealtimeUpdates() {
+            if (window.__veneraActionRealtimeBound) return;
+            window.__veneraActionRealtimeBound = true;
+
+            // Local periodic refresh: keeps badges and open history live even when updates
+            // are applied in the same tab by other sync mechanisms.
+            setInterval(function() {
+                window._updateActionBadges && window._updateActionBadges();
+                _refreshOpenHistoryPanels();
+            }, 1500);
+
+            // Instant cross-tab sync without waiting for storage events.
+            try {
+                if (typeof BroadcastChannel !== 'undefined') {
+                    var ch = new BroadcastChannel(ACTIONS_SYNC_CHANNEL_KEY);
+                    ch.onmessage = function() {
+                        window._updateActionBadges && window._updateActionBadges();
+                        _refreshOpenHistoryPanels();
+                    };
+                }
+            } catch (_) {}
         }
 
         function _formatTimestamp(dateStr) {
@@ -7507,6 +7549,7 @@ window.initClientsAdmin = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    _initActionRealtimeUpdates();
     _initHistoryPanelsDelegation();
     window.initClientsAdmin && window.initClientsAdmin();
     window.renderClientsAdmin && window.renderClientsAdmin();
@@ -8019,6 +8062,7 @@ window.initCalendarAdmin = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    _initActionRealtimeUpdates();
     _initHistoryPanelsDelegation();
     window.initCalendarAdmin && window.initCalendarAdmin();
 });
