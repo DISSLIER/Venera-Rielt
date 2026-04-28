@@ -1039,6 +1039,78 @@
             }
         }
 
+        function _escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function _formatHistoryDetailValue(value) {
+            if (value == null) return '—';
+            if (typeof value === 'object') {
+                try { return _escapeHtml(JSON.stringify(value, null, 2)); } catch (_) { return _escapeHtml(String(value)); }
+            }
+            var str = String(value).trim();
+            return str ? _escapeHtml(str) : '—';
+        }
+
+        function _openHistoryDetails(entryId) {
+            if (!entryId) return;
+            var modal = document.getElementById('history-detail-modal');
+            var body = document.getElementById('history-detail-body');
+            if (!modal || !body) return;
+
+            var logs = _getActionLogs();
+            var entry = logs.find(function(item) { return String(item.id || '') === String(entryId); });
+            if (!entry) {
+                body.innerHTML = '<div style="color:rgba(255,255,255,0.6);">Детали записи не найдены.</div>';
+                modal.classList.remove('hidden');
+                return;
+            }
+
+            var detailsRows = '';
+            var details = entry.details || {};
+            var detailKeys = Object.keys(details);
+            if (!detailKeys.length) {
+                detailsRows = '<div style="color:rgba(255,255,255,0.6);">Дополнительных данных нет.</div>';
+            } else {
+                detailsRows = detailKeys.map(function(key) {
+                    return '<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                        '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;">' + _escapeHtml(key) + '</div>' +
+                        '<div style="color:rgba(255,255,255,0.9);font-size:0.88rem;white-space:pre-wrap;word-break:break-word;">' + _formatHistoryDetailValue(details[key]) + '</div>' +
+                        '</div>';
+                }).join('');
+            }
+
+            body.innerHTML = '' +
+                '<div style="display:grid;grid-template-columns:120px 1fr;gap:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.12);margin-bottom:10px;">' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Раздел</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.section || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Действие</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.action || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Пользователь</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.user || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Время</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(_formatTimestamp(entry.timestamp)) + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">ID записи</div>' +
+                '<div style="color:#fff;font-size:0.9rem;word-break:break-all;">' + _escapeHtml(entry.id || '—') + '</div>' +
+                '</div>' +
+                '<div style="margin-top:8px;">' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Подробные данные</div>' +
+                detailsRows +
+                '</div>';
+
+            modal.classList.remove('hidden');
+        }
+
+        function _closeHistoryDetails() {
+            var modal = document.getElementById('history-detail-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
         function _renderHistoryLogs(section) {
             var logs = _getActionLogs(section);
             var listEl = null;
@@ -1070,7 +1142,7 @@
                 var userBgColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.1)' : 'rgba(100,181,246,0.1)';
                 var borderColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.4)' : 'rgba(100,181,246,0.4)';
                 
-                return '<div style=\"padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid ' + borderColor + ';background:' + userBgColor + ';border-radius:4px;color:#a0a0a0;font-size:0.8rem;\">' +
+                  return '<div class=\"history-log-item\" data-history-id=\"' + _escapeHtml(entry.id || '') + '\" style=\"padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid ' + borderColor + ';background:' + userBgColor + ';border-radius:4px;color:#a0a0a0;font-size:0.8rem;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;\">' +
                        '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;\">' +
                        '<div>' +
                        '<span style=\"color:' + userColor + ';font-weight:600;\">' + userStr + '</span>' +
@@ -1079,6 +1151,7 @@
                        '</div>' +
                        '<span style=\"color:#666;font-size:0.75rem;white-space:nowrap;margin-left:1rem;\">' + timeStr + '</span>' +
                        '</div>' +
+                      '<div style=\"margin-top:6px;color:rgba(255,215,0,0.72);font-size:0.72rem;\">Нажмите для подробностей</div>' +
                        '</div>';
             }).join('');
         }
@@ -1127,6 +1200,24 @@
                 if (calendarClose) {
                     var kp = document.getElementById('calendar-history-panel');
                     if (kp) kp.classList.add('hidden');
+                    return;
+                }
+
+                var historyItem = e.target.closest('.history-log-item');
+                if (historyItem) {
+                    _openHistoryDetails(historyItem.getAttribute('data-history-id') || '');
+                    return;
+                }
+
+                var detailClose = e.target.closest('#history-detail-close, #history-detail-close-btn');
+                if (detailClose) {
+                    _closeHistoryDetails();
+                    return;
+                }
+
+                var detailModal = e.target.closest('#history-detail-modal');
+                if (detailModal && e.target === detailModal) {
+                    _closeHistoryDetails();
                 }
             });
         }
