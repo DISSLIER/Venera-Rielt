@@ -917,6 +917,8 @@
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
         const ABOUT_MEDIA_CACHE_NAME = 'venera-about-media-v1';
+        const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
+        const REALTOR_SESSION_KEY = 'venera_realtor_session';
         const ACTIONS_LOG_KEY = 'venera_actions_log_v1';
         const DEFAULT_SITE_CONTENT = {
             about: {
@@ -987,13 +989,25 @@
                 var logs = (function() {
                     try { return JSON.parse(localStorage.getItem(ACTIONS_LOG_KEY) || '[]'); } catch(_) { return []; }
                 })();
-                var adminName = getAdminSession && getAdminSession() ? 'Администратор' : (getRealtorSession ? getRealtorSession() : {}).name || 'Пользователь';
+                
+                var userName = 'Пользователь';
+                try {
+                    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+                        userName = 'Администратор';
+                    } else {
+                        var realtorSession = getRealtorSession();
+                        if (realtorSession && realtorSession.rieltor_name) {
+                            userName = 'Риелтор ' + realtorSession.rieltor_name;
+                        }
+                    }
+                } catch(_) {}
+                
                 var entry = {
                     id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
                     timestamp: new Date().toISOString(),
                     action: action,
                     section: section,
-                    user: adminName,
+                    user: userName,
                     details: details || {}
                 };
                 logs.unshift(entry);
@@ -1050,10 +1064,21 @@
                 }
                 var timeStr = _formatTimestamp(entry.timestamp);
                 var userStr = entry.user || '\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439';
-                return '<div style=\"padding:0.5rem;border-left:2px solid rgba(255,215,0,0.3);color:#a0a0a0;font-size:0.75rem;\">' +
-                       '<span style=\"color:#ffd700;font-weight:500;\">[' + timeStr + ']</span> ' +
-                       '<span style=\"color:#c0c0c0;\">' + userStr + ':</span> ' +
-                       entry.action + details +
+                
+                // \u0426\u0432\u0435\u0442 \u0434\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0430 \u0438 \u0440\u0438\u0435\u043b\u0442\u043e\u0440\u0430
+                var userColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? '#ff9800' : '#64b5f6';
+                var userBgColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.1)' : 'rgba(100,181,246,0.1)';
+                var borderColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.4)' : 'rgba(100,181,246,0.4)';
+                
+                return '<div style=\"padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid ' + borderColor + ';background:' + userBgColor + ';border-radius:4px;color:#a0a0a0;font-size:0.8rem;\">' +
+                       '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;\">' +
+                       '<div>' +
+                       '<span style=\"color:' + userColor + ';font-weight:600;\">' + userStr + '</span>' +
+                       ' <span style=\"color:#888;\">\u2014</span> ' +
+                       '<span style=\"color:#b0b0b0;\">' + entry.action + '</span>' + details +
+                       '</div>' +
+                       '<span style=\"color:#666;font-size:0.75rem;white-space:nowrap;margin-left:1rem;\">' + timeStr + '</span>' +
+                       '</div>' +
                        '</div>';
             }).join('');
         }
@@ -2185,8 +2210,6 @@
 
         // === Пароль доступа в админ-панель (можно изменить) ===
         const ADMIN_PASSWORD = 'venera2026';
-        const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
-        const REALTOR_SESSION_KEY = 'venera_realtor_session';
 
         function clearRealtorSession() {
             try { sessionStorage.removeItem(REALTOR_SESSION_KEY); } catch(e) {}
