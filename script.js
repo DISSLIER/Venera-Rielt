@@ -1058,6 +1058,7 @@
             }).join('');
         }
 
+        function _getAboutPhotoEntries(settings) {
             var s = settings || getSiteContentSettings();
             var list = [];
             if (Array.isArray(s.about.photos) && s.about.photos.length) {
