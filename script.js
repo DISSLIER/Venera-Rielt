@@ -990,7 +990,7 @@
                 var adminName = getAdminSession && getAdminSession() ? 'Администратор' : (getRealtorSession ? getRealtorSession() : {}).name || 'Пользователь';
                 var entry = {
                     id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-                    timestamp: Date.now(),
+                    timestamp: new Date().toISOString(),
                     action: action,
                     section: section,
                     user: adminName,
@@ -1021,7 +1021,7 @@
                 return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' +
                        pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
             } catch(e) {
-                return dateStr;
+                return String(dateStr);
             }
         }
 
