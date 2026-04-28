@@ -1492,7 +1492,9 @@
     <div id="admin-panel" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden overflow-auto">
         <div class="admin-shell">
             <aside class="admin-sidebar">
-                <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="admin-sidebar-logo">
+                <a id="admin-logo-home" href="index.html" title="На главную (без выхода)" style="display:block;line-height:0;cursor:pointer;" aria-label="Перейти на главную страницу">
+                    <img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Venera Rielt Logo" class="admin-sidebar-logo">
+                </a>
                 <nav class="admin-nav" aria-label="Разделы админ-панели">
                     <!-- Кнопка статистики для риелтора (скрыта для admin) -->
                     <button type="button" class="admin-nav-btn" data-admin-view-target="realtor-stats-view" data-realtor-only="1" aria-selected="false" title="Моя статистика" aria-label="Статистика риелтора" style="display:none;">
@@ -1531,7 +1533,7 @@
                     <div class="realtor-panel-name" style="font-size:0.65rem;color:rgba(255,215,0,0.8);text-align:center;font-weight:600;line-height:1.2;word-break:break-word;"></div>
                 </div>
 
-                <button id="close-admin-panel" class="admin-exit-btn" title="Выход" aria-label="Выйти из админ-панели">
+                <button id="close-admin-panel" class="admin-exit-btn" title="Выйти (сброс сессии)" aria-label="Выйти из админ-панели (сброс сессии)">
                     <i class="fas fa-power-off"></i>
                 </button>
             </aside>

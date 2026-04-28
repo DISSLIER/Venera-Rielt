@@ -2559,7 +2559,7 @@
                 });
             });
 
-            // Close admin panel
+            // Close admin panel (logout — clears session)
             closeAdminPanel.addEventListener('click', function() {
                 clearRealtorSession();
                 sessionStorage.removeItem(ADMIN_SESSION_KEY);
@@ -2573,6 +2573,23 @@
                 document.body.style.touchAction = '';
                 document.body.style.position = '';
             });
+
+            // Logo click — go to main page WITHOUT clearing session (minimize only)
+            const adminLogoHome = document.getElementById('admin-logo-home');
+            if (adminLogoHome) {
+                adminLogoHome.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Hide panel but keep session alive
+                    adminPanel.classList.add('hidden');
+                    document.body.style.overflow = '';
+                    document.body.style.touchAction = '';
+                    document.body.style.position = '';
+                    // Navigate to main page (for standalone admin page)
+                    if (isStandaloneAdminPage || document.body.classList.contains('admin-standalone')) {
+                        window.location.href = 'index.html';
+                    }
+                });
+            }
 
             // Initialize admin panel
             initAdminPanel();
