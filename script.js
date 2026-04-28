@@ -5709,7 +5709,6 @@
                         delete store[rid];
                     } else {
                         store[rid] = { hidden: true };
-                        _forceClientOwnerToCompany(rid);
                     }
                     saveAgentStatusStore(store);
                     renderAgentsList();
@@ -7136,7 +7135,9 @@ function _normalizeClientOwnerId(rawOwnerId) {
     var ownerId = String(rawOwnerId || '').trim();
     if (!ownerId) return CLIENT_OWNER_COMPANY_ID;
     if (ownerId === CLIENT_OWNER_COMPANY_ID) return CLIENT_OWNER_COMPANY_ID;
-    var allowed = _getClientOwnerOptions().some(function(opt) { return opt.value === ownerId; });
+    var allowed = _getAgentListForClientOwner().some(function(a) {
+        return String((a && a.rieltor_id) || '').trim() === ownerId;
+    });
     return allowed ? ownerId : CLIENT_OWNER_COMPANY_ID;
 }
 
@@ -7186,6 +7187,18 @@ function _applyClientOwnerControlForMode(prefillOwnerId) {
     }
 
     var options = [{ value: CLIENT_OWNER_COMPANY_ID, label: 'Компания' }].concat(_getClientOwnerOptions());
+    var prefillId = String(prefillOwnerId || '').trim();
+    if (prefillId && prefillId !== CLIENT_OWNER_COMPANY_ID) {
+        var hiddenStore = (typeof getAgentStatusStore === 'function') ? getAgentStatusStore() : {};
+        var isHiddenPrefill = !!(hiddenStore[prefillId] && hiddenStore[prefillId].hidden);
+        var alreadyInOptions = options.some(function(opt) { return String(opt.value) === prefillId; });
+        if (isHiddenPrefill && !alreadyInOptions) {
+            var hiddenAgent = _getAgentListForClientOwner().find(function(a) {
+                return String((a && a.rieltor_id) || '').trim() === prefillId;
+            });
+            options.push({ value: prefillId, label: (hiddenAgent && hiddenAgent.name ? hiddenAgent.name : prefillId) + ' (скрыт)' });
+        }
+    }
     ownerEl.innerHTML = options.map(function(opt) {
         return '<option value="' + _escMsg(opt.value) + '">' + _escMsg(opt.label) + '</option>';
     }).join('');
@@ -7434,6 +7447,7 @@ window.renderClientsAdmin = function() {
     }
 
     var ownerAgents = _getAgentListForClientOwner();
+    var ownerStateStore = (typeof getAgentStatusStore === 'function') ? getAgentStatusStore() : {};
     var ownerMap = {};
     ownerAgents.forEach(function(a) {
         var rid = String((a && a.rieltor_id) || '').trim();
@@ -7456,9 +7470,11 @@ window.renderClientsAdmin = function() {
 
         var ownerId = _normalizeClientOwnerId(item.rieltor_id);
         var ownerAgent = ownerMap[ownerId] || null;
-        var ownerCellHtml = ownerAgent && ownerAgent.photo
-            ? '<img src="' + _escMsg(ownerAgent.photo) + '" alt="" title="' + _escMsg(ownerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
-            : '<img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Компания" title="Компания" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
+        var ownerHidden = ownerId !== CLIENT_OWNER_COMPANY_ID && !!(ownerStateStore[ownerId] && ownerStateStore[ownerId].hidden);
+        var effectiveOwnerAgent = ownerHidden ? null : ownerAgent;
+        var ownerCellHtml = effectiveOwnerAgent && effectiveOwnerAgent.photo
+            ? '<img src="' + _escMsg(effectiveOwnerAgent.photo) + '" alt="" title="' + _escMsg(effectiveOwnerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
+            : '<img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Компания" title="' + _escMsg(ownerHidden ? 'Компания (риелтор временно скрыт)' : 'Компания') + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
