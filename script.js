@@ -920,6 +920,9 @@
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
         const REALTOR_SESSION_KEY = 'venera_realtor_session';
         const ACTIONS_LOG_KEY = 'venera_actions_log_v1';
+        const ACTIONS_BADGE_STATE_KEY = 'venera_actions_badge_state_v1';
+        const ACTIONS_SECTION_CLIENTS = 'База клиентов';
+        const ACTIONS_SECTION_CALENDAR = 'Календарь встреч и показов';
         const DEFAULT_SITE_CONTENT = {
             about: {
                 title: 'О компании',
@@ -991,13 +994,19 @@
                 })();
                 
                 var userName = 'Пользователь';
+                var actorType = 'unknown';
+                var actorId = '';
                 try {
                     if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
                         userName = 'Администратор';
+                        actorType = 'admin';
+                        actorId = 'admin';
                     } else {
                         var realtorSession = getRealtorSession();
-                        if (realtorSession && realtorSession.rieltor_name) {
-                            userName = 'Риелтор ' + realtorSession.rieltor_name;
+                        if (realtorSession && realtorSession.rieltor_id) {
+                            userName = 'Риелтор ' + (realtorSession.name || realtorSession.rieltor_id);
+                            actorType = 'realtor';
+                            actorId = String(realtorSession.rieltor_id);
                         }
                     }
                 } catch(_) {}
@@ -1008,11 +1017,14 @@
                     action: action,
                     section: section,
                     user: userName,
+                    actorType: actorType,
+                    actorId: actorId,
                     details: details || {}
                 };
                 logs.unshift(entry);
                 if (logs.length > 500) logs = logs.slice(0, 500);
                 localStorage.setItem(ACTIONS_LOG_KEY, JSON.stringify(logs));
+                window._updateActionBadges && window._updateActionBadges();
             } catch(_) {}
         }
 
@@ -1026,6 +1038,104 @@
 
         function _clearActionLogs() {
             try { localStorage.removeItem(ACTIONS_LOG_KEY); } catch(_) {}
+        }
+
+        function _getActionBadgeState() {
+            try { return JSON.parse(localStorage.getItem(ACTIONS_BADGE_STATE_KEY) || '{}'); } catch(_) { return {}; }
+        }
+
+        function _saveActionBadgeState(state) {
+            try { localStorage.setItem(ACTIONS_BADGE_STATE_KEY, JSON.stringify(state || {})); } catch(_) {}
+        }
+
+        function _actionTimestampMs(entry) {
+            var isoTs = entry && entry.timestamp ? Date.parse(entry.timestamp) : NaN;
+            if (!Number.isNaN(isoTs)) return isoTs;
+            var numTs = Number(entry && entry.timestamp || 0);
+            return Number.isFinite(numTs) ? numTs : 0;
+        }
+
+        function _getActionViewerContext() {
+            try {
+                if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+                    return { role: 'admin', key: 'admin', realtorId: '' };
+                }
+            } catch(_) {}
+            var rs = null;
+            try { rs = getRealtorSession(); } catch(_) { rs = null; }
+            if (rs && rs.rieltor_id) {
+                var rid = String(rs.rieltor_id);
+                return { role: 'realtor', key: 'realtor_' + rid, realtorId: rid };
+            }
+            return { role: 'guest', key: 'guest', realtorId: '' };
+        }
+
+        function _normalizeActionTargetId(entry) {
+            var d = (entry && entry.details) || {};
+            var raw = d.targetId || d.realtorId || d.rieltor_id || d.clientOwnerId || d.ownerId || '';
+            return String(raw || '').trim();
+        }
+
+        function _isActionRelevantForViewer(entry, viewer) {
+            if (!entry || !viewer || viewer.role === 'guest') return false;
+            var actorType = String(entry.actorType || '').trim();
+            if (!actorType) {
+                actorType = String(entry.user || '').indexOf('Администратор') >= 0 ? 'admin' : 'realtor';
+            }
+
+            if (viewer.role === 'admin') {
+                return actorType === 'realtor';
+            }
+
+            if (viewer.role === 'realtor') {
+                if (actorType !== 'admin') return false;
+                var targetId = _normalizeActionTargetId(entry);
+                if (!targetId) return true;
+                if (targetId === viewer.realtorId) return true;
+                if (targetId === CALENDAR_TARGET_ALL_REALTORS) return true;
+                if (targetId === CALENDAR_TARGET_COMPANY) return true;
+                if (targetId === CLIENT_OWNER_COMPANY_ID) return true;
+                return false;
+            }
+
+            return false;
+        }
+
+        function _setActionBadgeValue(badgeId, count) {
+            var badge = document.getElementById(badgeId);
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function _countUnreadActionsForSection(section, viewer, readState) {
+            if (!section || !viewer) return 0;
+            var lastSeen = Number(readState[viewer.key + '::' + section] || 0);
+            return _getActionLogs(section).filter(function(entry) {
+                return _isActionRelevantForViewer(entry, viewer) && _actionTimestampMs(entry) > lastSeen;
+            }).length;
+        }
+
+        window._updateActionBadges = function() {
+            var viewer = _getActionViewerContext();
+            var readState = _getActionBadgeState();
+            var clientsUnread = _countUnreadActionsForSection(ACTIONS_SECTION_CLIENTS, viewer, readState);
+            var calendarUnread = _countUnreadActionsForSection(ACTIONS_SECTION_CALENDAR, viewer, readState);
+            _setActionBadgeValue('admin-clients-badge', clientsUnread);
+            _setActionBadgeValue('admin-calendar-badge', calendarUnread);
+        };
+
+        function _markActionSectionSeen(section) {
+            var viewer = _getActionViewerContext();
+            if (!viewer || viewer.role === 'guest') return;
+            var state = _getActionBadgeState();
+            state[viewer.key + '::' + section] = Date.now();
+            _saveActionBadgeState(state);
+            window._updateActionBadges && window._updateActionBadges();
         }
 
         function _formatTimestamp(dateStr) {
@@ -1151,7 +1261,6 @@
                        '</div>' +
                        '<span style=\"color:#666;font-size:0.75rem;white-space:nowrap;margin-left:1rem;\">' + timeStr + '</span>' +
                        '</div>' +
-                      '<div style=\"margin-top:6px;color:rgba(255,215,0,0.72);font-size:0.72rem;\">Нажмите для подробностей</div>' +
                        '</div>';
             }).join('');
         }
@@ -6800,6 +6909,7 @@ window.deleteReadMessages = function() {
 // Обновляем бейдж при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     window._updateMessagesBadge && window._updateMessagesBadge();
+    window._updateActionBadges && window._updateActionBadges();
 });
 
 
@@ -6818,6 +6928,10 @@ window.addEventListener('storage', function(e) {
         if (clientsView && !clientsView.classList.contains('hidden')) {
             if (typeof window.renderClientsAdmin === 'function') window.renderClientsAdmin();
         }
+        window._updateActionBadges && window._updateActionBadges();
+    }
+    if (e.key === ACTIONS_LOG_KEY || e.key === ACTIONS_BADGE_STATE_KEY) {
+        window._updateActionBadges && window._updateActionBadges();
     }
     if (e.key === SITE_CONTENT_STORAGE_KEY) {
         applySiteContentSettings();
@@ -7143,6 +7257,10 @@ window.closeClientModal = function() {
 window.renderClientsAdmin = function() {
     var list = document.getElementById('admin-clients-list');
     if (!list) return;
+    var clientsView = document.getElementById('admin-clients-view');
+    if (clientsView && !clientsView.classList.contains('hidden')) {
+        _markActionSectionSeen(ACTIONS_SECTION_CLIENTS);
+    }
     _reassignHiddenOrDeletedClientsToCompany();
     var items = _getClients();
     // В режиме риелтора — показываем только его клиентов
@@ -7235,7 +7353,11 @@ window.deleteClient = function(id) {
         var client = _getClients().find(function(item) { return item.id === id; });
         var items = _getClients().filter(function(item) { return item.id !== id; });
         _saveClients(items);
-        _logAction('Удаление клиента', 'База клиентов', { clientId: id, clientName: client ? client.fullName : 'Неизвестно' });
+        _logAction('Удаление клиента', 'База клиентов', {
+            clientId: id,
+            clientName: client ? client.fullName : 'Неизвестно',
+            targetId: client ? _normalizeClientOwnerId(client.rieltor_id) : ''
+        });
         window.renderClientsAdmin();
         _refreshRealtorStatsIfVisible();
     });
@@ -7316,9 +7438,17 @@ window.initClientsAdmin = function() {
 
         _saveClients(items);
         if (!editId) {
-            _logAction('Добавление клиента', 'База клиентов', { clientName: data.fullName || 'Неизвестно', phone: data.phone });
+            _logAction('Добавление клиента', 'База клиентов', {
+                clientName: data.fullName || 'Неизвестно',
+                phone: data.phone,
+                targetId: _normalizeClientOwnerId(data.rieltor_id)
+            });
         } else {
-            _logAction('Редактирование клиента', 'База клиентов', { clientId: editId, clientName: data.fullName || 'Неизвестно' });
+            _logAction('Редактирование клиента', 'База клиентов', {
+                clientId: editId,
+                clientName: data.fullName || 'Неизвестно',
+                targetId: _normalizeClientOwnerId(data.rieltor_id)
+            });
         }
         form.reset();
         var statusSelect = document.getElementById('client-status');
@@ -7685,6 +7815,10 @@ function _renderCalendarGrid() {
 }
 
 window.renderCalendarAdmin = function() {
+    var calendarView = document.getElementById('admin-calendar-view');
+    if (calendarView && !calendarView.classList.contains('hidden')) {
+        _markActionSectionSeen(ACTIONS_SECTION_CALENDAR);
+    }
     _renderCalendarRealtorSelects();
     _renderCalendarGrid();
     _renderCalendarDayEntries();
@@ -7742,7 +7876,12 @@ window.deleteCalendarNote = function(id) {
         var note = _getCalendarNotes().find(function(n) { return n.id === id; });
         var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
         _saveCalendarNotes(items);
-        _logAction('Удаление события', 'Календарь встреч и показов', { noteId: id, title: note ? note.title : 'Неизвестно', date: note ? note.date : '' });
+        _logAction('Удаление события', 'Календарь встреч и показов', {
+            noteId: id,
+            title: note ? note.title : 'Неизвестно',
+            date: note ? note.date : '',
+            targetId: note ? String(note.realtorId || '') : ''
+        });
         window.renderCalendarAdmin();
         _refreshRealtorStatsIfVisible();
     });
@@ -7852,9 +7991,20 @@ window.initCalendarAdmin = function() {
 
             _saveCalendarNotes(items);
             if (!id) {
-                _logAction('Добавление события', 'Календарь встреч и показов', { title: title, date: date, type: type, target: realtorName || realtorId });
+                _logAction('Добавление события', 'Календарь встреч и показов', {
+                    title: title,
+                    date: date,
+                    type: type,
+                    target: realtorName || realtorId,
+                    targetId: String(realtorId || '')
+                });
             } else {
-                _logAction('Редактирование события', 'Календарь встреч и показов', { noteId: id, title: title, date: date });
+                _logAction('Редактирование события', 'Календарь встреч и показов', {
+                    noteId: id,
+                    title: title,
+                    date: date,
+                    targetId: String(realtorId || '')
+                });
             }
             st.selectedDate = date;
             var dt = new Date(date + 'T00:00:00');
@@ -7879,6 +8029,7 @@ window.addEventListener('storage', function(e) {
         if (clientsView && !clientsView.classList.contains('hidden')) {
             window.renderClientsAdmin && window.renderClientsAdmin();
         }
+        window._updateActionBadges && window._updateActionBadges();
         _refreshRealtorStatsIfVisible();
     }
     if (e.key === CALENDAR_STORAGE_KEY) {
@@ -7886,7 +8037,11 @@ window.addEventListener('storage', function(e) {
         if (calendarView && !calendarView.classList.contains('hidden')) {
             window.renderCalendarAdmin && window.renderCalendarAdmin();
         }
+        window._updateActionBadges && window._updateActionBadges();
         _refreshRealtorStatsIfVisible();
+    }
+    if (e.key === ACTIONS_LOG_KEY || e.key === ACTIONS_BADGE_STATE_KEY) {
+        window._updateActionBadges && window._updateActionBadges();
     }
 });
 
