@@ -110,6 +110,21 @@
             return value.charAt(0).toUpperCase() + value.slice(1);
         }
 
+        function sortCitiesWithChisinauFirst(cities) {
+            return (cities || []).slice().sort(function(a, b) {
+                var left = String(a || '').trim();
+                var right = String(b || '').trim();
+                var normalize = function(city) {
+                    return city.toLowerCase().replace(/ё/g, 'е');
+                };
+                var leftIsChisinau = normalize(left) === 'кишинев';
+                var rightIsChisinau = normalize(right) === 'кишинев';
+                if (leftIsChisinau && !rightIsChisinau) return -1;
+                if (!leftIsChisinau && rightIsChisinau) return 1;
+                return left.localeCompare(right, 'ru');
+            });
+        }
+
         function detectTrafficSource(referrer, utmSource) {
             const utmLabel = normalizeSourceLabel(utmSource);
             if (utmLabel) return utmLabel;
@@ -727,7 +742,7 @@
             });
 
             const citySelect = document.getElementById('analytics-city-select');
-            const cityNames = Object.keys(summary.districtByCity || {}).sort((a, b) => a.localeCompare(b, 'ru'));
+            const cityNames = sortCitiesWithChisinauFirst(Object.keys(summary.districtByCity || {}));
             const normalizedCityOptions = cityNames.length ? cityNames : ['Все города'];
 
             if (citySelect) {
@@ -2992,8 +3007,7 @@
             allOption.textContent = 'Все города';
             searchCity.appendChild(allOption);
 
-            Object.keys(cityDistricts)
-                .sort((a, b) => a.localeCompare(b, 'ru'))
+            sortCitiesWithChisinauFirst(Object.keys(cityDistricts))
                 .forEach(city => {
                     const option = document.createElement('option');
                     option.value = city;
@@ -3010,7 +3024,7 @@
             if (!citySelect) return;
 
             syncCityDistrictCatalog();
-            const cities = Object.keys(cityDistricts).sort((a, b) => a.localeCompare(b, 'ru'));
+            const cities = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
             const currentValue = citySelect.value || '';
             citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
             
@@ -7253,9 +7267,8 @@ function _populateSelect(selectId, options, placeholder, keepValue) {
 function _getCityOptions() {
     if (typeof syncCityDistrictCatalog === 'function') syncCityDistrictCatalog();
     if (typeof cityDistricts === 'undefined' || !cityDistricts) return [];
-    return Object.keys(cityDistricts)
-        .filter(function(city) { return city && city !== 'Все города'; })
-        .sort(function(a, b) { return a.localeCompare(b, 'ru'); })
+    return sortCitiesWithChisinauFirst(Object.keys(cityDistricts)
+        .filter(function(city) { return city && city !== 'Все города'; }))
         .map(function(city) { return { value: city, label: city }; });
 }
 
