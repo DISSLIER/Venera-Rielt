@@ -1209,6 +1209,51 @@
             return str ? _escapeHtml(str) : '—';
         }
 
+        function _historyFieldLabel(key) {
+            var map = {
+                mode: 'Тип операции',
+                targetId: 'Цель',
+                clientId: 'ID клиента',
+                clientName: 'Клиент',
+                phone: 'Телефон',
+                title: 'Заголовок',
+                date: 'Дата',
+                time: 'Время',
+                type: 'Тип',
+                noteId: 'ID события',
+                target: 'Кому назначено',
+                previousData: 'Данные до изменения',
+                newData: 'Новые данные',
+                deletedData: 'Удаленные данные',
+                id: 'ID',
+                fullName: 'ФИО',
+                email: 'Email',
+                rieltor_id: 'ID риелтора',
+                rooms: 'Комнаты',
+                city: 'Город',
+                district: 'Район',
+                condition: 'Состояние',
+                priceFrom: 'Цена от',
+                priceTo: 'Цена до',
+                status: 'Статус',
+                note: 'Заметка',
+                realtorId: 'ID назначенного',
+                realtorName: 'Назначено',
+                createdAt: 'Создано'
+            };
+            return map[key] || key;
+        }
+
+        function _renderHistoryDetailObjectRows(obj) {
+            var data = obj || {};
+            return Object.keys(data).map(function(subKey) {
+                return '<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.08);">' +
+                    '<div style="color:rgba(255,215,0,0.78);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">' + _escapeHtml(_historyFieldLabel(subKey)) + '</div>' +
+                    '<div style="color:rgba(255,255,255,0.9);font-size:0.86rem;white-space:pre-wrap;word-break:break-word;">' + _formatHistoryDetailValue(data[subKey]) + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
         function _isMainAdminSession() {
             try { return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; } catch (_) { return false; }
         }
@@ -1271,9 +1316,14 @@
                 detailsRows = '<div style="color:rgba(255,255,255,0.6);">Дополнительных данных нет.</div>';
             } else {
                 detailsRows = detailKeys.map(function(key) {
+                    var value = details[key];
+                    var isObject = value && typeof value === 'object' && !Array.isArray(value);
+                    var renderedValue = isObject
+                        ? ('<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;">' + _renderHistoryDetailObjectRows(value) + '</div>')
+                        : _formatHistoryDetailValue(value);
                     return '<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' +
-                        '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;">' + _escapeHtml(key) + '</div>' +
-                        '<div style="color:rgba(255,255,255,0.9);font-size:0.88rem;white-space:pre-wrap;word-break:break-word;">' + _formatHistoryDetailValue(details[key]) + '</div>' +
+                        '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;">' + _escapeHtml(_historyFieldLabel(key)) + '</div>' +
+                        '<div style="color:rgba(255,255,255,0.9);font-size:0.88rem;white-space:pre-wrap;word-break:break-word;">' + renderedValue + '</div>' +
                         '</div>';
                 }).join('');
             }
@@ -7460,9 +7510,27 @@ window.deleteClient = function(id) {
         var items = _getClients().filter(function(item) { return item.id !== id; });
         _saveClients(items);
         _logAction('Удаление клиента', 'База клиентов', {
+            mode: 'delete',
             clientId: id,
             clientName: client ? client.fullName : 'Неизвестно',
-            targetId: client ? _normalizeClientOwnerId(client.rieltor_id) : ''
+            targetId: client ? _normalizeClientOwnerId(client.rieltor_id) : '',
+            deletedData: client ? {
+                id: client.id,
+                fullName: client.fullName,
+                phone: client.phone,
+                email: client.email,
+                rieltor_id: _normalizeClientOwnerId(client.rieltor_id),
+                rooms: client.rooms,
+                city: client.city,
+                district: client.district,
+                condition: client.condition,
+                type: client.type,
+                priceFrom: client.priceFrom,
+                priceTo: client.priceTo,
+                status: client.status,
+                note: client.note,
+                createdAt: client.createdAt
+            } : {}
         });
         window.renderClientsAdmin();
         _refreshRealtorStatsIfVisible();
@@ -7523,10 +7591,14 @@ window.initClientsAdmin = function() {
         var editId = editIdEl ? String(editIdEl.value || '').trim() : '';
 
         var items = _getClients();
+        var oldClient = editId ? (items.find(function(item) { return item.id === editId; }) || null) : null;
+        var createdClient = null;
+        var updatedClient = null;
         if (editId) {
             items = items.map(function(item) {
                 if (item.id !== editId) return item;
-                return Object.assign({}, item, data);
+                updatedClient = Object.assign({}, item, data);
+                return updatedClient;
             });
         } else {
             var newClientBase = {
@@ -7539,21 +7611,75 @@ window.initClientsAdmin = function() {
             } else {
                 newClientBase.rieltor_id = _normalizeClientOwnerId(data.rieltor_id);
             }
-            items.unshift(Object.assign(newClientBase, data));
+            createdClient = Object.assign({}, newClientBase, data);
+            items.unshift(createdClient);
         }
 
         _saveClients(items);
         if (!editId) {
             _logAction('Добавление клиента', 'База клиентов', {
+                mode: 'add',
                 clientName: data.fullName || 'Неизвестно',
                 phone: data.phone,
-                targetId: _normalizeClientOwnerId(data.rieltor_id)
+                targetId: _normalizeClientOwnerId(data.rieltor_id),
+                newData: createdClient ? {
+                    id: createdClient.id,
+                    fullName: createdClient.fullName,
+                    phone: createdClient.phone,
+                    email: createdClient.email,
+                    rieltor_id: _normalizeClientOwnerId(createdClient.rieltor_id),
+                    rooms: createdClient.rooms,
+                    city: createdClient.city,
+                    district: createdClient.district,
+                    condition: createdClient.condition,
+                    type: createdClient.type,
+                    priceFrom: createdClient.priceFrom,
+                    priceTo: createdClient.priceTo,
+                    status: createdClient.status,
+                    note: createdClient.note,
+                    createdAt: createdClient.createdAt
+                } : {}
             });
         } else {
             _logAction('Редактирование клиента', 'База клиентов', {
+                mode: 'edit',
                 clientId: editId,
                 clientName: data.fullName || 'Неизвестно',
-                targetId: _normalizeClientOwnerId(data.rieltor_id)
+                targetId: _normalizeClientOwnerId(data.rieltor_id),
+                previousData: oldClient ? {
+                    id: oldClient.id,
+                    fullName: oldClient.fullName,
+                    phone: oldClient.phone,
+                    email: oldClient.email,
+                    rieltor_id: _normalizeClientOwnerId(oldClient.rieltor_id),
+                    rooms: oldClient.rooms,
+                    city: oldClient.city,
+                    district: oldClient.district,
+                    condition: oldClient.condition,
+                    type: oldClient.type,
+                    priceFrom: oldClient.priceFrom,
+                    priceTo: oldClient.priceTo,
+                    status: oldClient.status,
+                    note: oldClient.note,
+                    createdAt: oldClient.createdAt
+                } : {},
+                newData: updatedClient ? {
+                    id: updatedClient.id,
+                    fullName: updatedClient.fullName,
+                    phone: updatedClient.phone,
+                    email: updatedClient.email,
+                    rieltor_id: _normalizeClientOwnerId(updatedClient.rieltor_id),
+                    rooms: updatedClient.rooms,
+                    city: updatedClient.city,
+                    district: updatedClient.district,
+                    condition: updatedClient.condition,
+                    type: updatedClient.type,
+                    priceFrom: updatedClient.priceFrom,
+                    priceTo: updatedClient.priceTo,
+                    status: updatedClient.status,
+                    note: updatedClient.note,
+                    createdAt: updatedClient.createdAt
+                } : {}
             });
         }
         form.reset();
@@ -7984,10 +8110,22 @@ window.deleteCalendarNote = function(id) {
         var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
         _saveCalendarNotes(items);
         _logAction('Удаление события', 'Календарь встреч и показов', {
+            mode: 'delete',
             noteId: id,
             title: note ? note.title : 'Неизвестно',
             date: note ? note.date : '',
-            targetId: note ? String(note.realtorId || '') : ''
+            targetId: note ? String(note.realtorId || '') : '',
+            deletedData: note ? {
+                id: note.id,
+                date: note.date,
+                time: note.time,
+                realtorId: note.realtorId,
+                realtorName: note.realtorName,
+                type: note.type,
+                title: note.title,
+                note: note.note,
+                createdAt: note.createdAt
+            } : {}
         });
         window.renderCalendarAdmin();
         _refreshRealtorStatsIfVisible();
@@ -8069,10 +8207,13 @@ window.initCalendarAdmin = function() {
             if (!date || !title) return;
 
             var items = _getCalendarNotes();
+            var oldNote = id ? (items.find(function(n) { return n.id === id; }) || null) : null;
+            var createdNote = null;
+            var updatedNote = null;
             if (id) {
                 items = items.map(function(n) {
                     if (n.id !== id) return n;
-                    return Object.assign({}, n, {
+                    updatedNote = Object.assign({}, n, {
                         date: date,
                         time: time,
                         realtorId: realtorId,
@@ -8081,9 +8222,10 @@ window.initCalendarAdmin = function() {
                         title: title,
                         note: note
                     });
+                    return updatedNote;
                 });
             } else {
-                items.push({
+                createdNote = {
                     id: 'cal_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
                     date: date,
                     time: time,
@@ -8093,24 +8235,60 @@ window.initCalendarAdmin = function() {
                     title: title,
                     note: note,
                     createdAt: Date.now()
-                });
+                };
+                items.push(createdNote);
             }
 
             _saveCalendarNotes(items);
             if (!id) {
                 _logAction('Добавление события', 'Календарь встреч и показов', {
+                    mode: 'add',
                     title: title,
                     date: date,
                     type: type,
                     target: realtorName || realtorId,
-                    targetId: String(realtorId || '')
+                    targetId: String(realtorId || ''),
+                    newData: createdNote ? {
+                        id: createdNote.id,
+                        date: createdNote.date,
+                        time: createdNote.time,
+                        realtorId: createdNote.realtorId,
+                        realtorName: createdNote.realtorName,
+                        type: createdNote.type,
+                        title: createdNote.title,
+                        note: createdNote.note,
+                        createdAt: createdNote.createdAt
+                    } : {}
                 });
             } else {
                 _logAction('Редактирование события', 'Календарь встреч и показов', {
+                    mode: 'edit',
                     noteId: id,
                     title: title,
                     date: date,
-                    targetId: String(realtorId || '')
+                    targetId: String(realtorId || ''),
+                    previousData: oldNote ? {
+                        id: oldNote.id,
+                        date: oldNote.date,
+                        time: oldNote.time,
+                        realtorId: oldNote.realtorId,
+                        realtorName: oldNote.realtorName,
+                        type: oldNote.type,
+                        title: oldNote.title,
+                        note: oldNote.note,
+                        createdAt: oldNote.createdAt
+                    } : {},
+                    newData: updatedNote ? {
+                        id: updatedNote.id,
+                        date: updatedNote.date,
+                        time: updatedNote.time,
+                        realtorId: updatedNote.realtorId,
+                        realtorName: updatedNote.realtorName,
+                        type: updatedNote.type,
+                        title: updatedNote.title,
+                        note: updatedNote.note,
+                        createdAt: updatedNote.createdAt
+                    } : {}
                 });
             }
             st.selectedDate = date;
