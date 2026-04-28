@@ -1795,7 +1795,18 @@
                 <section id="admin-clients-view" class="admin-view hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                         <h3 class="text-2xl font-semibold gold-text">База клиентов</h3>
-                        <button id="open-client-modal-btn" class="cal-btn-primary"><i class="fas fa-plus mr-2"></i>Добавить покупателя</button>
+                        <div class="flex gap-3">
+                            <button id="open-client-modal-btn" class="cal-btn-primary"><i class="fas fa-plus mr-2"></i>Добавить покупателя</button>
+                            <button id="history-clients-toggle-btn" type="button" class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#ffd700;"><i class="fas fa-history"></i> История</button>
+                        </div>
+                    </div>
+                    
+                    <div id="clients-history-panel" class="hidden mb-6 p-4 rounded-lg" style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.15);">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold" style="color:#ffd700;">История действий</h4>
+                            <button id="clients-history-close-btn" type="button" class="text-xs text-gray-500 hover:text-gray-300"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="clients-history-list" class="max-h-80 overflow-y-auto text-sm space-y-2"></div>
                     </div>
 
                     <div class="mb-5">
@@ -1853,10 +1864,21 @@
                             <h3 class="text-2xl font-semibold gold-text">Календарь встреч и показов</h3>
                             <p class="text-xs text-gray-500 mt-1">Управление расписанием риелторов</p>
                         </div>
-                        <button id="calendar-add-note-btn" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition"
-                            style="background:linear-gradient(135deg,#FFD700,#e6b800);color:#000;">
-                            <i class="fas fa-plus"></i> Добавить запись
-                        </button>
+                        <div class="flex gap-3">
+                            <button id="calendar-add-note-btn" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition"
+                                style="background:linear-gradient(135deg,#FFD700,#e6b800);color:#000;">
+                                <i class="fas fa-plus"></i> Добавить запись
+                            </button>
+                            <button id="history-calendar-toggle-btn" type="button" class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#ffd700;"><i class="fas fa-history"></i> История</button>
+                        </div>
+                    </div>
+                    
+                    <div id="calendar-history-panel" class="hidden mb-6 p-4 rounded-lg" style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.15);">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold" style="color:#ffd700;">История действий</h4>
+                            <button id="calendar-history-close-btn" type="button" class="text-xs text-gray-500 hover:text-gray-300"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="calendar-history-list" class="max-h-80 overflow-y-auto text-sm space-y-2"></div>
                     </div>
 
                     <div class="mb-5">

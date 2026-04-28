@@ -917,6 +917,7 @@
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
         const ABOUT_MEDIA_CACHE_NAME = 'venera-about-media-v1';
+        const ACTIONS_LOG_KEY = 'venera_actions_log_v1';
         const DEFAULT_SITE_CONTENT = {
             about: {
                 title: 'О компании',
@@ -981,7 +982,82 @@
             try { localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(settings)); } catch (_) {}
         }
 
-        function _getAboutPhotoEntries(settings) {
+        function _logAction(action, section, details) {
+            try {
+                var logs = (function() {
+                    try { return JSON.parse(localStorage.getItem(ACTIONS_LOG_KEY) || '[]'); } catch(_) { return []; }
+                })();
+                var adminName = getAdminSession && getAdminSession() ? 'Администратор' : (getRealtorSession ? getRealtorSession() : {}).name || 'Пользователь';
+                var entry = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                    timestamp: Date.now(),
+                    action: action,
+                    section: section,
+                    user: adminName,
+                    details: details || {}
+                };
+                logs.unshift(entry);
+                if (logs.length > 500) logs = logs.slice(0, 500);
+                localStorage.setItem(ACTIONS_LOG_KEY, JSON.stringify(logs));
+            } catch(_) {}
+        }
+
+        function _getActionLogs(section) {
+            try {
+                var logs = JSON.parse(localStorage.getItem(ACTIONS_LOG_KEY) || '[]');
+                if (section) logs = logs.filter(function(l) { return String(l.section || '') === section; });
+                return logs;
+            } catch(_) { return []; }
+        }
+
+        function _clearActionLogs() {
+            try { localStorage.removeItem(ACTIONS_LOG_KEY); } catch(_) {}
+        }
+
+        function _formatTimestamp(dateStr) {
+            try {
+                var d = new Date(dateStr);
+                var pad = function(n) { return n < 10 ? '0' + n : n; };
+                return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' +
+                       pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+            } catch(e) {
+                return dateStr;
+            }
+        }
+
+        function _renderHistoryLogs(section) {
+            var logs = _getActionLogs(section);
+            var listEl = null;
+            if (section === '\u0411\u0430\u0437\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u043e\u0432') {
+                listEl = document.getElementById('clients-history-list');
+            } else if (section === '\u041a\u0430\u043b\u0435\u043d\u0434\u0430\u0440\u044c \u0432\u0441\u0442\u0440\u0435\u0447 \u0438 \u043f\u043e\u043a\u0430\u0437\u043e\u0432') {
+                listEl = document.getElementById('calendar-history-list');
+            }
+            if (!listEl) return;
+            
+            if (!logs || logs.length === 0) {
+                listEl.innerHTML = '<div class="text-gray-500 text-xs">Действия еще не зафиксированы</div>';
+                return;
+            }
+            
+            listEl.innerHTML = logs.map(function(entry) {
+                var details = '';
+                if (entry.details) {
+                    if (entry.details.clientName) details += ' \u2013 ' + entry.details.clientName;
+                    if (entry.details.phone) details += ' (' + entry.details.phone + ')';
+                    if (entry.details.title) details += ' \u2013 ' + entry.details.title;
+                    if (entry.details.date && entry.details.action !== '\u0423\u0434\u0430\u043b\u0435\u043d\u0438\u0435 \u0441\u043e\u0431\u044b\u0442\u0438\u044f') details += ' (' + entry.details.date + ')';
+                }
+                var timeStr = _formatTimestamp(entry.timestamp);
+                var userStr = entry.user || '\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439';
+                return '<div style=\"padding:0.5rem;border-left:2px solid rgba(255,215,0,0.3);color:#a0a0a0;font-size:0.75rem;\">' +
+                       '<span style=\"color:#ffd700;font-weight:500;\">[' + timeStr + ']</span> ' +
+                       '<span style=\"color:#c0c0c0;\">' + userStr + ':</span> ' +
+                       entry.action + details +
+                       '</div>';
+            }).join('');
+        }
+
             var s = settings || getSiteContentSettings();
             var list = [];
             if (Array.isArray(s.about.photos) && s.about.photos.length) {
@@ -6993,8 +7069,10 @@ window.cycleClientStatus = function(id) {
 
 window.deleteClient = function(id) {
     showConfirm('Удалить этого клиента из базы?', function() {
+        var client = _getClients().find(function(item) { return item.id === id; });
         var items = _getClients().filter(function(item) { return item.id !== id; });
         _saveClients(items);
+        _logAction('Удаление клиента', 'База клиентов', { clientId: id, clientName: client ? client.fullName : 'Неизвестно' });
         window.renderClientsAdmin();
         _refreshRealtorStatsIfVisible();
     });
@@ -7074,6 +7152,11 @@ window.initClientsAdmin = function() {
         }
 
         _saveClients(items);
+        if (!editId) {
+            _logAction('Добавление клиента', 'База клиентов', { clientName: data.fullName || 'Неизвестно', phone: data.phone });
+        } else {
+            _logAction('Редактирование клиента', 'База клиентов', { clientId: editId, clientName: data.fullName || 'Неизвестно' });
+        }
         form.reset();
         var statusSelect = document.getElementById('client-status');
         if (statusSelect) statusSelect.value = 'pending';
@@ -7123,6 +7206,28 @@ window.initClientsAdmin = function() {
                 ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type', 'clients-filter-status'].forEach(function(id) { _cselSync(id); });
             }
             window.renderClientsAdmin();
+        });
+    }
+
+    var historyToggleBtn = document.getElementById('history-clients-toggle-btn');
+    var historyPanel = document.getElementById('clients-history-panel');
+    var historyCloseBtn = document.getElementById('clients-history-close-btn');
+    
+    if (historyToggleBtn && historyPanel) {
+        historyToggleBtn.addEventListener('click', function() {
+            var isHidden = historyPanel.classList.contains('hidden');
+            if (isHidden) {
+                historyPanel.classList.remove('hidden');
+                _renderHistoryLogs('\u0411\u0430\u0437\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u043e\u0432');
+            } else {
+                historyPanel.classList.add('hidden');
+            }
+        });
+    }
+    
+    if (historyCloseBtn) {
+        historyCloseBtn.addEventListener('click', function() {
+            historyPanel.classList.add('hidden');
         });
     }
 
@@ -7492,8 +7597,10 @@ window.editCalendarNote = function(id) {
 
 window.deleteCalendarNote = function(id) {
     showConfirm('Удалить эту запись из календаря?', function() {
+        var note = _getCalendarNotes().find(function(n) { return n.id === id; });
         var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
         _saveCalendarNotes(items);
+        _logAction('Удаление события', 'Календарь встреч и показов', { noteId: id, title: note ? note.title : 'Неизвестно', date: note ? note.date : '' });
         window.renderCalendarAdmin();
         _refreshRealtorStatsIfVisible();
     });
@@ -7602,6 +7709,11 @@ window.initCalendarAdmin = function() {
             }
 
             _saveCalendarNotes(items);
+            if (!id) {
+                _logAction('Добавление события', 'Календарь встреч и показов', { title: title, date: date, type: type, target: realtorName || realtorId });
+            } else {
+                _logAction('Редактирование события', 'Календарь встреч и показов', { noteId: id, title: title, date: date });
+            }
             st.selectedDate = date;
             var dt = new Date(date + 'T00:00:00');
             st.year = dt.getFullYear();
@@ -7609,6 +7721,27 @@ window.initCalendarAdmin = function() {
             window.closeCalendarNoteModal();
             window.renderCalendarAdmin();
             _refreshRealtorStatsIfVisible();
+        });
+    }
+
+    var historyToggleBtn = document.getElementById('history-calendar-toggle-btn');
+    var historyPanel = document.getElementById('calendar-history-panel');
+    var historyCloseBtn = document.getElementById('calendar-history-close-btn');
+    
+    if (historyToggleBtn && historyPanel) {
+        historyToggleBtn.addEventListener('click', function() {
+            var isHidden = historyPanel.classList.contains('hidden');
+            if (isHidden) {
+                historyPanel.classList.remove('hidden');
+                _renderHistoryLogs('\u041a\u0430\u043b\u0435\u043d\u0434\u0430\u0440\u044c \u0432\u0441\u0442\u0440\u0435\u0447 \u0438 \u043f\u043e\u043a\u0430\u0437\u043e\u0432');
+            } else {\n                historyPanel.classList.add('hidden');
+            }
+        });
+    }
+    
+    if (historyCloseBtn) {
+        historyCloseBtn.addEventListener('click', function() {
+            historyPanel.classList.add('hidden');
         });
     }
 };
