@@ -1209,7 +1209,48 @@
             return str ? _escapeHtml(str) : '—';
         }
 
+        function _isMainAdminSession() {
+            try { return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; } catch (_) { return false; }
+        }
+
+        function _hashToInt(input) {
+            var s = String(input || '');
+            var h = 0;
+            for (var i = 0; i < s.length; i++) {
+                h = ((h << 5) - h) + s.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h);
+        }
+
+        function _getHistoryUserPalette(entry) {
+            var isAdmin = String(entry && entry.actorType || '') === 'admin' || String(entry && entry.user || '') === 'Администратор';
+            if (isAdmin) {
+                return {
+                    text: '#ff9800',
+                    bg: 'rgba(255,152,0,0.1)',
+                    border: 'rgba(255,152,0,0.4)'
+                };
+            }
+
+            var realtorPalette = [
+                { text: '#4fc3f7', bg: 'rgba(79,195,247,0.12)', border: 'rgba(79,195,247,0.42)' },
+                { text: '#81c784', bg: 'rgba(129,199,132,0.12)', border: 'rgba(129,199,132,0.42)' },
+                { text: '#ba68c8', bg: 'rgba(186,104,200,0.12)', border: 'rgba(186,104,200,0.42)' },
+                { text: '#ff8a65', bg: 'rgba(255,138,101,0.12)', border: 'rgba(255,138,101,0.42)' },
+                { text: '#90a4ae', bg: 'rgba(144,164,174,0.12)', border: 'rgba(144,164,174,0.42)' },
+                { text: '#ffd54f', bg: 'rgba(255,213,79,0.12)', border: 'rgba(255,213,79,0.42)' },
+                { text: '#64b5f6', bg: 'rgba(100,181,246,0.12)', border: 'rgba(100,181,246,0.42)' },
+                { text: '#4db6ac', bg: 'rgba(77,182,172,0.12)', border: 'rgba(77,182,172,0.42)' }
+            ];
+
+            var key = (entry && entry.actorId) ? String(entry.actorId) : String(entry && entry.user || '');
+            var idx = _hashToInt(key) % realtorPalette.length;
+            return realtorPalette[idx];
+        }
+
         function _openHistoryDetails(entryId) {
+            if (!_isMainAdminSession()) return;
             if (!entryId) return;
             var modal = document.getElementById('history-detail-modal');
             var body = document.getElementById('history-detail-body');
@@ -1264,6 +1305,7 @@
         }
 
         function _renderHistoryLogs(section) {
+            if (!_isMainAdminSession()) return;
             var logs = _getActionLogs(section);
             var listEl = null;
             if (section === '\u0411\u0430\u0437\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u043e\u0432') {
@@ -1289,10 +1331,10 @@
                 var timeStr = _formatTimestamp(entry.timestamp);
                 var userStr = entry.user || '\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439';
                 
-                // \u0426\u0432\u0435\u0442 \u0434\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0430 \u0438 \u0440\u0438\u0435\u043b\u0442\u043e\u0440\u0430
-                var userColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? '#ff9800' : '#64b5f6';
-                var userBgColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.1)' : 'rgba(100,181,246,0.1)';
-                var borderColor = userStr === '\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440' ? 'rgba(255,152,0,0.4)' : 'rgba(100,181,246,0.4)';
+                var palette = _getHistoryUserPalette(entry);
+                var userColor = palette.text;
+                var userBgColor = palette.bg;
+                var borderColor = palette.border;
                 
                   return '<div class=\"history-log-item\" data-history-id=\"' + _escapeHtml(entry.id || '') + '\" style=\"padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid ' + borderColor + ';background:' + userBgColor + ';border-radius:4px;color:#a0a0a0;font-size:0.8rem;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;\">' +
                        '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;\">' +
@@ -1314,6 +1356,7 @@
             document.addEventListener('click', function(e) {
                 var clientsToggle = e.target.closest('#history-clients-toggle-btn');
                 if (clientsToggle) {
+                    if (!_isMainAdminSession()) return;
                     var clientsPanel = document.getElementById('clients-history-panel');
                     if (!clientsPanel) return;
                     var clientsHidden = clientsPanel.classList.contains('hidden');
@@ -1328,6 +1371,7 @@
 
                 var calendarToggle = e.target.closest('#history-calendar-toggle-btn');
                 if (calendarToggle) {
+                    if (!_isMainAdminSession()) return;
                     var calendarPanel = document.getElementById('calendar-history-panel');
                     if (!calendarPanel) return;
                     var calendarHidden = calendarPanel.classList.contains('hidden');
@@ -1356,6 +1400,7 @@
 
                 var historyItem = e.target.closest('.history-log-item');
                 if (historyItem) {
+                    if (!_isMainAdminSession()) return;
                     _openHistoryDetails(historyItem.getAttribute('data-history-id') || '');
                     return;
                 }
@@ -2752,6 +2797,16 @@
             if (ri) ri.classList.add('hidden');
             panel.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = ''; });
             panel.querySelectorAll('[data-realtor-only]').forEach(function(el) { el.style.display = 'none'; });
+            ['history-clients-toggle-btn', 'history-calendar-toggle-btn', 'clients-history-panel', 'calendar-history-panel', 'history-detail-modal']
+                .forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) {
+                        if (id === 'history-detail-modal' || id.indexOf('-panel') >= 0) {
+                            el.classList.add('hidden');
+                        }
+                        el.style.display = '';
+                    }
+                });
         }
 
         function _applyRealtorPanelMode(rieltor_id, name, photo) {
@@ -2770,6 +2825,15 @@
             }
             panel.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = 'none'; });
             panel.querySelectorAll('[data-realtor-only]').forEach(function(el) { el.style.display = ''; });
+            ['history-clients-toggle-btn', 'history-calendar-toggle-btn', 'clients-history-panel', 'calendar-history-panel', 'history-detail-modal']
+                .forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    if (id === 'history-detail-modal' || id.indexOf('-panel') >= 0) {
+                        el.classList.add('hidden');
+                    }
+                    el.style.display = 'none';
+                });
             // Set calendar realtor filter
             var st = _calendarState();
             st.realtorFilter = String(rieltor_id);
