@@ -916,6 +916,7 @@
         };
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
+        const ABOUT_MEDIA_CACHE_NAME = 'venera-about-media-v1';
         const DEFAULT_SITE_CONTENT = {
             about: {
                 title: 'О компании',
@@ -1114,6 +1115,53 @@
             if (el && value) el.setAttribute('src', value);
         }
 
+        function _sanitizeAboutMediaFileName(name) {
+            var base = String(name || '').trim();
+            if (!base) return 'about-media-' + Date.now() + '.bin';
+            return base
+                .replace(/[^a-zA-Z0-9._-]+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '') || ('about-media-' + Date.now() + '.bin');
+        }
+
+        function _normalizeAboutMediaUrl(url) {
+            var value = String(url || '').trim();
+            if (!value) return '';
+            if (/^(data:|blob:|https?:\/\/)/i.test(value)) return value;
+            if (value.charAt(0) === '/') return value;
+            if (/^image\/about\//i.test(value)) return '/' + value;
+            return '/image/about/' + value.replace(/^\.?\/+/, '');
+        }
+
+        function _fileToDataUrl(file) {
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function(ev) { resolve(ev.target.result); };
+                reader.onerror = function() { reject(new Error('read_failed')); };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function _saveAboutMediaToCache(file) {
+            var safeFileName = _sanitizeAboutMediaFileName(file && file.name);
+            var mediaPath = '/image/about/' + safeFileName;
+            if (!window.caches || typeof window.caches.open !== 'function') {
+                return _fileToDataUrl(file);
+            }
+            return window.caches.open(ABOUT_MEDIA_CACHE_NAME)
+                .then(function(cache) {
+                    var headers = {
+                        'Content-Type': file && file.type ? file.type : 'application/octet-stream',
+                        'Cache-Control': 'public, max-age=31536000'
+                    };
+                    return cache.put(mediaPath, new Response(file, { status: 200, headers: headers }))
+                        .then(function() { return mediaPath; });
+                })
+                .catch(function() {
+                    return _fileToDataUrl(file);
+                });
+        }
+
         function applySiteContentSettings() {
             var s = getSiteContentSettings();
 
@@ -1126,7 +1174,6 @@
             _setText('about-stat-1-label', s.about.stat1Label);
             _setText('about-stat-2-value', s.about.stat2Value);
             _setText('about-stat-2-label', s.about.stat2Label);
-            _setText('about-stat-3-value', s.about.stat3Value);
             _setText('about-stat-3-label', s.about.stat3Label);
             _setText('about-stat-4-value', s.about.stat4Value);
             _setText('about-stat-4-label', s.about.stat4Label);
@@ -1166,6 +1213,10 @@
             COMPANY_CONTACT.name = s.about.company || COMPANY_CONTACT.name;
             COMPANY_CONTACT.phone = s.contact.phoneMain || COMPANY_CONTACT.phone;
             COMPANY_CONTACT.whatsapp = s.contact.phoneMain || COMPANY_CONTACT.whatsapp;
+
+            if (typeof updatePropertiesForSaleCount === 'function') {
+                updatePropertiesForSaleCount();
+            }
         }
 
         window.renderSiteContentAdmin = function() {
@@ -1173,6 +1224,9 @@
             function setValue(id, value) {
                 var el = document.getElementById(id);
                 if (el) el.value = value || '';
+            }
+            function getCurrentPropertyCount() {
+                return document.querySelectorAll('.property-card').length;
             }
             setValue('site-about-title', s.about.title);
             setValue('site-about-company', s.about.company);
@@ -1183,7 +1237,7 @@
             setValue('site-about-stat-1-label', s.about.stat1Label);
             setValue('site-about-stat-2-value', s.about.stat2Value);
             setValue('site-about-stat-2-label', s.about.stat2Label);
-            setValue('site-about-stat-3-value', s.about.stat3Value);
+            setValue('site-about-stat-3-value', String(getCurrentPropertyCount()));
             setValue('site-about-stat-3-label', s.about.stat3Label);
             setValue('site-about-stat-4-value', s.about.stat4Value);
             setValue('site-about-stat-4-label', s.about.stat4Label);
@@ -1206,6 +1260,12 @@
             setValue('site-social-telegram', s.social.telegram);
             setValue('site-social-whatsapp', s.social.whatsapp);
             setValue('site-social-viber', s.social.viber);
+
+            var stat3Input = document.getElementById('site-about-stat-3-value');
+            if (stat3Input) {
+                stat3Input.readOnly = true;
+                stat3Input.title = 'Автоматически рассчитывается по опубликованным объектам';
+            }
 
             renderAboutPhotosAdmin(s);
         };
@@ -1991,9 +2051,14 @@
 
         // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
         function updatePropertiesForSaleCount() {
-            const el = document.getElementById('properties-for-sale-count');
-            if (!el) return;
-            el.textContent = document.querySelectorAll('.property-card').length;
+            const count = document.querySelectorAll('.property-card').length;
+            const ids = ['properties-for-sale-count', 'about-stat-3-value'];
+            ids.forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = String(count);
+            });
+            const adminInput = document.getElementById('site-about-stat-3-value');
+            if (adminInput) adminInput.value = String(count);
         }
 
         updatePropertiesForSaleCount();
@@ -5201,11 +5266,10 @@
                 if (aboutFile.size > aboutMaxMB * 1024 * 1024) {
                     showToast('Файл слишком большой (макс. ' + aboutMaxMB + ' МБ)', 'error'); return;
                 }
-                var aboutReader = new FileReader();
-                aboutReader.onload = function(ev) {
+                _saveAboutMediaToCache(aboutFile).then(function(savedUrl) {
                     var stFile = getSiteContentSettings();
                     var media = _getAboutPhotoEntries(stFile);
-                    media.push({ url: ev.target.result, type: aboutType, hidden: false });
+                    media.push({ url: savedUrl, type: aboutType, hidden: false });
                     _setAboutPhotos(stFile, media);
                     saveSiteContentSettings(stFile);
                     aboutFileInp.value = '';
@@ -5214,8 +5278,9 @@
                     renderAboutPhotosAdmin(stFile);
                     applySiteContentSettings();
                     showToast('Слайд добавлен', 'success');
-                };
-                aboutReader.readAsDataURL(aboutFile);
+                }).catch(function() {
+                    showToast('Не удалось сохранить файл. Попробуйте снова.', 'error');
+                });
                 return;
             }
 
@@ -5223,10 +5288,11 @@
                 var addUrlInp = document.getElementById('site-about-photo-add-url');
                 var url = addUrlInp ? addUrlInp.value.trim() : '';
                 if (!url) { showToast('Введите URL', 'error'); return; }
-                var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url) ? 'video' : 'image';
+                var normalizedUrl = _normalizeAboutMediaUrl(url);
+                var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(normalizedUrl) ? 'video' : 'image';
                 var st = getSiteContentSettings();
                 var ph = _getAboutPhotoEntries(st);
-                ph.push({ url: url, type: detectedType, hidden: false });
+                ph.push({ url: normalizedUrl, type: detectedType, hidden: false });
                 _setAboutPhotos(st, ph);
                 saveSiteContentSettings(st);
                 if (addUrlInp) addUrlInp.value = '';
@@ -5301,7 +5367,6 @@
                 s.about.stat1Label = getValue('site-about-stat-1-label') || s.about.stat1Label;
                 s.about.stat2Value = getValue('site-about-stat-2-value') || s.about.stat2Value;
                 s.about.stat2Label = getValue('site-about-stat-2-label') || s.about.stat2Label;
-                s.about.stat3Value = getValue('site-about-stat-3-value') || s.about.stat3Value;
                 s.about.stat3Label = getValue('site-about-stat-3-label') || s.about.stat3Label;
                 s.about.stat4Value = getValue('site-about-stat-4-value') || s.about.stat4Value;
                 s.about.stat4Label = getValue('site-about-stat-4-label') || s.about.stat4Label;
