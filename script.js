@@ -3025,6 +3025,44 @@
             });
         }
 
+        function _normalizeCityName(value) {
+            return String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/ё/g, 'е');
+        }
+
+        function getDistrictsForCity(city) {
+            const cleanCity = String(city || '').trim();
+            if (!cleanCity) return ['Все районы'];
+
+            const normalizedCity = _normalizeCityName(cleanCity);
+            const districtSet = new Set();
+
+            function addDistrict(value) {
+                const district = String(value || '').trim();
+                if (!district || district === 'Все районы') return;
+                districtSet.add(district);
+            }
+
+            if (cityDistricts && typeof cityDistricts === 'object') {
+                Object.keys(cityDistricts).forEach(cityName => {
+                    if (_normalizeCityName(cityName) !== normalizedCity) return;
+                    const list = Array.isArray(cityDistricts[cityName]) ? cityDistricts[cityName] : [];
+                    list.forEach(addDistrict);
+                });
+            }
+
+            document.querySelectorAll('.property-card').forEach(card => {
+                const cardCity = _normalizeCityName(card.dataset.city);
+                if (cardCity !== normalizedCity) return;
+                addDistrict(card.dataset.district);
+            });
+
+            const specificDistricts = Array.from(districtSet).sort((a, b) => a.localeCompare(b, 'ru'));
+            return ['Все районы'].concat(specificDistricts);
+        }
+
         function syncCityDistrictCatalog() {
             const { cities, districtsByCity } = getUniqueCitiesAndDistricts();
             cities.forEach(city => registerCityDistrict(city, 'Все районы'));
@@ -3117,7 +3155,7 @@
 
             const selectedCity = citySelect.value;
             const currentDistrict = districtSelect.value || '';
-            const districts = cityDistricts[selectedCity] || ['Все районы'];
+            const districts = getDistrictsForCity(selectedCity);
 
             districtSelect.innerHTML = '<option value="">-- Выберите район --</option>';
             
@@ -4942,21 +4980,16 @@
             // Clear current options
             districtSelect.innerHTML = '';
             
-            // Add new options based on selected city
-            if (selectedCity && cityDistricts[selectedCity]) {
-                cityDistricts[selectedCity].forEach(district => {
-                    const option = document.createElement('option');
-                    option.value = district;
-                    option.textContent = district;
-                    districtSelect.appendChild(option);
-                });
-            } else {
-                // Default option if city not found
+            const districts = selectedCity && selectedCity !== 'Все'
+                ? getDistrictsForCity(selectedCity)
+                : ['Все районы'];
+
+            districts.forEach(district => {
                 const option = document.createElement('option');
-                option.value = 'Все районы';
-                option.textContent = 'Все районы';
+                option.value = district;
+                option.textContent = district;
                 districtSelect.appendChild(option);
-            }
+            });
         }
 
         function isRentalType(typeValue) {
@@ -7565,8 +7598,8 @@ function _getCityOptions() {
 }
 
 function _getDistrictOptions(city) {
-    if (!city || typeof cityDistricts === 'undefined' || !cityDistricts[city]) return [];
-    return cityDistricts[city]
+    if (!city || typeof getDistrictsForCity !== 'function') return [];
+    return getDistrictsForCity(city)
         .filter(function(d) { return d && d !== 'Все районы'; })
         .sort(function(a, b) { return a.localeCompare(b, 'ru'); })
         .map(function(d) { return { value: d, label: d }; });
