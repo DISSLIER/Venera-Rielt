@@ -5796,6 +5796,43 @@
             if (e.target.closest('.promo-next')) goToPromoSlide(_promoCurrentIndex + 1);
         });
 
+        // Touch swipe for promo carousel
+        (function() {
+            var _touchStartX = 0;
+            var _touchStartY = 0;
+            var _touchAxisLocked = false; // true = vertical scroll, ignore swipe
+
+            document.addEventListener('touchstart', function(e) {
+                var car = document.getElementById('promo-carousel');
+                if (!car || !car.contains(e.target)) return;
+                _touchStartX = e.touches[0].clientX;
+                _touchStartY = e.touches[0].clientY;
+                _touchAxisLocked = false;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                var car = document.getElementById('promo-carousel');
+                if (!car || !car.contains(e.target)) return;
+                if (_touchAxisLocked) return;
+                var dx = e.touches[0].clientX - _touchStartX;
+                var dy = e.touches[0].clientY - _touchStartY;
+                if (Math.abs(dy) > Math.abs(dx)) { _touchAxisLocked = true; }
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(e) {
+                var car = document.getElementById('promo-carousel');
+                var touch = e.changedTouches[0];
+                if (!car || !car.contains(touch.target)) return;
+                if (_touchAxisLocked) return;
+                var dx = touch.clientX - _touchStartX;
+                var dy = touch.clientY - _touchStartY;
+                if (Math.abs(dy) > Math.abs(dx)) return;
+                if (Math.abs(dx) < 40) return;
+                if (dx < 0) goToPromoSlide(_promoCurrentIndex + 1);
+                else        goToPromoSlide(_promoCurrentIndex - 1);
+            }, { passive: true });
+        })();
+
         function ensureAdminMediaPreviewModal() {
             var existing = document.getElementById('admin-media-preview-modal');
             if (existing) return existing;
