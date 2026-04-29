@@ -1,4 +1,11 @@
+# venera-rielt.vercel.app — robots.txt
 User-agent: *
 Allow: /
+Disallow: /admin.html
+Disallow: /admin.js
 
+# Crawl-delay для вежливого обхода
+Crawl-delay: 1
+
+# Sitemap
 Sitemap: https://venera-rielt.vercel.app/sitemap.xml
