@@ -122,16 +122,28 @@
             display: block;
         }
 
-        .admin-auth-logo-anim {
-            animation: adminAuthLogoFloat 3.2s ease-in-out infinite;
-            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.45));
-            transform-origin: center;
+        .admin-auth-logo-wrap {
+            display: flex;
+            justify-content: center;
+            padding-left: 4px;
         }
 
-        @keyframes adminAuthLogoFloat {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-            100% { transform: translateY(0); }
+        .admin-auth-logo-anim {
+            display: block;
+            animation: adminAuthLogoGlow 2.4s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.35)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+        }
+
+        @keyframes adminAuthLogoGlow {
+            0% {
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+            }
+            50% {
+                filter: drop-shadow(0 0 22px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 38px rgba(255, 215, 0, 0.45)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+            }
+            100% {
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+            }
         }
 
         .admin-nav {
@@ -1479,7 +1491,7 @@
     <!-- Admin Auth Modal: защита доступа к панели управления -->
     <div id="admin-auth-modal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex items-center justify-center">
         <div class="w-full max-w-sm mx-4">
-            <div class="mb-4 text-center">
+            <div class="mb-4 admin-auth-logo-wrap">
                 <img src="image/components/AdminPass.png" alt="AdminPass" class="h-48 mx-auto object-contain admin-auth-logo-anim">
             </div>
             <div class="glass-effect rounded-xl p-8">
