@@ -125,24 +125,24 @@
         .admin-auth-logo-wrap {
             display: flex;
             justify-content: center;
-            padding-left: 4px;
+            padding-left: 10px;
         }
 
         .admin-auth-logo-anim {
             display: block;
             animation: adminAuthLogoGlow 2.4s ease-in-out infinite;
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.35)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.22)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
         }
 
         @keyframes adminAuthLogoGlow {
             0% {
-                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+                filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.2)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
             }
             50% {
-                filter: drop-shadow(0 0 22px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 38px rgba(255, 215, 0, 0.45)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+                filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.45)) drop-shadow(0 0 18px rgba(255, 215, 0, 0.2)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
             }
             100% {
-                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
+                filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.2)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.42));
             }
         }
 
@@ -1496,7 +1496,10 @@
             </div>
             <div class="glass-effect rounded-xl p-8">
             <div class="mb-4">
-                <label class="block text-gray-400 mb-2">Пароль</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-gray-400">Пароль</label>
+                    <span class="text-[0.72rem] text-white/55 font-light tracking-wide">Админ Панель</span>
+                </div>
                 <div class="relative">
                     <input type="password" id="admin-password-input"
                         class="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none pr-10"
