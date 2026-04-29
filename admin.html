@@ -2084,6 +2084,25 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- City & District Manager -->
+                    <div class="rounded-2xl p-5 mb-5" style="background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,215,0,0.18);backdrop-filter:blur(12px);">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <h4 class="text-sm font-semibold" style="color:#ffd700;"><i class="fas fa-map-marker-alt mr-1"></i> Города и районы</h4>
+                            <button id="city-manager-reset-btn" type="button" class="cal-btn-cancel" style="padding:4px 12px;font-size:0.78rem;" title="Сбросить к стандартным городам">
+                                <i class="fas fa-undo mr-1"></i> Сброс по умолчанию
+                            </button>
+                        </div>
+                        <!-- Add city row -->
+                        <div class="flex gap-2 mb-4">
+                            <input id="city-manager-new-city" type="text" class="cal-input flex-1" placeholder="Название нового города..." autocomplete="off">
+                            <button id="city-manager-add-city-btn" type="button" class="cal-btn-primary" style="padding:6px 16px;white-space:nowrap;">
+                                <i class="fas fa-plus mr-1"></i> Добавить город
+                            </button>
+                        </div>
+                        <!-- Cities list -->
+                        <div id="city-manager-list" class="space-y-3"></div>
+                    </div>
                 </section>
             </div>
         </div>
@@ -2682,6 +2701,7 @@
                     }
                     if (targetId === 'admin-site-content-view') {
                         if (typeof window.renderSiteContentAdmin === 'function') window.renderSiteContentAdmin();
+                        if (typeof renderCityManager === 'function') renderCityManager();
                     }
                 }
 
@@ -2744,6 +2764,7 @@
                 }
 
                 switchAdminView('admin-properties-view');
+                if (typeof initCityManagerEvents === 'function') initCityManagerEvents();
 
                 // === Realtor stats period bar ===
                 var currentRealtorPeriod = 30;

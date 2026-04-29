@@ -931,6 +931,7 @@
         };
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
+        const CITY_DISTRICTS_STORAGE_KEY = 'venera_city_districts_v1';
         const ABOUT_MEDIA_CACHE_NAME = 'venera-about-media-v1';
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
         const REALTOR_SESSION_KEY = 'venera_realtor_session';
@@ -1001,6 +1002,47 @@
 
         function saveSiteContentSettings(settings) {
             try { localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(settings)); } catch (_) {}
+        }
+
+        // ---- City/District catalog stored in localStorage ----
+        const DEFAULT_CITY_DISTRICTS = {
+            'Кишинёв': ['Все районы', 'Центр', 'Ботаника', 'Рышкановка', 'Чеканы', 'Телецентр', 'Буюканы', 'Скулянка', 'Бубуечь', 'Дурлешты', 'Ватра', 'Друмул Таберей', 'Ставчены', 'Трушены'],
+            'Бельцы': ['Все районы', 'Центр', 'Северный', 'Южный', 'Западный', 'Восточный'],
+            'Тирасполь': ['Все районы', 'Центр', 'Микрорайон', 'Кировский', 'Октябрьский'],
+            'Бендеры': ['Все районы', 'Центр', 'Ленинский', 'Фрунзенский'],
+            'Рыбница': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Кагул': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Унгень': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Сороки': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Оргеев': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Комрат': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Чадыр-Лунга': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Страшены': ['Все районы', 'Центр'],
+            'Дрокия': ['Все районы', 'Центр'],
+            'Единцы': ['Все районы', 'Центр'],
+            'Флорешты': ['Все районы', 'Центр'],
+            'Резина': ['Все районы', 'Центр'],
+            'Глодяны': ['Все районы', 'Центр'],
+            'Кантемир': ['Все районы', 'Центр'],
+            'Леова': ['Все районы', 'Центр'],
+            'Ниспорены': ['Все районы', 'Центр'],
+            'Окница': ['Все районы', 'Центр'],
+            'Вадул-луй-Водэ': ['Все районы', 'Центр']
+        };
+
+        function getCityDistrictsData() {
+            try {
+                var raw = localStorage.getItem(CITY_DISTRICTS_STORAGE_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) return parsed;
+                }
+            } catch (_) {}
+            return JSON.parse(JSON.stringify(DEFAULT_CITY_DISTRICTS));
+        }
+
+        function saveCityDistrictsData(data) {
+            try { localStorage.setItem(CITY_DISTRICTS_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
         }
 
         function _logAction(action, section, details) {
@@ -2995,9 +3037,21 @@
             });
         }
 
+        let _cityFilterActiveOnly = false;
+
         function populateSearchCitySelect() {
             const searchCity = document.getElementById('city');
             if (!searchCity) return;
+
+            // Determine cities to show
+            let citiesToShow = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
+            if (_cityFilterActiveOnly) {
+                const activeCities = new Set();
+                document.querySelectorAll('.property-card').forEach(card => {
+                    if (card.dataset.city) activeCities.add(card.dataset.city.trim());
+                });
+                citiesToShow = citiesToShow.filter(c => activeCities.has(c));
+            }
 
             const currentValue = searchCity.value || 'Все';
             searchCity.innerHTML = '';
@@ -3007,16 +3061,29 @@
             allOption.textContent = 'Все города';
             searchCity.appendChild(allOption);
 
-            sortCitiesWithChisinauFirst(Object.keys(cityDistricts))
-                .forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
-                    searchCity.appendChild(option);
-                });
+            citiesToShow.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                searchCity.appendChild(option);
+            });
 
             const canRestore = Array.from(searchCity.options).some(option => option.value === currentValue);
             searchCity.value = canRestore ? currentValue : 'Все';
+
+            // Sync filter button state
+            const filterBtn = document.getElementById('city-filter-active-btn');
+            if (filterBtn) {
+                if (_cityFilterActiveOnly) {
+                    filterBtn.style.background = 'rgba(255,215,0,0.22)';
+                    filterBtn.style.color = '#ffd700';
+                    filterBtn.style.borderColor = 'rgba(255,215,0,0.7)';
+                } else {
+                    filterBtn.style.background = 'rgba(255,215,0,0.07)';
+                    filterBtn.style.color = '#b8952a';
+                    filterBtn.style.borderColor = 'rgba(255,215,0,0.35)';
+                }
+            }
         }
 
         function populateCitySelect() {
@@ -3065,6 +3132,134 @@
                 districtSelect.value = currentDistrict;
             }
             if (typeof _cselSync === 'function') _cselSync('property-district');
+        }
+
+        // ---- City Manager UI ----
+        function renderCityManager() {
+            const container = document.getElementById('city-manager-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const cities = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
+            cities.forEach(city => {
+                const districts = cityDistricts[city] || ['Все районы'];
+                const card = document.createElement('div');
+                card.className = 'rounded-xl p-3';
+                card.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.12);';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold text-sm" style="color:#ffd700;">${_escHtml(city)}</span>
+                        <button type="button" class="city-manager-delete-city cal-btn-cancel" data-city="${_escHtml(city)}" style="padding:2px 10px;font-size:0.78rem;" title="Удалить город">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-2" id="city-districts-${_escAttr(city)}">
+                        ${districts.map(d => d === 'Все районы' ? '' : `<span class="inline-flex items-center gap-1 px-2 py-0 rounded-full text-xs" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#e5c84e;">${_escHtml(d)}<button type="button" class="city-manager-delete-district ml-1" data-city="${_escAttr(city)}" data-district="${_escAttr(d)}" title="Удалить район" style="background:none;border:none;cursor:pointer;color:#e57e7e;line-height:1;">&times;</button></span>`).join('')}
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" class="cal-input flex-1" placeholder="Новый район..." style="font-size:0.82rem;padding:4px 8px;" data-add-district-for="${_escAttr(city)}">
+                        <button type="button" class="city-manager-add-district cal-btn-primary" data-city="${_escAttr(city)}" style="padding:4px 12px;font-size:0.78rem;white-space:nowrap;"><i class="fas fa-plus"></i></button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function _escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function _escAttr(s) { return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+        function _cityManagerSaveAndRefresh() {
+            saveCityDistrictsData(cityDistricts);
+            renderCityManager();
+            populateCitySelect();
+            populateSearchCitySelect();
+            if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+        }
+
+        function initCityManagerEvents() {
+            const container = document.getElementById('city-manager-list');
+            if (!container) return;
+
+            // Add city
+            const addCityBtn = document.getElementById('city-manager-add-city-btn');
+            const newCityInput = document.getElementById('city-manager-new-city');
+            if (addCityBtn && newCityInput) {
+                addCityBtn.addEventListener('click', function() {
+                    const name = newCityInput.value.trim();
+                    if (!name) return;
+                    if (cityDistricts[name]) { showToast('Такой город уже есть', 'warning'); return; }
+                    cityDistricts[name] = ['Все районы'];
+                    newCityInput.value = '';
+                    _cityManagerSaveAndRefresh();
+                    showToast('Город добавлен: ' + name, 'success');
+                });
+                newCityInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') addCityBtn.click(); });
+            }
+
+            // Reset button
+            const resetBtn = document.getElementById('city-manager-reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    showConfirm('Сбросить список городов и районов к стандартным значениям?', function() {
+                        cityDistricts = JSON.parse(JSON.stringify(DEFAULT_CITY_DISTRICTS));
+                        _cityManagerSaveAndRefresh();
+                        showToast('Города сброшены к стандартным', 'success');
+                    });
+                });
+            }
+
+            // Delegated events on container
+            container.addEventListener('click', function(e) {
+                // Delete city
+                const delCity = e.target.closest('.city-manager-delete-city');
+                if (delCity) {
+                    const city = delCity.dataset.city;
+                    showConfirm('Удалить город «' + city + '» и все его районы?', function() {
+                        delete cityDistricts[city];
+                        _cityManagerSaveAndRefresh();
+                        showToast('Город удалён: ' + city, 'success');
+                    });
+                    return;
+                }
+                // Delete district
+                const delDist = e.target.closest('.city-manager-delete-district');
+                if (delDist) {
+                    const city = delDist.dataset.city;
+                    const district = delDist.dataset.district;
+                    if (cityDistricts[city]) {
+                        cityDistricts[city] = cityDistricts[city].filter(d => d !== district);
+                        if (!cityDistricts[city].includes('Все районы')) cityDistricts[city].unshift('Все районы');
+                        _cityManagerSaveAndRefresh();
+                        showToast('Район удалён', 'success');
+                    }
+                    return;
+                }
+                // Add district button
+                const addDist = e.target.closest('.city-manager-add-district');
+                if (addDist) {
+                    const city = addDist.dataset.city;
+                    const input = container.querySelector(`input[data-add-district-for="${CSS.escape(city)}"]`);
+                    if (!input) return;
+                    const name = input.value.trim();
+                    if (!name || name === 'Все районы') return;
+                    if (!cityDistricts[city]) cityDistricts[city] = ['Все районы'];
+                    if (cityDistricts[city].includes(name)) { showToast('Такой район уже есть', 'warning'); return; }
+                    cityDistricts[city].push(name);
+                    cityDistricts[city] = Array.from(new Set(cityDistricts[city])).sort((a, b) => a === 'Все районы' ? -1 : b === 'Все районы' ? 1 : a.localeCompare(b, 'ru'));
+                    input.value = '';
+                    _cityManagerSaveAndRefresh();
+                    showToast('Район добавлен: ' + name, 'success');
+                }
+            });
+
+            container.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+                const input = e.target.closest('input[data-add-district-for]');
+                if (input) {
+                    const city = input.dataset.addDistrictFor;
+                    const btn = container.querySelector(`.city-manager-add-district[data-city="${CSS.escape(city)}"]`);
+                    if (btn) btn.click();
+                }
+            });
         }
 
         function openAdminPanelWithAuth() {
@@ -4311,31 +4506,8 @@
         let agentCounter = getCurrentMaxAgentIdNumber(agents);
         let propertyCounter = getCurrentMaxPropertyIdNumber(); // Auto-detect current max property id
 
-        // City districts data
-        const cityDistricts = {
-            'Кишинёв': ['Все районы', 'Центр', 'Ботаника', 'Рышкановка', 'Чеканы', 'Телецентр', 'Буюканы', 'Скулянка', 'Бубуечь', 'Дурлешты', 'Ватра', 'Друмул Таберей', 'Ставчены', 'Трушены'],
-            'Бельцы': ['Все районы', 'Центр', 'Северный', 'Южный', 'Западный', 'Восточный'],
-            'Тирасполь': ['Все районы', 'Центр', 'Микрорайон', 'Кировский', 'Октябрьский'],
-            'Бендеры': ['Все районы', 'Центр', 'Ленинский', 'Фрунзенский'],
-            'Рыбница': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Кагул': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Унгень': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Сороки': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Оргеев': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Комрат': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Чадыр-Лунга': ['Все районы', 'Центр', 'Северный', 'Южный'],
-            'Страшены': ['Все районы', 'Центр'],
-            'Дрокия': ['Все районы', 'Центр'],
-            'Единцы': ['Все районы', 'Центр'],
-            'Флорешты': ['Все районы', 'Центр'],
-            'Резина': ['Все районы', 'Центр'],
-            'Глодяны': ['Все районы', 'Центр'],
-            'Кантемир': ['Все районы', 'Центр'],
-            'Леова': ['Все районы', 'Центр'],
-            'Ниспорены': ['Все районы', 'Центр'],
-            'Окница': ['Все районы', 'Центр'],
-            'Вадул-луй-Водэ': ['Все районы', 'Центр']
-        };
+        // City districts data — loaded from localStorage (or defaults)
+        let cityDistricts = getCityDistrictsData();
 
         // Map initialization
         let mainMap, propertyMap;
@@ -5635,6 +5807,16 @@
             
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);
+
+            // City filter button — show only cities with active properties
+            const _cityFilterBtn = document.getElementById('city-filter-active-btn');
+            if (_cityFilterBtn) {
+                _cityFilterBtn.addEventListener('click', function() {
+                    _cityFilterActiveOnly = !_cityFilterActiveOnly;
+                    populateSearchCitySelect();
+                    updateDistricts();
+                });
+            }
             
             // Initialize districts for default city
             updateDistricts();
@@ -7208,6 +7390,15 @@ window.addEventListener('storage', function(e) {
         var contentView = document.getElementById('admin-site-content-view');
         if (contentView && !contentView.classList.contains('hidden') && typeof window.renderSiteContentAdmin === 'function') {
             window.renderSiteContentAdmin();
+        }
+    }
+    if (e.key === CITY_DISTRICTS_STORAGE_KEY) {
+        cityDistricts = getCityDistrictsData();
+        populateSearchCitySelect();
+        populateCitySelect();
+        var cityContentView = document.getElementById('admin-site-content-view');
+        if (cityContentView && !cityContentView.classList.contains('hidden') && typeof renderCityManager === 'function') {
+            renderCityManager();
         }
     }
 });
