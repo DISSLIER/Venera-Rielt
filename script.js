@@ -3872,10 +3872,16 @@
         function populateRealtorDropdown() {
             const realtorSelect = document.getElementById('property-rieltor-id');
             
-            // Clear existing options except the first one
-            while (realtorSelect.options.length > 1) {
-                realtorSelect.remove(1);
+            // Clear all existing options
+            while (realtorSelect.options.length > 0) {
+                realtorSelect.remove(0);
             }
+
+            // First option — company
+            const companyOption = document.createElement('option');
+            companyOption.value = '';
+            companyOption.textContent = 'Компания';
+            realtorSelect.appendChild(companyOption);
             
             // Add agents as options (deduplicate by rieltor_id)
             const seen = new Set();
