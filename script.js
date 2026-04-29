@@ -3300,12 +3300,14 @@
                 if (delDist) {
                     const city = delDist.dataset.city;
                     const district = delDist.dataset.district;
-                    if (cityDistricts[city]) {
-                        cityDistricts[city] = cityDistricts[city].filter(d => d !== district);
-                        if (!cityDistricts[city].includes('Все районы')) cityDistricts[city].unshift('Все районы');
-                        _cityManagerSaveAndRefresh();
-                        showToast('Район удалён', 'success');
-                    }
+                    showConfirm('Удалить район «' + district + '» из города «' + city + '»?', function() {
+                        if (cityDistricts[city]) {
+                            cityDistricts[city] = cityDistricts[city].filter(d => d !== district);
+                            if (!cityDistricts[city].includes('Все районы')) cityDistricts[city].unshift('Все районы');
+                            _cityManagerSaveAndRefresh();
+                            showToast('Район удалён', 'success');
+                        }
+                    });
                     return;
                 }
                 // Add district button
