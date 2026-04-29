@@ -1390,16 +1390,32 @@
             if (!detailKeys.length) {
                 detailsRows = '<div style="color:rgba(255,255,255,0.6);">Дополнительных данных нет.</div>';
             } else {
+                var _makeRow = function(labelHtml, valueHtml, separatorStyle) {
+                    var sep = separatorStyle || '1px solid rgba(255,255,255,0.08)';
+                    return '<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-bottom:' + sep + ';">' +
+                        '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;">' + labelHtml + '</div>' +
+                        '<div style="color:rgba(255,255,255,0.9);font-size:0.88rem;white-space:pre-wrap;word-break:break-word;">' + valueHtml + '</div>' +
+                        '</div>';
+                };
                 detailsRows = detailKeys.map(function(key) {
                     var value = details[key];
                     var isObject = value && typeof value === 'object' && !Array.isArray(value);
-                    var renderedValue = isObject
-                        ? ('<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;">' + _renderHistoryDetailObjectRows(value) + '</div>')
-                        : _formatHistoryDetailValue(value);
-                    return '<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' +
-                        '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;">' + _escapeHtml(_historyFieldLabel(key)) + '</div>' +
-                        '<div style="color:rgba(255,255,255,0.9);font-size:0.88rem;white-space:pre-wrap;word-break:break-word;">' + renderedValue + '</div>' +
-                        '</div>';
+                    if (isObject) {
+                        // Render as section header + flat sub-rows
+                        var subKeys = Object.keys(value);
+                        var headerRow = '<div style="padding:10px 0 4px;">' +
+                            '<span style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid rgba(255,215,0,0.3);padding-bottom:3px;">' +
+                            _escapeHtml(_historyFieldLabel(key)) + '</span></div>';
+                        var subRows = subKeys.map(function(subKey) {
+                            return _makeRow(
+                                _escapeHtml(_historyFieldLabel(subKey)),
+                                _formatHistoryDetailValue(value[subKey]),
+                                '1px dashed rgba(255,255,255,0.07)'
+                            );
+                        }).join('');
+                        return headerRow + subRows;
+                    }
+                    return _makeRow(_escapeHtml(_historyFieldLabel(key)), _formatHistoryDetailValue(value));
                 }).join('');
             }
 
