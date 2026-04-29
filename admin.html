@@ -122,6 +122,18 @@
             display: block;
         }
 
+        .admin-auth-logo-anim {
+            animation: adminAuthLogoFloat 3.2s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.45));
+            transform-origin: center;
+        }
+
+        @keyframes adminAuthLogoFloat {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0); }
+        }
+
         .admin-nav {
             display: flex;
             flex-direction: column;
@@ -1468,10 +1480,9 @@
     <div id="admin-auth-modal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex items-center justify-center">
         <div class="w-full max-w-sm mx-4">
             <div class="mb-4 text-center">
-                <img src="image/components/AdminPass.png" alt="AdminPass" class="h-24 mx-auto object-contain">
+                <img src="image/components/AdminPass.png" alt="AdminPass" class="h-48 mx-auto object-contain admin-auth-logo-anim">
             </div>
             <div class="glass-effect rounded-xl p-8">
-            <h3 class="text-base font-light text-white/75 tracking-wide mb-6 text-center">Админ панель</h3>
             <div class="mb-4">
                 <label class="block text-gray-400 mb-2">Пароль</label>
                 <div class="relative">
