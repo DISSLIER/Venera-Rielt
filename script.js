@@ -932,6 +932,7 @@
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
         const CITY_DISTRICTS_STORAGE_KEY = 'venera_city_districts_v1';
+        const CITY_LIST_MODE_STORAGE_KEY = 'venera_city_list_mode_v1';
         const ABOUT_MEDIA_CACHE_NAME = 'venera-about-media-v1';
         const ADMIN_SESSION_KEY = 'venera_admin_authenticated';
         const REALTOR_SESSION_KEY = 'venera_realtor_session';
@@ -1043,6 +1044,20 @@
 
         function saveCityDistrictsData(data) {
             try { localStorage.setItem(CITY_DISTRICTS_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+        }
+
+        function getCityListMode() {
+            try {
+                var mode = String(localStorage.getItem(CITY_LIST_MODE_STORAGE_KEY) || 'all').trim();
+                return mode === 'with-objects' ? 'with-objects' : 'all';
+            } catch (_) {
+                return 'all';
+            }
+        }
+
+        function saveCityListMode(mode) {
+            var cleanMode = mode === 'with-objects' ? 'with-objects' : 'all';
+            try { localStorage.setItem(CITY_LIST_MODE_STORAGE_KEY, cleanMode); } catch (_) {}
         }
 
         function _logAction(action, section, details) {
@@ -3075,15 +3090,14 @@
             });
         }
 
-        let _cityFilterActiveOnly = false;
-
         function populateSearchCitySelect() {
             const searchCity = document.getElementById('city');
             if (!searchCity) return;
 
             // Determine cities to show
             let citiesToShow = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
-            if (_cityFilterActiveOnly) {
+            const cityListMode = getCityListMode();
+            if (cityListMode === 'with-objects') {
                 const activeCities = new Set();
                 document.querySelectorAll('.property-card').forEach(card => {
                     if (card.dataset.city) activeCities.add(card.dataset.city.trim());
@@ -3108,20 +3122,6 @@
 
             const canRestore = Array.from(searchCity.options).some(option => option.value === currentValue);
             searchCity.value = canRestore ? currentValue : 'Все';
-
-            // Sync filter button state
-            const filterBtn = document.getElementById('city-filter-active-btn');
-            if (filterBtn) {
-                if (_cityFilterActiveOnly) {
-                    filterBtn.style.background = 'rgba(255,215,0,0.22)';
-                    filterBtn.style.color = '#ffd700';
-                    filterBtn.style.borderColor = 'rgba(255,215,0,0.7)';
-                } else {
-                    filterBtn.style.background = 'rgba(255,215,0,0.07)';
-                    filterBtn.style.color = '#b8952a';
-                    filterBtn.style.borderColor = 'rgba(255,215,0,0.35)';
-                }
-            }
         }
 
         function populateCitySelect() {
@@ -3177,6 +3177,20 @@
             const container = document.getElementById('city-manager-list');
             if (!container) return;
             container.innerHTML = '';
+
+            const modeAllBtn = document.getElementById('city-mode-all-btn');
+            const modeWithObjectsBtn = document.getElementById('city-mode-with-objects-btn');
+            const mode = getCityListMode();
+            if (modeAllBtn && modeWithObjectsBtn) {
+                function applyModeBtnStyle(btn, isActive) {
+                    btn.style.background = isActive ? 'rgba(255,215,0,0.22)' : 'rgba(255,215,0,0.07)';
+                    btn.style.color = isActive ? '#ffd700' : '#b8952a';
+                    btn.style.borderColor = isActive ? 'rgba(255,215,0,0.7)' : 'rgba(255,215,0,0.35)';
+                }
+                applyModeBtnStyle(modeAllBtn, mode === 'all');
+                applyModeBtnStyle(modeWithObjectsBtn, mode === 'with-objects');
+            }
+
             const cities = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
             cities.forEach(city => {
                 const districts = cityDistricts[city] || ['Все районы'];
@@ -3216,6 +3230,29 @@
         function initCityManagerEvents() {
             const container = document.getElementById('city-manager-list');
             if (!container) return;
+
+            const modeAllBtn = document.getElementById('city-mode-all-btn');
+            const modeWithObjectsBtn = document.getElementById('city-mode-with-objects-btn');
+            if (modeAllBtn) {
+                modeAllBtn.addEventListener('click', function() {
+                    saveCityListMode('all');
+                    renderCityManager();
+                    populateSearchCitySelect();
+                    if (typeof updateDistricts === 'function') updateDistricts();
+                    showToast('Режим городов: показывать все', 'success');
+                    if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                });
+            }
+            if (modeWithObjectsBtn) {
+                modeWithObjectsBtn.addEventListener('click', function() {
+                    saveCityListMode('with-objects');
+                    renderCityManager();
+                    populateSearchCitySelect();
+                    if (typeof updateDistricts === 'function') updateDistricts();
+                    showToast('Режим городов: только с объектами', 'success');
+                    if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+                });
+            }
 
             // Add city
             const addCityBtn = document.getElementById('city-manager-add-city-btn');
@@ -5841,16 +5878,6 @@
             // Set up city change event
             document.getElementById('city').addEventListener('change', updateDistricts);
 
-            // City filter button — show only cities with active properties
-            const _cityFilterBtn = document.getElementById('city-filter-active-btn');
-            if (_cityFilterBtn) {
-                _cityFilterBtn.addEventListener('click', function() {
-                    _cityFilterActiveOnly = !_cityFilterActiveOnly;
-                    populateSearchCitySelect();
-                    updateDistricts();
-                });
-            }
-            
             // Initialize districts for default city
             updateDistricts();
             
@@ -7431,6 +7458,14 @@ window.addEventListener('storage', function(e) {
         populateCitySelect();
         var cityContentView = document.getElementById('admin-site-content-view');
         if (cityContentView && !cityContentView.classList.contains('hidden') && typeof renderCityManager === 'function') {
+            renderCityManager();
+        }
+    }
+    if (e.key === CITY_LIST_MODE_STORAGE_KEY) {
+        populateSearchCitySelect();
+        if (typeof updateDistricts === 'function') updateDistricts();
+        var cityModeContentView = document.getElementById('admin-site-content-view');
+        if (cityModeContentView && !cityModeContentView.classList.contains('hidden') && typeof renderCityManager === 'function') {
             renderCityManager();
         }
     }
