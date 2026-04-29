@@ -5559,23 +5559,34 @@
             });
         }
 
+        const COMPANY_LOGO_URL = 'https://i.ibb.co/35ZQ5g8X/logo.png';
+
         // Function to update agent photos on property cards
         function updateAgentPhotos() {
             document.querySelectorAll('.agent-photo').forEach(img => {
                 const rieltorId = img.dataset.rieltorId;
                 const agent = agents.find(a => a.rieltor_id == rieltorId);
-                if (agent) {
-                    // If agent is hidden, hide the badge entirely
-                    if (isAgentHidden(rieltorId)) {
-                        var badge = img.closest('.agent-badge');
-                        if (badge) badge.style.display = 'none';
-                    } else {
-                        var badge = img.closest('.agent-badge');
-                        if (badge) badge.style.display = '';
-                        img.src = agent.photo;
-                        img.alt = agent.name;
-                    }
+                var badge = img.closest('.agent-badge');
+                if (agent && !isAgentHidden(rieltorId)) {
+                    // Normal visible agent
+                    if (badge) badge.style.display = '';
+                    img.src = agent.photo;
+                    img.alt = agent.name;
+                    img.title = agent.name;
+                } else if (agent && isAgentHidden(rieltorId)) {
+                    // Agent exists but hidden — show company logo
+                    if (badge) badge.style.display = '';
+                    img.src = COMPANY_LOGO_URL;
+                    img.alt = 'Компания';
+                    img.title = 'Venera Rielt';
+                } else if (!rieltorId || rieltorId === 'company') {
+                    // Property assigned to company directly
+                    if (badge) badge.style.display = '';
+                    img.src = COMPANY_LOGO_URL;
+                    img.alt = 'Компания';
+                    img.title = 'Venera Rielt';
                 }
+                // If rieltorId set but agent not found at all — leave hidden (default)
             });
         }
 
