@@ -5599,6 +5599,45 @@
         // ─── Promo Carousel ──────────────────────────────────────────────────────────
         const PROMO_STORAGE_KEY = 'venera_promo_slides_v7';
         const PROMO_HIDDEN_KEY = 'venera_promo_hidden_v1';
+        const PROMO_MEDIA_CACHE_NAME = 'venera-promo-media-v1';
+
+        function _normalizePromoMediaUrl(url) {
+            var value = String(url || '').trim();
+            if (!value) return '';
+            if (/^(data:|blob:|https?:\/\/)/i.test(value)) return value;
+            if (value.charAt(0) === '/') return value;
+            if (/^image\/promo\//i.test(value)) return '/' + value;
+            return '/image/promo/' + value.replace(/^\.?\/+/, '');
+        }
+
+        function _sanitizePromoMediaFileName(name) {
+            var base = String(name || '').trim();
+            if (!base) return 'promo-media-' + Date.now() + '.bin';
+            return base
+                .replace(/[^a-zA-Z0-9._-]+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '') || ('promo-media-' + Date.now() + '.bin');
+        }
+
+        function _savePromoMediaToCache(file) {
+            var safeFileName = _sanitizePromoMediaFileName(file && file.name);
+            var mediaPath = '/image/promo/' + safeFileName;
+            if (!window.caches || typeof window.caches.open !== 'function') {
+                return _fileToDataUrl(file);
+            }
+            return window.caches.open(PROMO_MEDIA_CACHE_NAME)
+                .then(function(cache) {
+                    var headers = {
+                        'Content-Type': file && file.type ? file.type : 'application/octet-stream',
+                        'Cache-Control': 'public, max-age=31536000'
+                    };
+                    return cache.put(mediaPath, new Response(file, { status: 200, headers: headers }))
+                        .then(function() { return mediaPath; });
+                })
+                .catch(function() {
+                    return _fileToDataUrl(file);
+                });
+        }
 
         function getPromoSlides() {
             try {
@@ -5618,7 +5657,12 @@
         }
 
         function savePromoSlides(slides) {
-            try { localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(slides)); } catch (_) {}
+            try {
+                localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(slides));
+                return true;
+            } catch (_) {
+                return false;
+            }
         }
 
         function renderPromoCarousel() {
@@ -6296,6 +6340,30 @@
             }
 
             // Promo admin actions
+            if (e.target.id === 'promo-src-file-btn' || e.target.closest('#promo-src-file-btn')) {
+                var promoFileBtn = document.getElementById('promo-src-file-btn');
+                var promoUrlBtn = document.getElementById('promo-src-url-btn');
+                var promoFileRow = document.getElementById('promo-src-file-row');
+                var promoUrlRow = document.getElementById('promo-src-url-row');
+                if (promoFileBtn) { promoFileBtn.classList.remove('cal-btn-cancel'); promoFileBtn.classList.add('cal-btn-primary'); }
+                if (promoUrlBtn) { promoUrlBtn.classList.remove('cal-btn-primary'); promoUrlBtn.classList.add('cal-btn-cancel'); }
+                if (promoFileRow) promoFileRow.classList.remove('hidden');
+                if (promoUrlRow) promoUrlRow.classList.add('hidden');
+                return;
+            }
+
+            if (e.target.id === 'promo-src-url-btn' || e.target.closest('#promo-src-url-btn')) {
+                var promoFileBtn2 = document.getElementById('promo-src-file-btn');
+                var promoUrlBtn2 = document.getElementById('promo-src-url-btn');
+                var promoFileRow2 = document.getElementById('promo-src-file-row');
+                var promoUrlRow2 = document.getElementById('promo-src-url-row');
+                if (promoUrlBtn2) { promoUrlBtn2.classList.remove('cal-btn-cancel'); promoUrlBtn2.classList.add('cal-btn-primary'); }
+                if (promoFileBtn2) { promoFileBtn2.classList.remove('cal-btn-primary'); promoFileBtn2.classList.add('cal-btn-cancel'); }
+                if (promoUrlRow2) promoUrlRow2.classList.remove('hidden');
+                if (promoFileRow2) promoFileRow2.classList.add('hidden');
+                return;
+            }
+
             if (e.target.closest('.promo-slide-toggle')) {
                 var idx = Number(e.target.closest('.promo-slide-toggle').dataset.i);
                 var sl = getPromoSlides();
@@ -6331,11 +6399,13 @@
                 if (file.size > maxMB * 1024 * 1024) {
                     showToast('Файл слишком большой (макс. ' + maxMB + ' МБ)', 'error'); return;
                 }
-                var reader = new FileReader();
-                reader.onload = function(ev) {
+                _savePromoMediaToCache(file).then(function(savedUrl) {
                     var sl = getPromoSlides();
-                    sl.push({ url: ev.target.result, type: fileType, link: linkInp ? linkInp.value.trim() : '', alt: file.name });
-                    savePromoSlides(sl);
+                    sl.push({ url: savedUrl, type: fileType, link: linkInp ? linkInp.value.trim() : '', alt: file.name });
+                    if (!savePromoSlides(sl)) {
+                        showToast('Не удалось сохранить слайд. Очистите хранилище браузера и попробуйте снова.', 'error');
+                        return;
+                    }
                     fileInp.value = '';
                     var nameSpan = document.getElementById('promo-file-name');
                     if (nameSpan) nameSpan.textContent = 'Выбрать файл...';
@@ -6343,8 +6413,9 @@
                     renderPromoAdmin(); renderPromoCarousel();
                     showToast('Слайд добавлен', 'success');
                     if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
-                };
-                reader.readAsDataURL(file);
+                }).catch(function() {
+                    showToast('Не удалось сохранить файл. Попробуйте снова.', 'error');
+                });
             }
             if (e.target.id === 'promo-toggle-visibility-btn' || e.target.closest('#promo-toggle-visibility-btn')) {
                 var cur = localStorage.getItem(PROMO_HIDDEN_KEY) === '1';
@@ -6355,11 +6426,14 @@
                 var urlInp = document.getElementById('promo-add-url');
                 var linkInp2 = document.getElementById('promo-add-link-url');
                 if (!urlInp || !urlInp.value.trim()) { showToast('Введите URL', 'error'); return; }
-                var rawUrl = urlInp.value.trim();
+                var rawUrl = _normalizePromoMediaUrl(urlInp.value.trim());
                 var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(rawUrl) ? 'video' : 'image';
                 var sl = getPromoSlides();
                 sl.push({ url: rawUrl, type: detectedType, link: linkInp2 ? linkInp2.value.trim() : '', alt: '' });
-                savePromoSlides(sl);
+                if (!savePromoSlides(sl)) {
+                    showToast('Не удалось сохранить слайд. Очистите хранилище браузера и попробуйте снова.', 'error');
+                    return;
+                }
                 urlInp.value = ''; if (linkInp2) linkInp2.value = '';
                 renderPromoAdmin(); renderPromoCarousel();
                 showToast('Слайд добавлен', 'success');
@@ -6378,6 +6452,11 @@
 
         // Site content photo inputs: URL + file upload previews
         document.addEventListener('change', function(e) {
+            if (e.target.id === 'promo-add-file') {
+                var promoNameSpan = document.getElementById('promo-file-name');
+                if (promoNameSpan) promoNameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
+            }
+
             if (e.target.id === 'site-about-photo-add-file') {
                 var nameSpan = document.getElementById('site-about-file-name');
                 if (nameSpan) nameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
