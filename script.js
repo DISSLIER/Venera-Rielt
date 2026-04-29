@@ -3346,7 +3346,7 @@
 
                 const agentDiv = document.createElement('div');
                 agentDiv.className = 'flex flex-col h-full agent-sort-card';
-                agentDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
+                agentDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;cursor:grab;';
                 agentDiv.setAttribute('draggable', 'true');
                 agentDiv.dataset.agentIndex = String(index);
                 agentDiv.innerHTML = `
@@ -3416,14 +3416,32 @@
             var cards = Array.from(agentsList.querySelectorAll('.agent-sort-card'));
             if (!cards.length) return;
 
+            var isInteractiveTarget = function(target) {
+                return !!(target && target.closest('.edit-agent, .delete-agent, .hide-agent, a, button, input, textarea, select'));
+            };
+
+            var clearDragVisual = function() {
+                cards.forEach(function(c) { c.classList.remove('opacity-60'); });
+            };
+
             var dragFrom = null;
             cards.forEach(function(card) {
-                card.addEventListener('dragstart', function() {
+                card.addEventListener('dragstart', function(e) {
+                    if (isInteractiveTarget(e.target)) {
+                        e.preventDefault();
+                        dragFrom = null;
+                        return;
+                    }
                     dragFrom = Number(card.dataset.agentIndex || -1);
+                    clearDragVisual();
                     card.classList.add('opacity-60');
+                    if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        try { e.dataTransfer.setData('text/plain', String(dragFrom)); } catch (_) {}
+                    }
                 });
                 card.addEventListener('dragend', function() {
-                    card.classList.remove('opacity-60');
+                    clearDragVisual();
                 });
                 card.addEventListener('dragover', function(e) {
                     e.preventDefault();
@@ -3432,6 +3450,7 @@
                     e.preventDefault();
                     var dragTo = Number(card.dataset.agentIndex || -1);
                     reorderAgents(dragFrom, dragTo);
+                    clearDragVisual();
                 });
             });
 
@@ -3439,8 +3458,9 @@
             var touchFrom = null;
             cards.forEach(function(card) {
                 card.addEventListener('touchstart', function(e) {
-                    if (e.target.closest('.edit-agent, .delete-agent, .hide-agent, a, button')) return;
+                    if (isInteractiveTarget(e.target)) return;
                     touchFrom = Number(card.dataset.agentIndex || -1);
+                    clearDragVisual();
                     card.classList.add('opacity-60');
                 }, { passive: true });
 
@@ -3456,7 +3476,12 @@
                             }
                         }
                     }
-                    card.classList.remove('opacity-60');
+                    clearDragVisual();
+                    touchFrom = null;
+                }, { passive: true });
+
+                card.addEventListener('touchcancel', function() {
+                    clearDragVisual();
                     touchFrom = null;
                 }, { passive: true });
             });
