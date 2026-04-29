@@ -3345,8 +3345,10 @@
                 ].filter(Boolean).join('');
 
                 const agentDiv = document.createElement('div');
-                agentDiv.className = 'flex flex-col h-full';
+                agentDiv.className = 'flex flex-col h-full agent-sort-card';
                 agentDiv.style.cssText = 'background:linear-gradient(160deg,rgba(0,0,0,0.55) 0%,rgba(10,10,10,0.45) 100%);border:1px solid rgba(255,215,0,0.25);backdrop-filter:blur(14px);border-radius:18px;overflow:hidden;';
+                agentDiv.setAttribute('draggable', 'true');
+                agentDiv.dataset.agentIndex = String(index);
                 agentDiv.innerHTML = `
                     <div class="flex flex-col flex-grow" style="padding:18px;">
                         <div class="flex items-center gap-4 mb-4">
@@ -3383,6 +3385,80 @@
                     </div>
                 `;
                 agentsList.appendChild(agentDiv);
+            });
+
+            initAgentReorderDnD();
+        }
+
+        function reorderAgents(fromIndex, toIndex) {
+            var from = Number(fromIndex);
+            var to = Number(toIndex);
+            if (!Number.isInteger(from) || !Number.isInteger(to)) return;
+            if (from === to) return;
+            if (from < 0 || to < 0 || from >= agents.length || to >= agents.length) return;
+
+            var moved = agents.splice(from, 1)[0];
+            agents.splice(to, 0, moved);
+
+            renderAgentsList();
+            if (typeof renderAgents === 'function') renderAgents();
+            if (typeof updateAgentPhotos === 'function') updateAgentPhotos();
+            if (typeof _refreshClientCatalogSelects === 'function') _refreshClientCatalogSelects();
+            if (typeof populateRealtorDropdown === 'function') populateRealtorDropdown();
+            if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
+            if (typeof showToast === 'function') showToast('Порядок риелторов обновлен');
+        }
+
+        function initAgentReorderDnD() {
+            var agentsList = document.getElementById('agents-list');
+            if (!agentsList) return;
+
+            var cards = Array.from(agentsList.querySelectorAll('.agent-sort-card'));
+            if (!cards.length) return;
+
+            var dragFrom = null;
+            cards.forEach(function(card) {
+                card.addEventListener('dragstart', function() {
+                    dragFrom = Number(card.dataset.agentIndex || -1);
+                    card.classList.add('opacity-60');
+                });
+                card.addEventListener('dragend', function() {
+                    card.classList.remove('opacity-60');
+                });
+                card.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+                card.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    var dragTo = Number(card.dataset.agentIndex || -1);
+                    reorderAgents(dragFrom, dragTo);
+                });
+            });
+
+            // Touch reorder for mobile
+            var touchFrom = null;
+            cards.forEach(function(card) {
+                card.addEventListener('touchstart', function(e) {
+                    if (e.target.closest('.edit-agent, .delete-agent, .hide-agent, a, button')) return;
+                    touchFrom = Number(card.dataset.agentIndex || -1);
+                    card.classList.add('opacity-60');
+                }, { passive: true });
+
+                card.addEventListener('touchend', function(e) {
+                    if (touchFrom !== null) {
+                        var t = e.changedTouches && e.changedTouches[0];
+                        if (t) {
+                            var el = document.elementFromPoint(t.clientX, t.clientY);
+                            var targetCard = el ? el.closest('.agent-sort-card') : null;
+                            if (targetCard) {
+                                var touchTo = Number(targetCard.dataset.agentIndex || -1);
+                                reorderAgents(touchFrom, touchTo);
+                            }
+                        }
+                    }
+                    card.classList.remove('opacity-60');
+                    touchFrom = null;
+                }, { passive: true });
             });
         }
         
