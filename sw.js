@@ -1,17 +1,19 @@
-const CACHE_NAME = 'venera-rielt-v11';
+const CACHE_NAME = 'venera-rielt-v12';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/admin.html',
   '/styles.css',
   '/script.js',
   '/admin.js',
   '/agents.config.js',
   '/properties.config.js',
-  '/manifest.webmanifest?v=3',
+  '/manifest.webmanifest',
   '/image/components/appicon-192.png',
   '/image/components/appicon-512.png',
-  '/image/components/AppIcon.png'
+  '/image/components/AppIcon.png',
+  '/image/components/AppIcon1.png'
 ];
 
 self.addEventListener('install', (event) => {

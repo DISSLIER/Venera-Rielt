@@ -1666,9 +1666,11 @@
                 }
                 return '<div class="testimonial-item' + (i === 0 ? ' active' : '') + '"><img src="' + entry.url + '" alt="Luxury Property" class="w-full h-96 object-cover"></div>';
             }).join('');
+            var showArrows = entries.length > 1;
+            var arrowStyle = showArrows ? '' : 'display:none;';
             var arrows =
-                '<button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"><i class="fas fa-chevron-left"></i></button>' +
-                '<button class="carousel-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"><i class="fas fa-chevron-right"></i></button>';
+                '<button class="carousel-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition" style="' + arrowStyle + '"><i class="fas fa-chevron-left"></i></button>' +
+                '<button class="carousel-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition" style="' + arrowStyle + '"><i class="fas fa-chevron-right"></i></button>';
             carousel.innerHTML = slidesHtml + arrows;
             window.__veneraAboutCarouselNeedsRebind = true;
         }
@@ -5697,6 +5699,7 @@
 
             container.innerHTML = '';
             if (dotsContainer) dotsContainer.innerHTML = '';
+            _promoCurrentIndex = 0; // Reset index on full re-render
 
             slides.forEach(function(slide, i) {
                 if (slide.hidden) return; // skip hidden slides
@@ -7114,6 +7117,31 @@
             if (testimonialNext && !testimonialNext.dataset.bound) {
                 testimonialNext.dataset.bound = '1';
                 testimonialNext.addEventListener('click', () => showTestimonial(currentTestimonial + 1));
+            }
+            // Touch swipe
+            var car = document.getElementById('about-testimonial-carousel');
+            if (car && !car.dataset.swipeBound) {
+                car.dataset.swipeBound = '1';
+                var _tStartX = 0, _tStartY = 0, _tAxisLocked = false;
+                car.addEventListener('touchstart', function(e) {
+                    _tStartX = e.touches[0].clientX;
+                    _tStartY = e.touches[0].clientY;
+                    _tAxisLocked = false;
+                }, { passive: true });
+                car.addEventListener('touchmove', function(e) {
+                    if (_tAxisLocked) return;
+                    var dx = e.touches[0].clientX - _tStartX;
+                    var dy = e.touches[0].clientY - _tStartY;
+                    if (Math.abs(dy) > Math.abs(dx)) _tAxisLocked = true;
+                }, { passive: true });
+                car.addEventListener('touchend', function(e) {
+                    if (_tAxisLocked) return;
+                    var dx = e.changedTouches[0].clientX - _tStartX;
+                    var dy = e.changedTouches[0].clientY - _tStartY;
+                    if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 40) return;
+                    if (dx < 0) showTestimonial(currentTestimonial + 1);
+                    else showTestimonial(currentTestimonial - 1);
+                }, { passive: true });
             }
         }
 
