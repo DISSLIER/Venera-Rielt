@@ -1172,9 +1172,12 @@
                 var targetId = _normalizeActionTargetId(entry);
                 if (!targetId) return false;
                 if (targetId === viewer.realtorId) return true;
-                if (targetId === CALENDAR_TARGET_ALL_REALTORS) return true;
-                if (targetId === CALENDAR_TARGET_COMPANY) return true;
-                if (targetId === CLIENT_OWNER_COMPANY_ID) return true;
+                // Calendar events addressed to all realtors or the whole company are relevant to every realtor
+                var entrySection = String(entry.section || '');
+                if (entrySection === ACTIONS_SECTION_CALENDAR) {
+                    if (targetId === CALENDAR_TARGET_ALL_REALTORS) return true;
+                    if (targetId === CALENDAR_TARGET_COMPANY) return true;
+                }
                 return false;
             }
 
