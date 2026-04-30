@@ -22,8 +22,8 @@
   var REAL_EMAIL        = "info@venera-rielt.md";
   var REAL_ADDRESS      = "ишинёв, олдова";
   var SOCIAL_TIKTOK     = "https://www.tiktok.com/@venera.rielt?_t=ZN-8z4bdlOBmNy&_r=1";
-  var SOCIAL_INSTAGRAM  = "";
-
+  var SOCIAL_INSTAGRAM  = "https://www.instagram.com/venerarielt?igsh=ajRleTdtcHZkZzU5";
+  var SOCIAL_FACEBOOK   = "https://www.facebook.com/share/18SPXKDGBC/";
   var PAGE_TITLE_RU = "гентство недвижимости Venera Rielt — упить, продать, арендовать в олдове";
   var PAGE_DESC_RU  = "гентство недвижимости Venera Rielt в олдове. родажа и аренда квартир, домов, коммерческих помещений в ишинёве и по всей олдове. рофессиональные риелторы, актуальная база объектов. Imobiliare în Moldova — vânzare și chirie apartamente, case, spații comerciale în Chișinău.";
   var OG_IMAGE      = DEFAULT_SITE_URL + "/image/components/appicon-512.png";
@@ -76,7 +76,7 @@
   function applySeo() {
     var baseUrl      = resolveSiteUrl();
     var canonicalUrl = baseUrl + "/";
-    var sameAs       = [SOCIAL_TIKTOK];
+    var sameAs       = [SOCIAL_TIKTOK, SOCIAL_FACEBOOK];
     if (SOCIAL_INSTAGRAM) sameAs.push(SOCIAL_INSTAGRAM);
 
     document.title = PAGE_TITLE_RU;

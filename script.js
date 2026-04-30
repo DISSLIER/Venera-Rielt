@@ -973,8 +973,8 @@
                 hours2: 'Сб: 10:00 - 15:00'
             },
             social: {
-                facebook: '#',
-                instagram: '#',
+                facebook: 'https://www.facebook.com/share/18SPXKDGBC/',
+                instagram: 'https://www.instagram.com/venerarielt?igsh=ajRleTdtcHZkZzU5',
                 youtube: '#',
                 tiktok: 'https://www.tiktok.com/@venera.rielt?_t=ZN-8z4bdlOBmNy&_r=1',
                 telegram: '#',
