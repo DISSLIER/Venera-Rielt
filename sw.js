@@ -6,6 +6,8 @@ const PRECACHE_URLS = [
   '/admin.html',
   '/styles.css',
   '/script.js',
+  '/seo.js',
+  '/pwa.js',
   '/admin.js',
   '/agents.config.js',
   '/properties.config.js',

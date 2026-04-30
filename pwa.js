@@ -127,7 +127,7 @@ function hideInstallButton() {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register('/sw.js?v=11');
+    await navigator.serviceWorker.register('/sw.js?v=12');
   } catch (error) {
     console.log('SW register error:', error);
   }
