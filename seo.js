@@ -16,8 +16,9 @@
   var SOCIAL_INSTAGRAM = "https://www.instagram.com/venerarielt?igsh=ajRleTdtcHZkZzU5";
   var SOCIAL_FACEBOOK = "https://www.facebook.com/share/18SPXKDGBC/";
 
-  var PAGE_TITLE = "Venera Rielt - Real Estate in Moldova";
-  var PAGE_DESCRIPTION = "Buy, sell, and rent apartments, houses, and commercial property in Chisinau and across Moldova with Venera Rielt.";
+  var PAGE_TITLE = "Venera Rielt - Real Estate in Moldova | Недвижимость в Молдове | Imobiliare in Moldova";
+  var PAGE_DESCRIPTION = "Buy, sell, and rent apartments, houses, and commercial property in Chisinau and across Moldova. Продажа и аренда недвижимости в Молдове. Vanzare si chirie imobiliare in Moldova.";
+  var PAGE_KEYWORDS = "real estate Moldova, buy apartment Chisinau, rent apartment Moldova, house for sale Moldova, commercial property Chisinau, real estate agency Moldova, агентство недвижимости Молдова, купить квартиру Кишинев, аренда квартиры Кишинев, коммерческая недвижимость Молдова, imobiliare Moldova, apartamente Chisinau, chirie apartamente Moldova, case de vanzare Moldova, agentie imobiliara Moldova";
   var OG_IMAGE = DEFAULT_SITE_URL + "/image/components/appicon-512.png";
 
   function isLocalhost(hostname) {
@@ -82,14 +83,27 @@
 
     document.title = PAGE_TITLE;
     upsertMeta("name", "description", PAGE_DESCRIPTION);
+    upsertMeta("name", "keywords", PAGE_KEYWORDS);
+    upsertMeta("name", "language", "ru, ro, en");
     upsertMeta("property", "og:url", canonicalUrl);
     upsertMeta("property", "og:image", OG_IMAGE);
     upsertMeta("property", "og:title", PAGE_TITLE);
     upsertMeta("property", "og:description", PAGE_DESCRIPTION);
+    upsertMeta("property", "og:locale", "ru_MD");
+    upsertMeta("property", "og:locale:alternate", "ro_MD");
+
+    var ogAlternateEn = document.head.querySelector('meta[property="og:locale:alternate"][content="en_US"]');
+    if (!ogAlternateEn) {
+      ogAlternateEn = document.createElement("meta");
+      ogAlternateEn.setAttribute("property", "og:locale:alternate");
+      ogAlternateEn.setAttribute("content", "en_US");
+      document.head.appendChild(ogAlternateEn);
+    }
 
     upsertLink("canonical", canonicalUrl);
     upsertLink("alternate", canonicalUrl, "ru-MD");
     upsertLink("alternate", canonicalUrl, "ro-MD");
+    upsertLink("alternate", canonicalUrl, "en-MD");
     upsertLink("alternate", canonicalUrl, "x-default");
 
     injectJsonLd("ld-website", {
@@ -98,7 +112,7 @@
       "@id": canonicalUrl + "#website",
       name: SITE_NAME,
       url: canonicalUrl,
-      inLanguage: ["ru", "ro"],
+      inLanguage: ["ru", "ro", "en"],
       potentialAction: {
         "@type": "SearchAction",
         target: {
@@ -116,7 +130,7 @@
       url: canonicalUrl,
       name: PAGE_TITLE,
       description: PAGE_DESCRIPTION,
-      inLanguage: ["ru", "ro"],
+      inLanguage: ["ru", "ro", "en"],
       isPartOf: { "@id": canonicalUrl + "#website" },
       about: { "@id": canonicalUrl + "#business" },
       dateModified: today,
@@ -164,7 +178,7 @@
         latitude: 47.0105,
         longitude: 28.8638
       },
-      availableLanguage: ["Russian", "Romanian"],
+      availableLanguage: ["Russian", "Romanian", "English"],
       sameAs: sameAs
     });
 
@@ -185,7 +199,7 @@
         telephone: REAL_PHONE,
         contactType: "customer service",
         areaServed: "MD",
-        availableLanguage: ["Russian", "Romanian"]
+        availableLanguage: ["Russian", "Romanian", "English"]
       },
       sameAs: sameAs
     });

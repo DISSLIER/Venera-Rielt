@@ -9,9 +9,10 @@
     <lastmod>2026-04-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <!-- hreflang для двуязычного сайта -->
+    <!-- hreflang для триязычного сайта -->
     <xhtml:link rel="alternate" hreflang="ru-MD" href="https://venera-rielt.vercel.app/"/>
     <xhtml:link rel="alternate" hreflang="ro-MD" href="https://venera-rielt.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="en-MD" href="https://venera-rielt.vercel.app/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://venera-rielt.vercel.app/"/>
     <!-- Основное изображение для Google Image Search -->
     <image:image>
