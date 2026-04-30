@@ -987,6 +987,19 @@
             return JSON.parse(JSON.stringify(DEFAULT_SITE_CONTENT));
         }
 
+        function _normalizeSocialSettings(social) {
+            var normalized = Object.assign({}, social || {});
+            var fallback = {
+                facebook: DEFAULT_SITE_CONTENT.social.facebook,
+                instagram: DEFAULT_SITE_CONTENT.social.instagram
+            };
+            Object.keys(fallback).forEach(function(key) {
+                var value = String(normalized[key] || '').trim();
+                if (!value || value === '#') normalized[key] = fallback[key];
+            });
+            return normalized;
+        }
+
         function getSiteContentSettings() {
             var base = _cloneSiteDefaults();
             try {
@@ -998,6 +1011,7 @@
                     base.social = Object.assign({}, base.social, data.social || {});
                 }
             } catch (_) {}
+            base.social = _normalizeSocialSettings(base.social);
             return base;
         }
 
