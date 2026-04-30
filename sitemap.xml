@@ -6,20 +6,43 @@
 
   <url>
     <loc>https://venera-rielt.vercel.app/</loc>
-    <lastmod>2026-04-29</lastmod>
+    <lastmod>2026-04-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <!-- hreflang для триязычного сайта -->
+    <!-- RU page -->
     <xhtml:link rel="alternate" hreflang="ru-MD" href="https://venera-rielt.vercel.app/"/>
-    <xhtml:link rel="alternate" hreflang="ro-MD" href="https://venera-rielt.vercel.app/"/>
-    <xhtml:link rel="alternate" hreflang="en-MD" href="https://venera-rielt.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="ro-MD" href="https://venera-rielt.vercel.app/ro.html"/>
+    <xhtml:link rel="alternate" hreflang="en-MD" href="https://venera-rielt.vercel.app/en.html"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://venera-rielt.vercel.app/"/>
-    <!-- Основное изображение для Google Image Search -->
     <image:image>
       <image:loc>https://venera-rielt.vercel.app/image/components/appicon-512.png</image:loc>
       <image:title>Venera Rielt — Агентство недвижимости в Молдове</image:title>
       <image:caption>Агентство недвижимости Venera Rielt. Продажа и аренда квартир, домов и коммерческих объектов в Кишинёве и по всей Молдове.</image:caption>
     </image:image>
+  </url>
+
+  <url>
+    <loc>https://venera-rielt.vercel.app/en.html</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <!-- EN page -->
+    <xhtml:link rel="alternate" hreflang="ru-MD" href="https://venera-rielt.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="ro-MD" href="https://venera-rielt.vercel.app/ro.html"/>
+    <xhtml:link rel="alternate" hreflang="en-MD" href="https://venera-rielt.vercel.app/en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://venera-rielt.vercel.app/"/>
+  </url>
+
+  <url>
+    <loc>https://venera-rielt.vercel.app/ro.html</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <!-- RO page -->
+    <xhtml:link rel="alternate" hreflang="ru-MD" href="https://venera-rielt.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="ro-MD" href="https://venera-rielt.vercel.app/ro.html"/>
+    <xhtml:link rel="alternate" hreflang="en-MD" href="https://venera-rielt.vercel.app/en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://venera-rielt.vercel.app/"/>
   </url>
 
 </urlset>

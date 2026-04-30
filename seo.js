@@ -73,38 +73,84 @@
     document.head.appendChild(script);
   }
 
+  function detectPageLanguage(pathname) {
+    var path = String(pathname || "").toLowerCase();
+    if (path.endsWith("/en.html") || path === "/en") return "en";
+    if (path.endsWith("/ro.html") || path === "/ro") return "ro";
+    return "ru";
+  }
+
+  function getLanguageSeoConfig(lang, baseUrl) {
+    var pages = {
+      ru: {
+        htmlLang: "ru",
+        locale: "ru_MD",
+        canonical: baseUrl + "/",
+        title: "Агентство недвижимости Venera Rielt - Недвижимость в Молдове",
+        description: "Агентство недвижимости Venera Rielt в Молдове: продажа и аренда квартир, домов и коммерческих помещений в Кишиневе и по всей стране.",
+        keywords: "агентство недвижимости Молдова, купить квартиру Кишинев, аренда квартиры Кишинев, купить дом Молдова, недвижимость Кишинев, риелтор Молдова, продажа квартир Молдова, коммерческая недвижимость Молдова"
+      },
+      en: {
+        htmlLang: "en",
+        locale: "en_MD",
+        canonical: baseUrl + "/en.html",
+        title: "Venera Rielt - Real Estate in Moldova",
+        description: "Venera Rielt real estate agency in Moldova: buy, sell, and rent apartments, houses, and commercial properties in Chisinau and across the country.",
+        keywords: "real estate Moldova, buy apartment Chisinau, rent apartment Moldova, house for sale Moldova, commercial property Chisinau, real estate agency Moldova"
+      },
+      ro: {
+        htmlLang: "ro",
+        locale: "ro_MD",
+        canonical: baseUrl + "/ro.html",
+        title: "Venera Rielt - Imobiliare in Moldova",
+        description: "Agentia imobiliara Venera Rielt in Moldova: vanzare si chirie apartamente, case si spatii comerciale in Chisinau si in toata tara.",
+        keywords: "imobiliare Moldova, apartamente Chisinau, chirie apartamente Moldova, case de vanzare Moldova, spatii comerciale Chisinau, agentie imobiliara Moldova"
+      }
+    };
+    return pages[lang] || pages.ru;
+  }
+
+  function syncOgAlternateLocales(currentLocale, locales) {
+    var existing = document.head.querySelectorAll('meta[property="og:locale:alternate"]');
+    for (var i = 0; i < existing.length; i += 1) {
+      existing[i].parentNode.removeChild(existing[i]);
+    }
+    locales.forEach(function(locale) {
+      if (locale === currentLocale) return;
+      var meta = document.createElement("meta");
+      meta.setAttribute("property", "og:locale:alternate");
+      meta.setAttribute("content", locale);
+      document.head.appendChild(meta);
+    });
+  }
+
   function applySeo() {
     var baseUrl = resolveSiteUrl();
-    var canonicalUrl = baseUrl + "/";
+    var lang = detectPageLanguage(window.location.pathname);
+    var config = getLanguageSeoConfig(lang, baseUrl);
+    var canonicalUrl = config.canonical;
     var today = new Date().toISOString().slice(0, 10);
 
     var sameAs = [SOCIAL_TIKTOK, SOCIAL_FACEBOOK];
     if (SOCIAL_INSTAGRAM) sameAs.push(SOCIAL_INSTAGRAM);
 
-    document.title = PAGE_TITLE;
-    upsertMeta("name", "description", PAGE_DESCRIPTION);
-    upsertMeta("name", "keywords", PAGE_KEYWORDS);
-    upsertMeta("name", "language", "ru, ro, en");
+    document.documentElement.setAttribute("lang", config.htmlLang);
+    document.title = config.title;
+    upsertMeta("name", "description", config.description);
+    upsertMeta("name", "keywords", config.keywords || PAGE_KEYWORDS);
+    upsertMeta("name", "language", config.htmlLang);
     upsertMeta("property", "og:url", canonicalUrl);
     upsertMeta("property", "og:image", OG_IMAGE);
-    upsertMeta("property", "og:title", PAGE_TITLE);
-    upsertMeta("property", "og:description", PAGE_DESCRIPTION);
-    upsertMeta("property", "og:locale", "ru_MD");
-    upsertMeta("property", "og:locale:alternate", "ro_MD");
-
-    var ogAlternateEn = document.head.querySelector('meta[property="og:locale:alternate"][content="en_US"]');
-    if (!ogAlternateEn) {
-      ogAlternateEn = document.createElement("meta");
-      ogAlternateEn.setAttribute("property", "og:locale:alternate");
-      ogAlternateEn.setAttribute("content", "en_US");
-      document.head.appendChild(ogAlternateEn);
-    }
+    upsertMeta("property", "og:title", config.title);
+    upsertMeta("property", "og:description", config.description);
+    upsertMeta("property", "og:locale", config.locale);
+    syncOgAlternateLocales(config.locale, ["ru_MD", "ro_MD", "en_MD"]);
 
     upsertLink("canonical", canonicalUrl);
-    upsertLink("alternate", canonicalUrl, "ru-MD");
-    upsertLink("alternate", canonicalUrl, "ro-MD");
-    upsertLink("alternate", canonicalUrl, "en-MD");
-    upsertLink("alternate", canonicalUrl, "x-default");
+    upsertLink("alternate", baseUrl + "/", "ru-MD");
+    upsertLink("alternate", baseUrl + "/ro.html", "ro-MD");
+    upsertLink("alternate", baseUrl + "/en.html", "en-MD");
+    upsertLink("alternate", baseUrl + "/", "x-default");
 
     injectJsonLd("ld-website", {
       "@context": "https://schema.org",
@@ -128,8 +174,8 @@
       "@type": "WebPage",
       "@id": canonicalUrl + "#webpage",
       url: canonicalUrl,
-      name: PAGE_TITLE,
-      description: PAGE_DESCRIPTION,
+      name: config.title,
+      description: config.description,
       inLanguage: ["ru", "ro", "en"],
       isPartOf: { "@id": canonicalUrl + "#website" },
       about: { "@id": canonicalUrl + "#business" },
