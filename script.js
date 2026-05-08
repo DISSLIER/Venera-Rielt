@@ -4905,6 +4905,7 @@
 
         // Map initialization
         let mainMap, propertyMap;
+        let mainMapClusterLayer = null;
         const propertyMarkers = [];
         const markerGroups = {}; // To track markers by coordinates
         
@@ -4917,6 +4918,18 @@
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
+
+            if (typeof L.markerClusterGroup === 'function') {
+                mainMapClusterLayer = L.markerClusterGroup({
+                    showCoverageOnHover: false,
+                    spiderfyOnMaxZoom: true,
+                    disableClusteringAtZoom: 17,
+                    maxClusterRadius: 56
+                });
+                mainMap.addLayer(mainMapClusterLayer);
+            } else {
+                mainMapClusterLayer = null;
+            }
 
             // Custom icons for different property types
             const iconPremium = L.divIcon({
@@ -5095,7 +5108,13 @@
                 const marker = L.marker([lat, lng], {
                     icon: icon,
                     title: title
-                }).addTo(mainMap);
+                });
+
+                if (mainMapClusterLayer) {
+                    mainMapClusterLayer.addLayer(marker);
+                } else {
+                    marker.addTo(mainMap);
+                }
                 
                 // Bind popup with list of properties if multiple, or single property if one
                 if (group.length > 1) {
@@ -5637,6 +5656,27 @@
         function filterMapMarkers() {
             if (!mainMap) return;
             const listingCategory = (document.getElementById('listing-category') || {}).value || 'all';
+
+            const hostHasLayer = function(marker) {
+                return mainMapClusterLayer ? mainMapClusterLayer.hasLayer(marker) : mainMap.hasLayer(marker);
+            };
+
+            const hostAddLayer = function(marker) {
+                if (mainMapClusterLayer) {
+                    if (!mainMapClusterLayer.hasLayer(marker)) mainMapClusterLayer.addLayer(marker);
+                } else if (!mainMap.hasLayer(marker)) {
+                    marker.addTo(mainMap);
+                }
+            };
+
+            const hostRemoveLayer = function(marker) {
+                if (mainMapClusterLayer) {
+                    if (mainMapClusterLayer.hasLayer(marker)) mainMapClusterLayer.removeLayer(marker);
+                } else if (mainMap.hasLayer(marker)) {
+                    mainMap.removeLayer(marker);
+                }
+            };
+
             propertyMarkers.forEach(marker => {
                 const allProps = marker.allProps || [];
                 const filtered = listingCategory === 'all'
@@ -5665,10 +5705,10 @@
                         }));
                     }
 
-                    if (!mainMap.hasLayer(marker)) marker.addTo(mainMap);
+                    if (!hostHasLayer(marker)) hostAddLayer(marker);
                     bindMarkerPopup(marker, filtered);
                 } else {
-                    if (mainMap.hasLayer(marker)) mainMap.removeLayer(marker);
+                    if (hostHasLayer(marker)) hostRemoveLayer(marker);
                 }
             });
         }
