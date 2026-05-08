@@ -972,6 +972,12 @@
         <button id="map-overlay-close" class="map-overlay-close">
             <i class="fas fa-times"></i>
         </button>
+        <button id="map-overlay-confirm-location" class="hidden" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;padding:12px 28px;background:linear-gradient(135deg,#ffd700,#f59e0b);color:#111;font-weight:700;font-size:0.97rem;border:none;border-radius:999px;box-shadow:0 4px 20px rgba(255,215,0,0.45);cursor:pointer;display:flex;align-items:center;gap:8px;" type="button">
+            <i class="fas fa-check"></i> Подтвердить точку
+        </button>
+        <div id="map-overlay-picker-hint" class="hidden" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,0,0,0.78);color:#ffd700;font-size:0.88rem;padding:8px 18px;border-radius:999px;pointer-events:none;white-space:nowrap;">
+            <i class="fas fa-location-dot mr-1"></i> Нажмите на карту, чтобы выбрать точку объекта
+        </div>
         <div id="map-overlay-container" class="map-overlay-container"></div>
     </div>
 
