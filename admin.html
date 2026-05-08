@@ -2417,7 +2417,14 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Полный адрес</label>
-                        <input type="text" id="property-full-address" class="cal-input w-full" required>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="property-full-address" class="cal-input w-full" placeholder="Город, Район, Улица дом" required>
+                            <button type="button" id="admin-pick-location-btn" title="Выбрать точку на карте" aria-label="Выбрать точку на карте"
+                                style="flex-shrink:0;padding:9px 14px;background:rgba(255,215,0,0.13);border:1.5px solid #FFD700;color:#FFD700;border-radius:8px;cursor:pointer;font-size:1.1rem;transition:background 0.2s;">
+                                <i class="fas fa-location-dot"></i>
+                            </button>
+                        </div>
+                        <p style="color:#6b7280;font-size:0.82rem;margin-top:4px;">Нажмите на иконку, чтобы выбрать точку на карте — адрес и координаты заполнятся автоматически.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Описание</label>
@@ -2554,6 +2561,159 @@
         </button>
         <div id="map-overlay-container" class="map-overlay-container"></div>
     </div>
+
+    <!-- Admin Property Location Picker -->
+    <div id="admin-location-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:2000;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="position:relative;width:min(900px,96vw);height:min(600px,80vh);background:#111;border-radius:14px;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,0.7);">
+            <!-- Close -->
+            <button id="admin-location-picker-close" type="button" aria-label="Закрыть" style="position:absolute;top:12px;right:14px;z-index:10;background:rgba(0,0,0,0.65);border:none;color:#fff;font-size:1.4rem;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+            <!-- Hint -->
+            <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.72);color:#FFD700;font-size:0.85rem;padding:7px 18px;border-radius:999px;white-space:nowrap;pointer-events:none;">
+                <i class="fas fa-location-dot" style="margin-right:5px;"></i>Нажмите на карту, чтобы выбрать точку объекта
+            </div>
+            <!-- Map container -->
+            <div id="admin-location-picker-map" style="width:100%;height:100%;"></div>
+            <!-- Confirm button (hidden until point selected) -->
+            <button id="admin-location-picker-confirm" type="button" style="display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;padding:11px 32px;background:linear-gradient(135deg,#FFD700,#f59e0b);color:#111;font-weight:700;font-size:0.95rem;border:none;border-radius:999px;box-shadow:0 4px 20px rgba(255,215,0,0.4);cursor:pointer;">
+                <i class="fas fa-check" style="margin-right:6px;"></i>Подтвердить точку
+            </button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var _pickerMap = null;
+        var _pickerMarker = null;
+        var _pickerLat = null;
+        var _pickerLng = null;
+        var _pickerAddress = null;
+
+        function _openAdminLocationPicker() {
+            var overlay = document.getElementById('admin-location-picker-overlay');
+            var mapEl = document.getElementById('admin-location-picker-map');
+            var confirmBtn = document.getElementById('admin-location-picker-confirm');
+            if (!overlay || !mapEl) return;
+
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            if (_pickerMap) { _pickerMap.remove(); _pickerMap = null; }
+            _pickerMarker = null;
+            _pickerLat = null;
+            _pickerLng = null;
+            _pickerAddress = null;
+            if (confirmBtn) { confirmBtn.style.display = 'none'; }
+
+            var coordsInput = document.getElementById('property-coords');
+            var centerLat = 47.0245, centerLng = 28.8323, zoom = 12;
+            if (coordsInput && coordsInput.value.trim()) {
+                var parts = coordsInput.value.split(',');
+                var la = parseFloat(parts[0]), lo = parseFloat(parts[1]);
+                if (!isNaN(la) && !isNaN(lo)) { centerLat = la; centerLng = lo; zoom = 16; }
+            }
+
+            _pickerMap = L.map('admin-location-picker-map', { zoomControl: true }).setView([centerLat, centerLng], zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { attribution: '', detectRetina: true }).addTo(_pickerMap);
+
+            if (zoom === 16) {
+                _pickerMarker = L.marker([centerLat, centerLng]).addTo(_pickerMap);
+                _pickerLat = centerLat; _pickerLng = centerLng;
+                if (confirmBtn) confirmBtn.style.display = '';
+            }
+
+            _pickerMap.on('click', async function(e) {
+                var lat = e.latlng.lat, lng = e.latlng.lng;
+                _pickerLat = lat; _pickerLng = lng;
+                if (_pickerMarker) { _pickerMarker.setLatLng([lat, lng]); }
+                else { _pickerMarker = L.marker([lat, lng]).addTo(_pickerMap); }
+                if (confirmBtn) confirmBtn.style.display = '';
+
+                // Reverse geocode
+                try {
+                    var url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=' + lat + '&lon=' + lng;
+                    var resp = await fetch(url);
+                    if (resp.ok) {
+                        var data = await resp.json();
+                        var addr = data.address || {};
+                        var city = addr.city || addr.town || addr.village || addr.municipality || '';
+                        var district = addr.suburb || addr.city_district || addr.neighbourhood || '';
+                        var road = [addr.road, addr.house_number].filter(Boolean).join(' ');
+                        var line = road || addr.neighbourhood || addr.hamlet || '';
+                        _pickerAddress = { city: city, district: district, line: line, coords: lat.toFixed(6) + ', ' + lng.toFixed(6) };
+                    }
+                } catch(_) {}
+            });
+        }
+
+        function _closeAdminLocationPicker() {
+            var overlay = document.getElementById('admin-location-picker-overlay');
+            if (overlay) overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            if (_pickerMap) { _pickerMap.remove(); _pickerMap = null; }
+            _pickerMarker = null;
+        }
+
+        function _confirmAdminLocation() {
+            if (_pickerLat === null || _pickerLng === null) return;
+            var coords = _pickerLat.toFixed(6) + ', ' + _pickerLng.toFixed(6);
+            var coordsInput = document.getElementById('property-coords');
+            var fullAddrInput = document.getElementById('property-full-address');
+            var cityInput = document.getElementById('property-city');
+            var districtInput = document.getElementById('property-district');
+
+            if (coordsInput) coordsInput.value = coords;
+
+            if (_pickerAddress) {
+                // Fill city if empty
+                if (cityInput && !cityInput.value.trim() && _pickerAddress.city) {
+                    if (typeof registerCityDistrict === 'function') registerCityDistrict(_pickerAddress.city, '');
+                    if (typeof populateCitySelect === 'function') populateCitySelect();
+                    cityInput.value = _pickerAddress.city;
+                    if (typeof populateDistrictSelect === 'function') populateDistrictSelect();
+                    if (typeof _cselSync === 'function') _cselSync('property-city');
+                }
+                // Fill district if empty
+                if (districtInput && !districtInput.value.trim() && _pickerAddress.district) {
+                    if (typeof registerCityDistrict === 'function') registerCityDistrict(cityInput ? cityInput.value : _pickerAddress.city, _pickerAddress.district);
+                    if (typeof populateDistrictSelect === 'function') populateDistrictSelect();
+                    if (Array.from(districtInput.options).some(function(o){ return o.value === _pickerAddress.district; })) {
+                        districtInput.value = _pickerAddress.district;
+                    }
+                    if (typeof _cselSync === 'function') _cselSync('property-district');
+                }
+                // Build full address
+                if (fullAddrInput) {
+                    var city = (cityInput && cityInput.value.trim()) ? cityInput.value.trim() : _pickerAddress.city;
+                    var dist = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : _pickerAddress.district;
+                    var line = _pickerAddress.line || ('Точка: ' + coords);
+                    fullAddrInput.value = [city, dist, line].filter(Boolean).join(', ');
+                }
+            } else if (fullAddrInput && !fullAddrInput.value.trim()) {
+                fullAddrInput.value = 'Точка на карте (' + coords + ')';
+            }
+
+            _closeAdminLocationPicker();
+            if (typeof showToast === 'function') showToast('Точка на карте подтверждена ✓', 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('admin-pick-location-btn');
+            if (btn) btn.addEventListener('click', _openAdminLocationPicker);
+
+            var closeBtn = document.getElementById('admin-location-picker-close');
+            if (closeBtn) closeBtn.addEventListener('click', _closeAdminLocationPicker);
+
+            var confirmBtn = document.getElementById('admin-location-picker-confirm');
+            if (confirmBtn) confirmBtn.addEventListener('click', _confirmAdminLocation);
+
+            // Close on backdrop click
+            var overlay = document.getElementById('admin-location-picker-overlay');
+            if (overlay) overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) _closeAdminLocationPicker();
+            });
+        });
+    })();
+    </script>
 
     <!-- Property Details Overlay -->
     <div id="property-overlay" class="overlay">
