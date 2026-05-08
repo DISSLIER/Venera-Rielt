@@ -2377,7 +2377,104 @@
                 return '';
             }
 
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                return '';
+            }
+
             return `${lat}, ${lng}`;
+        }
+
+        const _geocodeCache = new Map();
+        const GEOCODE_COUNTRY_HINT = 'Moldova';
+
+        function extractCoordsFromText(rawText) {
+            const text = String(rawText || '').trim();
+            if (!text) {
+                return '';
+            }
+
+            // We only treat explicit decimal pairs as coordinates to avoid accidental matches in regular addresses.
+            const match = text.match(/(-?\d{1,2}\.\d{3,})\s*[,;]\s*(-?\d{1,3}\.\d{3,})/);
+            if (!match) {
+                return '';
+            }
+
+            return normalizeCoords(`${match[1]}, ${match[2]}`);
+        }
+
+        function buildPropertyAddressForGeocoding(fullAddress, city, district, shortAddress) {
+            const preferred = String(fullAddress || '').trim();
+            if (preferred) {
+                return preferred;
+            }
+
+            return [city, district, shortAddress]
+                .map(part => String(part || '').trim())
+                .filter(Boolean)
+                .join(', ');
+        }
+
+        async function geocodeAddressToCoords(addressText) {
+            const normalizedAddress = String(addressText || '').trim();
+            if (!normalizedAddress) {
+                return '';
+            }
+
+            const cacheKey = normalizedAddress.toLowerCase();
+            if (_geocodeCache.has(cacheKey)) {
+                return _geocodeCache.get(cacheKey);
+            }
+
+            const queryAddress = /moldova|молдова/i.test(normalizedAddress)
+                ? normalizedAddress
+                : `${normalizedAddress}, ${GEOCODE_COUNTRY_HINT}`;
+
+            let resolvedCoords = '';
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(queryAddress)}`);
+                if (response.ok) {
+                    const payload = await response.json();
+                    if (Array.isArray(payload) && payload.length > 0) {
+                        resolvedCoords = normalizeCoords(`${payload[0].lat}, ${payload[0].lon}`);
+                    }
+                }
+            } catch (error) {
+                console.warn('Address geocoding failed:', normalizedAddress, error);
+            }
+
+            _geocodeCache.set(cacheKey, resolvedCoords);
+            return resolvedCoords;
+        }
+
+        async function resolvePropertyCoordsByData(coordsValue, fullAddress, city, district, shortAddress) {
+            const explicitCoords = normalizeCoords(coordsValue);
+            if (explicitCoords) {
+                return explicitCoords;
+            }
+
+            const coordsFromAddressText = extractCoordsFromText(fullAddress);
+            if (coordsFromAddressText) {
+                return coordsFromAddressText;
+            }
+
+            const geocodeAddress = buildPropertyAddressForGeocoding(fullAddress, city, district, shortAddress);
+            return geocodeAddress ? geocodeAddressToCoords(geocodeAddress) : '';
+        }
+
+        async function resolvePropertyCoordsForCard(card) {
+            const resolved = await resolvePropertyCoordsByData(
+                card.dataset.coords || '',
+                card.dataset.fullAddress || '',
+                card.dataset.city || '',
+                card.dataset.district || '',
+                card.dataset.address || ''
+            );
+
+            if (resolved) {
+                card.dataset.coords = resolved;
+            }
+
+            return resolved;
         }
 
         function normalizePhotosValue(rawPhotos) {
@@ -2435,7 +2532,7 @@
                 district,
                 type: String(property.type || 'Премиум').trim(),
                 listingMode: normalizeListingMode(property.listingMode, property.type),
-                coords: normalizeCoords(property.coords),
+                coords: normalizeCoords(property.coords) || extractCoordsFromText(property.fullAddress),
                 rieltorId: property.rieltorId ? String(property.rieltorId).trim() : '',
                 price: toPositiveNumber(property.price, 0),
                 area: toPositiveNumber(property.area, 0),
@@ -4703,48 +4800,58 @@
                 iconSize: [30, 30]
             });
 
-            // Collect all properties with their coordinates
-            const properties = [];
-            document.querySelectorAll('.property-card').forEach((card, index) => {
-                card.dataset.index = index;
-                const coords = card.dataset.coords;
-                if (!coords) {
-                    console.warn('Property card missing coordinates:', card.querySelector('h3').textContent);
-                    return;
+            propertyMarkers.length = 0;
+            Object.keys(markerGroups).forEach(key => {
+                delete markerGroups[key];
+            });
+
+            const buildAndRenderMapMarkers = async () => {
+                // Collect all properties and resolve coordinates from exact coords first, then from full address.
+                const properties = [];
+                const cards = Array.from(document.querySelectorAll('.property-card'));
+
+                for (let index = 0; index < cards.length; index++) {
+                    const card = cards[index];
+                    card.dataset.index = index;
+
+                    const coords = await resolvePropertyCoordsForCard(card);
+                    if (!coords) {
+                        console.warn('Property card missing coordinates and geocoding result:', card.querySelector('h3').textContent);
+                        continue;
+                    }
+
+                    const [latStr, lngStr] = coords.split(',');
+                    const lat = parseFloat((latStr || '').trim());
+                    const lng = parseFloat((lngStr || '').trim());
+
+                    if (isNaN(lat) || isNaN(lng)) {
+                        console.error('Invalid resolved coordinates for property:', card.querySelector('h3').textContent, coords);
+                        continue;
+                    }
+
+                    properties.push({
+                        card: card,
+                        lat: lat,
+                        lng: lng,
+                        index: index,
+                        listingMode: normalizeListingMode(card.dataset.listingMode, card.dataset.type)
+                    });
                 }
-                
-                const [latStr, lngStr] = coords.split(',');
-                const lat = parseFloat(latStr.trim());
-                const lng = parseFloat(lngStr.trim());
-                
-                if (isNaN(lat) || isNaN(lng)) {
-                    console.error('Invalid coordinates for property:', card.querySelector('h3').textContent, coords);
-                    return;
-                }
-                
-                properties.push({
-                    card: card,
-                    lat: lat,
-                    lng: lng,
-                    index: index,
-                    listingMode: normalizeListingMode(card.dataset.listingMode, card.dataset.type)
+
+                // Group properties by coordinates (proximity ~11m) regardless of listing mode.
+                const groupedProperties = {};
+                properties.forEach(prop => {
+                    const keyLat = Math.round(prop.lat * 10000) / 10000;
+                    const keyLng = Math.round(prop.lng * 10000) / 10000;
+                    const key = `${keyLat},${keyLng}`;
+                    if (!groupedProperties[key]) {
+                        groupedProperties[key] = [];
+                    }
+                    groupedProperties[key].push(prop);
                 });
-            });
 
-            // Group properties by coordinates (proximity ~11m) regardless of listing mode
-            const groupedProperties = {};
-            properties.forEach(prop => {
-                const keyLat = Math.round(prop.lat * 10000) / 10000;
-                const keyLng = Math.round(prop.lng * 10000) / 10000;
-                const key = `${keyLat},${keyLng}`;
-                if (!groupedProperties[key]) {
-                    groupedProperties[key] = [];
-                }
-                groupedProperties[key].push(prop);
-            });
-
-            // Create markers for each group
-            Object.keys(groupedProperties).forEach(key => {
+                // Create markers for each group.
+                Object.keys(groupedProperties).forEach(key => {
                 const group = groupedProperties[key];
                 const firstProperty = group[0];
                 const lat = firstProperty.lat;
@@ -4954,6 +5061,13 @@
                 marker.listingModes = groupListingModes;
                 propertyMarkers.push(marker);
             });
+
+                if (typeof filterMapMarkers === 'function') {
+                    filterMapMarkers();
+                }
+            };
+
+            buildAndRenderMapMarkers();
         }
 
         function getMiniMapMarkerMeta(typeValue) {
@@ -6777,7 +6891,7 @@
             renderLightboxImage();
         }
 
-        function openPropertyOverlay(buttonOrIndex) {
+        async function openPropertyOverlay(buttonOrIndex) {
             // Handle both button element and index number
             const button = typeof buttonOrIndex === 'number' 
                 ? document.querySelectorAll('.view-details-btn')[buttonOrIndex]
@@ -6913,14 +7027,22 @@
             // Собираем реальную галерею из mainPhoto и photos.
             renderPropertyCarousel(propertyImages, agentName);
             
-            // Get coordinates from property card and init map
-            const coords = propertyCard.dataset.coords;
-            if (coords) {
+            // Resolve map coordinates from explicit coords first; otherwise geocode full address.
+            const resolvedCoords = await resolvePropertyCoordsByData(
+                propertyCard.dataset.coords || '',
+                propertyData.fullAddress || '',
+                propertyData.city || '',
+                propertyData.district || '',
+                propertyData.address || ''
+            );
+
+            if (resolvedCoords) {
+                propertyCard.dataset.coords = resolvedCoords;
                 const propertyMapEl = document.getElementById('property-map');
-                propertyMapEl.dataset.coords = coords;
+                propertyMapEl.dataset.coords = resolvedCoords;
                 propertyMapEl.dataset.markerType = propertyData.type || propertyType || 'premium';
                 propertyMapEl.dataset.listingMode = propertyData.listingMode || 'sale';
-                const [lat, lng] = coords.split(',').map(Number);
+                const [lat, lng] = resolvedCoords.split(',').map(Number);
                 setTimeout(() => {
                     initPropertyMap(lat, lng, propertyData.type || propertyType || 'premium', propertyData.listingMode || 'sale');
                 }, 100);
