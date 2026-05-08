@@ -2416,7 +2416,12 @@
         }
 
         function composePropertyFullAddress(city, district, addressLine) {
-            return [city, district, addressLine]
+            const normalizedDistrict = String(district || '').trim();
+            const districtForAddress = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(normalizedDistrict)
+                ? ''
+                : normalizedDistrict;
+
+            return [city, districtForAddress, addressLine]
                 .map(part => String(part || '').trim())
                 .filter(Boolean)
                 .join(', ');
@@ -2433,7 +2438,10 @@
             }
 
             const normalizedCity = String(city || '').trim().toLowerCase();
-            const normalizedDistrict = String(district || '').trim().toLowerCase();
+            const normalizedDistrictRaw = String(district || '').trim();
+            const normalizedDistrict = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(normalizedDistrictRaw)
+                ? ''
+                : normalizedDistrictRaw.toLowerCase();
             let index = 0;
 
             if (normalizedCity && tokens[index] && tokens[index].toLowerCase() === normalizedCity) {

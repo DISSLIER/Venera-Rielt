@@ -2588,6 +2588,32 @@
         var _pickerLng = null;
         var _pickerAddress = null;
 
+        function _isGenericDistrict(value) {
+            return /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(String(value || '').trim());
+        }
+
+        function _syncAdminFullAddressFromSelectors() {
+            var cityInput = document.getElementById('property-city');
+            var districtInput = document.getElementById('property-district');
+            var fullAddrInput = document.getElementById('property-full-address');
+            if (!fullAddrInput) return;
+
+            var city = cityInput ? cityInput.value.trim() : '';
+            var districtRaw = districtInput ? districtInput.value.trim() : '';
+            var district = _isGenericDistrict(districtRaw) ? '' : districtRaw;
+            var current = fullAddrInput.value.trim();
+
+            // Remove leading city/district tokens if they are already present, keep only the address line tail.
+            var tokens = current.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+            var idx = 0;
+            if (city && tokens[idx] && tokens[idx].toLowerCase() === city.toLowerCase()) idx += 1;
+            if (district && tokens[idx] && tokens[idx].toLowerCase() === district.toLowerCase()) idx += 1;
+            var line = tokens.slice(idx).join(', ');
+
+            var nextValue = [city, district, line].filter(Boolean).join(', ');
+            fullAddrInput.value = nextValue || current;
+        }
+
         function _openAdminLocationPicker() {
             var overlay = document.getElementById('admin-location-picker-overlay');
             var mapEl = document.getElementById('admin-location-picker-map');
@@ -2684,7 +2710,8 @@
                 // Build full address
                 if (fullAddrInput) {
                     var city = (cityInput && cityInput.value.trim()) ? cityInput.value.trim() : _pickerAddress.city;
-                    var dist = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : _pickerAddress.district;
+                    var distRaw = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : _pickerAddress.district;
+                    var dist = _isGenericDistrict(distRaw) ? '' : distRaw;
                     var line = _pickerAddress.line || ('Точка: ' + coords);
                     fullAddrInput.value = [city, dist, line].filter(Boolean).join(', ');
                 }
@@ -2705,6 +2732,15 @@
 
             var confirmBtn = document.getElementById('admin-location-picker-confirm');
             if (confirmBtn) confirmBtn.addEventListener('click', _confirmAdminLocation);
+
+            var citySelect = document.getElementById('property-city');
+            if (citySelect) citySelect.addEventListener('change', _syncAdminFullAddressFromSelectors);
+
+            var districtSelect = document.getElementById('property-district');
+            if (districtSelect) districtSelect.addEventListener('change', _syncAdminFullAddressFromSelectors);
+
+            var fullAddressInput = document.getElementById('property-full-address');
+            if (fullAddressInput) fullAddressInput.addEventListener('blur', _syncAdminFullAddressFromSelectors);
 
             // Close on backdrop click
             var overlay = document.getElementById('admin-location-picker-overlay');
