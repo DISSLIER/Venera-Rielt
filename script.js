@@ -4924,6 +4924,8 @@
                     showCoverageOnHover: false,
                     spiderfyOnMaxZoom: false,
                     zoomToBoundsOnClick: false,
+                    animate: false,
+                    animateAddingMarkers: false,
                     disableClusteringAtZoom: 17,
                     maxClusterRadius: 56,
                     iconCreateFunction: function(cluster) {
@@ -4932,8 +4934,12 @@
                         const baseClass = 'custom-icon premium-icon';
                         const baseHtml = '<i class="fas fa-crown"></i>';
                         const count = (children || []).reduce(function(total, marker) {
+                            const visibleCount = Number(marker.currentVisibleCount);
+                            if (Number.isFinite(visibleCount) && visibleCount >= 0) {
+                                return total + visibleCount;
+                            }
                             const markerCount = Number(marker.objectCount || 0);
-                            if (Number.isFinite(markerCount) && markerCount > 0) {
+                            if (Number.isFinite(markerCount) && markerCount >= 0) {
                                 return total + markerCount;
                             }
                             const markerProps = Array.isArray(marker.allProps) ? marker.allProps : [];
@@ -5312,6 +5318,7 @@
                 marker.baseIconHtml = baseIconHtml;
                 marker.listingModes = groupListingModes;
                 marker.objectCount = group.length;
+                marker.currentVisibleCount = group.length;
                 propertyMarkers.push(marker);
             });
 
@@ -5739,6 +5746,7 @@
                     : allProps.filter(p => p.listingMode === listingCategory);
                 const shouldShow = filtered.length > 0;
                 if (shouldShow) {
+                    marker.currentVisibleCount = filtered.length;
                     const markerBaseClass = marker.baseIconClass || 'custom-icon premium-icon';
                     const markerBaseHtml = marker.baseIconHtml || '<i class="fas fa-crown"></i>';
 
@@ -5763,9 +5771,14 @@
                     if (!hostHasLayer(marker)) hostAddLayer(marker);
                     bindMarkerPopup(marker, filtered);
                 } else {
+                    marker.currentVisibleCount = 0;
                     if (hostHasLayer(marker)) hostRemoveLayer(marker);
                 }
             });
+
+            if (mainMapClusterLayer && typeof mainMapClusterLayer.refreshClusters === 'function') {
+                mainMapClusterLayer.refreshClusters();
+            }
         }
 
         function getInputValueByIds(ids) {
