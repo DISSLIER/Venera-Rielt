@@ -4924,8 +4924,8 @@
                     showCoverageOnHover: false,
                     spiderfyOnMaxZoom: false,
                     zoomToBoundsOnClick: false,
-                    animate: false,
-                    animateAddingMarkers: false,
+                    animate: true,
+                    animateAddingMarkers: true,
                     disableClusteringAtZoom: 17,
                     maxClusterRadius: 56,
                     iconCreateFunction: function(cluster) {
