@@ -4922,10 +4922,64 @@
             if (typeof L.markerClusterGroup === 'function') {
                 mainMapClusterLayer = L.markerClusterGroup({
                     showCoverageOnHover: false,
-                    spiderfyOnMaxZoom: true,
+                    spiderfyOnMaxZoom: false,
+                    zoomToBoundsOnClick: false,
                     disableClusteringAtZoom: 17,
-                    maxClusterRadius: 56
+                    maxClusterRadius: 56,
+                    iconCreateFunction: function(cluster) {
+                        const children = cluster.getAllChildMarkers();
+                        const firstChild = children && children.length ? children[0] : null;
+                        const baseClass = firstChild && firstChild.baseIconClass
+                            ? firstChild.baseIconClass
+                            : 'custom-icon premium-icon';
+                        const baseHtml = firstChild && firstChild.baseIconHtml
+                            ? firstChild.baseIconHtml
+                            : '<i class="fas fa-crown"></i>';
+                        const count = (children || []).reduce(function(total, marker) {
+                            const markerProps = Array.isArray(marker.allProps) ? marker.allProps : [];
+                            return total + Math.max(1, markerProps.length);
+                        }, 0);
+
+                        const badgeHtml = `<div style="position:relative;display:inline-block;">
+                            ${baseHtml}
+                            <div style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:2px solid white;">${count}</div>
+                        </div>`;
+
+                        return L.divIcon({
+                            className: baseClass,
+                            html: badgeHtml,
+                            iconSize: [30, 30]
+                        });
+                    }
                 });
+
+                mainMapClusterLayer.on('clusterclick', function(e) {
+                    const cluster = e.layer;
+                    const children = cluster.getAllChildMarkers();
+                    const props = [];
+
+                    children.forEach(function(marker) {
+                        const markerProps = Array.isArray(marker.allProps) ? marker.allProps : [];
+                        markerProps.forEach(function(p) { props.push(p); });
+                    });
+
+                    const unique = [];
+                    const seen = new Set();
+                    props.forEach(function(p) {
+                        const key = `${p.index}|${p.title}|${p.price}`;
+                        if (seen.has(key)) return;
+                        seen.add(key);
+                        unique.push(p);
+                    });
+
+                    const popupContent = buildMarkerPopupContent(unique);
+                    mainMap.openPopup(popupContent, cluster.getLatLng(), {
+                        maxWidth: 270,
+                        className: unique.length > 1 ? 'map-popup-list-container' : 'map-popup-mini-container',
+                        closeButton: true
+                    });
+                });
+
                 mainMap.addLayer(mainMapClusterLayer);
             } else {
                 mainMapClusterLayer = null;
