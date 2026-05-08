@@ -1448,14 +1448,20 @@
             box-shadow: 0 14px 24px rgba(17, 24, 39, 0.45);
         }
 
-        /* Smoother cluster merge/split movement on zoom */
-        .leaflet-cluster-anim .leaflet-marker-icon,
-        .leaflet-cluster-anim .leaflet-marker-shadow {
-            transition: transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.42s ease !important;
+        /* Cluster zoom animation: smooth icon movement, no lingering marker shadows */
+        .leaflet-cluster-anim .leaflet-marker-icon {
+            transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.24s ease !important;
         }
 
         .leaflet-cluster-anim .custom-icon {
-            transition: transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.32s ease, opacity 0.42s ease !important;
+            transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.2s ease, opacity 0.24s ease !important;
+        }
+
+        .map-container .leaflet-marker-shadow,
+        #map-overlay-container .leaflet-marker-shadow,
+        #property-map .leaflet-marker-shadow {
+            display: none !important;
+            opacity: 0 !important;
         }
 
         .premium-icon {

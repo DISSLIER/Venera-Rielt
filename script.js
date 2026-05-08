@@ -4912,7 +4912,12 @@
         // Property coordinates will be read from data-coords attribute
 
         function initMainMap() {
-            mainMap = L.map('main-map').setView([47.0245, 28.8323], 13);
+            mainMap = L.map('main-map', {
+                zoomAnimation: true,
+                markerZoomAnimation: true,
+                fadeAnimation: true,
+                inertia: true
+            }).setView([47.0245, 28.8323], 13);
             
             L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
@@ -4926,6 +4931,7 @@
                     zoomToBoundsOnClick: false,
                     animate: true,
                     animateAddingMarkers: true,
+                    removeOutsideVisibleBounds: false,
                     disableClusteringAtZoom: 17,
                     maxClusterRadius: function(zoom) {
                         if (zoom >= 16) return 42;
