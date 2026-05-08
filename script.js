@@ -4927,7 +4927,12 @@
                     animate: true,
                     animateAddingMarkers: true,
                     disableClusteringAtZoom: 17,
-                    maxClusterRadius: 56,
+                    maxClusterRadius: function(zoom) {
+                        if (zoom >= 16) return 42;
+                        if (zoom >= 14) return 50;
+                        if (zoom >= 12) return 58;
+                        return 66;
+                    },
                     iconCreateFunction: function(cluster) {
                         const children = cluster.getAllChildMarkers();
                         // Keep cluster visuals stable: fixed style and icon regardless of child order.
