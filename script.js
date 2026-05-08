@@ -4928,16 +4928,16 @@
                     maxClusterRadius: 56,
                     iconCreateFunction: function(cluster) {
                         const children = cluster.getAllChildMarkers();
-                        const firstChild = children && children.length ? children[0] : null;
-                        const baseClass = firstChild && firstChild.baseIconClass
-                            ? firstChild.baseIconClass
-                            : 'custom-icon premium-icon';
-                        const baseHtml = firstChild && firstChild.baseIconHtml
-                            ? firstChild.baseIconHtml
-                            : '<i class="fas fa-crown"></i>';
+                        // Keep cluster visuals stable: fixed style and icon regardless of child order.
+                        const baseClass = 'custom-icon premium-icon';
+                        const baseHtml = '<i class="fas fa-crown"></i>';
                         const count = (children || []).reduce(function(total, marker) {
+                            const markerCount = Number(marker.objectCount || 0);
+                            if (Number.isFinite(markerCount) && markerCount > 0) {
+                                return total + markerCount;
+                            }
                             const markerProps = Array.isArray(marker.allProps) ? marker.allProps : [];
-                            return total + Math.max(1, markerProps.length);
+                            return total + markerProps.length;
                         }, 0);
 
                         const badgeHtml = `<div style="position:relative;display:inline-block;">
@@ -5311,6 +5311,7 @@
                 marker.baseIconClass = baseIconClass;
                 marker.baseIconHtml = baseIconHtml;
                 marker.listingModes = groupListingModes;
+                marker.objectCount = group.length;
                 propertyMarkers.push(marker);
             });
 
