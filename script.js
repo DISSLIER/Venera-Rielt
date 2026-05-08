@@ -2442,12 +2442,37 @@
             const normalizedDistrict = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(normalizedDistrictRaw)
                 ? ''
                 : normalizedDistrictRaw.toLowerCase();
-            let index = 0;
 
-            if (normalizedCity && tokens[index] && tokens[index].toLowerCase() === normalizedCity) {
+            const citySelect = document.getElementById('property-city');
+            const districtSelect = document.getElementById('property-district');
+            const knownCities = citySelect
+                ? Array.from(citySelect.options).map(option => String(option.value || '').trim().toLowerCase()).filter(Boolean)
+                : [];
+            const knownDistricts = districtSelect
+                ? Array.from(districtSelect.options).map(option => String(option.value || '').trim().toLowerCase()).filter(Boolean)
+                : [];
+
+            let index = 0;
+            const firstToken = tokens[index] ? tokens[index].toLowerCase() : '';
+
+            const isCityToken = !!firstToken && (
+                (normalizedCity && firstToken === normalizedCity) ||
+                knownCities.includes(firstToken)
+            );
+
+            if (isCityToken) {
                 index += 1;
             }
-            if (normalizedDistrict && tokens[index] && tokens[index].toLowerCase() === normalizedDistrict) {
+
+            const secondToken = tokens[index] ? tokens[index].toLowerCase() : '';
+            const isGenericDistrictToken = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(secondToken);
+            const isDistrictToken = !!secondToken && (
+                isGenericDistrictToken ||
+                (normalizedDistrict && secondToken === normalizedDistrict) ||
+                knownDistricts.includes(secondToken)
+            );
+
+            if (isDistrictToken) {
                 index += 1;
             }
 

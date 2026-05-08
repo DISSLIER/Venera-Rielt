@@ -2605,9 +2605,29 @@
 
             // Remove leading city/district tokens if they are already present, keep only the address line tail.
             var tokens = current.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+            var knownCities = cityInput
+                ? Array.from(cityInput.options).map(function(o){ return String(o.value || '').trim().toLowerCase(); }).filter(Boolean)
+                : [];
+            var knownDistricts = districtInput
+                ? Array.from(districtInput.options).map(function(o){ return String(o.value || '').trim().toLowerCase(); }).filter(Boolean)
+                : [];
+
             var idx = 0;
-            if (city && tokens[idx] && tokens[idx].toLowerCase() === city.toLowerCase()) idx += 1;
-            if (district && tokens[idx] && tokens[idx].toLowerCase() === district.toLowerCase()) idx += 1;
+            var firstToken = tokens[idx] ? tokens[idx].toLowerCase() : '';
+            var isCityToken = !!firstToken && (
+                (city && firstToken === city.toLowerCase()) ||
+                knownCities.indexOf(firstToken) !== -1
+            );
+            if (isCityToken) idx += 1;
+
+            var secondToken = tokens[idx] ? tokens[idx].toLowerCase() : '';
+            var isDistrictToken = !!secondToken && (
+                _isGenericDistrict(secondToken) ||
+                (district && secondToken === district.toLowerCase()) ||
+                knownDistricts.indexOf(secondToken) !== -1
+            );
+            if (isDistrictToken) idx += 1;
+
             var line = tokens.slice(idx).join(', ');
 
             var nextValue = [city, district, line].filter(Boolean).join(', ');
