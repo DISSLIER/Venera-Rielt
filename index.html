@@ -830,7 +830,13 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Полный адрес</label>
-                        <input type="text" id="property-full-address" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" required>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="property-full-address" class="w-full bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:border-gold-500 focus:outline-none" placeholder="Город, Район, Улица дом" required>
+                            <button type="button" id="property-pick-location-btn" class="px-3 py-2 rounded-lg border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition" title="Выбрать точку на карте" aria-label="Выбрать точку на карте">
+                                <i class="fas fa-location-dot"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Нажмите на иконку геолокации, выберите точку на карте, и адрес с координатами заполнится автоматически.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-gray-400 mb-2">Описание</label>

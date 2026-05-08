@@ -2385,6 +2385,7 @@
         }
 
         const _geocodeCache = new Map();
+        const _reverseGeocodeCache = new Map();
         const GEOCODE_COUNTRY_HINT = 'Moldova';
 
         function extractCoordsFromText(rawText) {
@@ -2412,6 +2413,61 @@
                 .map(part => String(part || '').trim())
                 .filter(Boolean)
                 .join(', ');
+        }
+
+        function composePropertyFullAddress(city, district, addressLine) {
+            return [city, district, addressLine]
+                .map(part => String(part || '').trim())
+                .filter(Boolean)
+                .join(', ');
+        }
+
+        function extractAddressLineFromFullAddress(fullAddress, city, district) {
+            const tokens = String(fullAddress || '')
+                .split(',')
+                .map(token => token.trim())
+                .filter(Boolean);
+
+            if (tokens.length === 0) {
+                return '';
+            }
+
+            const normalizedCity = String(city || '').trim().toLowerCase();
+            const normalizedDistrict = String(district || '').trim().toLowerCase();
+            let index = 0;
+
+            if (normalizedCity && tokens[index] && tokens[index].toLowerCase() === normalizedCity) {
+                index += 1;
+            }
+            if (normalizedDistrict && tokens[index] && tokens[index].toLowerCase() === normalizedDistrict) {
+                index += 1;
+            }
+
+            return tokens.slice(index).join(', ');
+        }
+
+        function syncPropertyFullAddressField(options) {
+            const config = options || {};
+            const cityInput = document.getElementById('property-city');
+            const districtInput = document.getElementById('property-district');
+            const fullAddressInput = document.getElementById('property-full-address');
+            if (!fullAddressInput) {
+                return '';
+            }
+
+            const city = cityInput ? cityInput.value.trim() : '';
+            const district = districtInput ? districtInput.value.trim() : '';
+            const currentFullAddress = fullAddressInput.value.trim();
+            const forcedAddressLine = typeof config.forceAddressLine === 'string'
+                ? config.forceAddressLine.trim()
+                : null;
+            const addressLine = forcedAddressLine !== null
+                ? forcedAddressLine
+                : extractAddressLineFromFullAddress(currentFullAddress, city, district);
+
+            const nextFullAddress = composePropertyFullAddress(city, district, addressLine);
+            fullAddressInput.value = nextFullAddress || currentFullAddress;
+            return fullAddressInput.value.trim();
         }
 
         async function geocodeAddressToCoords(addressText) {
@@ -2444,6 +2500,86 @@
 
             _geocodeCache.set(cacheKey, resolvedCoords);
             return resolvedCoords;
+        }
+
+        function pickBestReverseCity(address) {
+            if (!address || typeof address !== 'object') {
+                return '';
+            }
+            return String(
+                address.city ||
+                address.town ||
+                address.village ||
+                address.municipality ||
+                address.county ||
+                ''
+            ).trim();
+        }
+
+        function pickBestReverseDistrict(address) {
+            if (!address || typeof address !== 'object') {
+                return '';
+            }
+            return String(
+                address.suburb ||
+                address.city_district ||
+                address.state_district ||
+                address.neighbourhood ||
+                ''
+            ).trim();
+        }
+
+        function pickBestReverseAddressLine(address, displayName) {
+            if (!address || typeof address !== 'object') {
+                return String(displayName || '').trim();
+            }
+
+            const street = [address.road, address.house_number].filter(Boolean).join(' ').trim();
+            if (street) {
+                return street;
+            }
+
+            const locality = String(address.neighbourhood || address.residential || address.hamlet || '').trim();
+            if (locality) {
+                return locality;
+            }
+
+            const display = String(displayName || '').trim();
+            if (!display) {
+                return '';
+            }
+
+            return display.split(',').map(item => item.trim()).filter(Boolean).slice(0, 2).join(', ');
+        }
+
+        async function reverseGeocodeCoords(lat, lng) {
+            const cacheKey = `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+            if (_reverseGeocodeCache.has(cacheKey)) {
+                return _reverseGeocodeCache.get(cacheKey);
+            }
+
+            const fallback = { city: '', district: '', addressLine: '' };
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    _reverseGeocodeCache.set(cacheKey, fallback);
+                    return fallback;
+                }
+
+                const payload = await response.json();
+                const address = payload && payload.address ? payload.address : {};
+                const result = {
+                    city: pickBestReverseCity(address),
+                    district: pickBestReverseDistrict(address),
+                    addressLine: pickBestReverseAddressLine(address, payload ? payload.display_name : '')
+                };
+                _reverseGeocodeCache.set(cacheKey, result);
+                return result;
+            } catch (_) {
+                _reverseGeocodeCache.set(cacheKey, fallback);
+                return fallback;
+            }
         }
 
         async function resolvePropertyCoordsByData(coordsValue, fullAddress, city, district, shortAddress) {
@@ -3993,6 +4129,8 @@
                 ['property-listing-mode', 'property-type', 'property-condition', 'property-rieltor-id',
                  'property-city', 'property-district'].forEach(id => _cselSync(id));
             }
+
+            syncPropertyFullAddressField();
             
             modal.classList.remove('hidden');
         }
@@ -4111,14 +4249,22 @@
         const PROPERTY_DRAFT_STORAGE_KEY = 'venera_property_form_draft_v1';
 
         function collectPropertyFormData() {
+            const cityValue = document.getElementById('property-city').value.trim();
+            const districtValue = document.getElementById('property-district').value.trim();
+            const rawFullAddress = document.getElementById('property-full-address').value.trim();
+            const rawCoords = document.getElementById('property-coords').value.trim();
+            const normalizedCoords = normalizeCoords(rawCoords) || extractCoordsFromText(rawFullAddress);
+            const addressLine = extractAddressLineFromFullAddress(rawFullAddress, cityValue, districtValue);
+            const composedFullAddress = composePropertyFullAddress(cityValue, districtValue, addressLine || rawFullAddress);
+
             return {
                 id: document.getElementById('property-id').value.trim(),
                 title: document.getElementById('property-title').value.trim(),
-                city: document.getElementById('property-city').value.trim(),
-                district: document.getElementById('property-district').value.trim(),
+                city: cityValue,
+                district: districtValue,
                 listingMode: document.getElementById('property-listing-mode').value.trim(),
                 type: document.getElementById('property-type').value,
-                coords: document.getElementById('property-coords').value.trim(),
+                coords: normalizedCoords,
                 rieltorId: document.getElementById('property-rieltor-id').value.trim(),
                 price: Number(document.getElementById('property-price').value) || 0,
                 area: Number(document.getElementById('property-area').value) || 0,
@@ -4127,8 +4273,8 @@
                 year: document.getElementById('property-year') ? document.getElementById('property-year').value.trim() : '',
                 land: document.getElementById('property-land').value.trim(),
                 parking: document.getElementById('property-parking').value.trim(),
-                address: document.getElementById('property-full-address').value.trim() || document.getElementById('property-city').value.trim(),
-                fullAddress: document.getElementById('property-full-address').value.trim(),
+                address: addressLine || rawFullAddress || cityValue,
+                fullAddress: composedFullAddress || rawFullAddress,
                 description: document.getElementById('property-description').value.trim(),
                 condition: document.getElementById('property-condition').value.trim(),
                 bathroom: document.getElementById('property-bathroom').value.trim(),
@@ -5163,6 +5309,112 @@
 
             const miniMapIcon = createMiniMapMarkerIcon(typeValue, listingModeValue);
             L.marker([lat, lng], { icon: miniMapIcon }).addTo(window.overlayMap);
+        }
+
+        let isPropertyLocationPickerMode = false;
+        let propertyLocationPickerMarker = null;
+
+        function closeMapOverlayWindow() {
+            const mapOverlay = document.getElementById('map-overlay');
+            if (mapOverlay) {
+                mapOverlay.classList.remove('active');
+            }
+            enableBodyScroll();
+
+            if (window.overlayMap) {
+                window.overlayMap.remove();
+                window.overlayMap = null;
+            }
+
+            propertyLocationPickerMarker = null;
+            isPropertyLocationPickerMode = false;
+        }
+
+        async function openPropertyLocationPicker() {
+            const cityInput = document.getElementById('property-city');
+            const districtInput = document.getElementById('property-district');
+            const fullAddressInput = document.getElementById('property-full-address');
+            const coordsInput = document.getElementById('property-coords');
+            const overlayEl = document.getElementById('map-overlay');
+            const containerEl = document.getElementById('map-overlay-container');
+            if (!coordsInput || !overlayEl || !containerEl) {
+                return;
+            }
+
+            const city = cityInput ? cityInput.value.trim() : '';
+            const district = districtInput ? districtInput.value.trim() : '';
+            const fullAddress = fullAddressInput ? fullAddressInput.value.trim() : '';
+
+            let resolvedCoords = normalizeCoords(coordsInput.value) || extractCoordsFromText(fullAddress);
+            if (!resolvedCoords) {
+                const geocodeSource = buildPropertyAddressForGeocoding(fullAddress, city, district, '');
+                if (geocodeSource) {
+                    resolvedCoords = await geocodeAddressToCoords(geocodeSource);
+                }
+            }
+
+            const center = resolvedCoords
+                ? resolvedCoords.split(',').map(Number)
+                : [47.0245, 28.8323];
+
+            disableBodyScroll();
+            overlayEl.classList.add('active');
+            isPropertyLocationPickerMode = true;
+
+            if (window.overlayMap) {
+                window.overlayMap.remove();
+                window.overlayMap = null;
+            }
+
+            window.overlayMap = L.map('map-overlay-container', { zoomControl: true }).setView(center, resolvedCoords ? 16 : 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                attribution: '',
+                detectRetina: true
+            }).addTo(window.overlayMap);
+
+            if (resolvedCoords) {
+                propertyLocationPickerMarker = L.marker(center).addTo(window.overlayMap);
+                coordsInput.value = normalizeCoords(resolvedCoords);
+            }
+
+            window.overlayMap.on('click', async function(evt) {
+                const lat = Number(evt.latlng.lat);
+                const lng = Number(evt.latlng.lng);
+                const selectedCoords = normalizeCoords(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                if (!selectedCoords) {
+                    return;
+                }
+
+                coordsInput.value = selectedCoords;
+
+                if (propertyLocationPickerMarker) {
+                    propertyLocationPickerMarker.setLatLng([lat, lng]);
+                } else {
+                    propertyLocationPickerMarker = L.marker([lat, lng]).addTo(window.overlayMap);
+                }
+
+                const reverse = await reverseGeocodeCoords(lat, lng);
+                if (cityInput && !cityInput.value.trim() && reverse.city) {
+                    registerCityDistrict(reverse.city, districtInput ? districtInput.value.trim() : '');
+                    populateCitySelect();
+                    cityInput.value = reverse.city;
+                    populateDistrictSelect();
+                }
+
+                if (districtInput && !districtInput.value.trim() && reverse.district) {
+                    registerCityDistrict(cityInput ? cityInput.value.trim() : reverse.city, reverse.district);
+                    populateDistrictSelect();
+                    if (Array.from(districtInput.options).some(option => option.value === reverse.district)) {
+                        districtInput.value = reverse.district;
+                    }
+                }
+
+                const chosenAddressLine = reverse.addressLine || `Точка на карте (${selectedCoords})`;
+                syncPropertyFullAddressField({ forceAddressLine: chosenAddressLine });
+                if (typeof showToast === 'function') {
+                    showToast('Точка на карте выбрана');
+                }
+            });
         }
 
         // Function to update districts based on selected city
@@ -6215,11 +6467,36 @@
             if (propertyMapEl) {
                 propertyMapEl.addEventListener('dblclick', openPropertyMapFullscreen);
             }
+
+            const pickLocationBtn = document.getElementById('property-pick-location-btn');
+            if (pickLocationBtn) {
+                pickLocationBtn.addEventListener('click', function() {
+                    openPropertyLocationPicker();
+                });
+            }
+
+            const propertyCityInput = document.getElementById('property-city');
+            const propertyDistrictInput = document.getElementById('property-district');
+            const propertyFullAddressInput = document.getElementById('property-full-address');
+            if (propertyCityInput) {
+                propertyCityInput.addEventListener('change', function() {
+                    syncPropertyFullAddressField();
+                });
+            }
+            if (propertyDistrictInput) {
+                propertyDistrictInput.addEventListener('change', function() {
+                    syncPropertyFullAddressField();
+                });
+            }
+            if (propertyFullAddressInput) {
+                propertyFullAddressInput.addEventListener('blur', function() {
+                    syncPropertyFullAddressField();
+                });
+            }
             
             // Close overlay map
             document.getElementById('map-overlay-close').addEventListener('click', function() {
-                document.getElementById('map-overlay').classList.remove('active');
-                enableBodyScroll();
+                closeMapOverlayWindow();
             });
 
             // Apply property statuses after all DOM setup
