@@ -927,7 +927,7 @@
             whatsapp: '+37322123456',
             telegram: '+37322123456',
             viber: '+37360123456',
-            photo: 'https://i.ibb.co/35ZQ5g8X/logo.png'
+            photo: '/image/components/CompanyAva.png'
         };
 
         const SITE_CONTENT_STORAGE_KEY = 'venera_site_content_v1';
@@ -8044,7 +8044,7 @@ window.renderClientsAdmin = function() {
         var effectiveOwnerAgent = ownerHidden ? null : ownerAgent;
         var ownerCellHtml = effectiveOwnerAgent && effectiveOwnerAgent.photo
             ? '<img src="' + _escMsg(effectiveOwnerAgent.photo) + '" alt="" title="' + _escMsg(effectiveOwnerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
-            : '<img src="https://i.ibb.co/35ZQ5g8X/logo.png" alt="Компания" title="' + _escMsg(ownerHidden ? 'Компания (риелтор временно скрыт)' : 'Компания') + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
+            : '<img src="/image/components/CompanyAva.png" alt="Компания" title="' + _escMsg(ownerHidden ? 'Компания (риелтор временно скрыт)' : 'Компания') + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
@@ -8514,7 +8514,7 @@ function _renderCalendarDayEntries() {
         
         // Special targets: company and all realtors
         if (realtorTargetId === CALENDAR_TARGET_COMPANY) {
-            agentPhoto = 'https://i.ibb.co/35ZQ5g8X/logo.png';
+            agentPhoto = '/image/components/CompanyAva.png';
         } else if (realtorTargetId === CALENDAR_TARGET_ALL_REALTORS) {
             agentPhoto = null; // Will show group icon
         } else {
