@@ -1,16 +1,16 @@
-    /*
-    ������� ���� ������ �����.
-    ��� ��� �����������:
-    1) ��������� � ������������ �������� � ���������.
-    2) ��������� �������� �� ��������.
-    3) �����-������� � ���������� ���������.
-    4) �������, �����, overlay, ���������.
+﻿    /*
+    Главный файл логики сайта.
+    Что чем управляется:
+    1) Валидация и нормализация объектов и риелторов.
+    2) Генерация карточек из конфигов.
+    3) Админ-модалки и генераторы сниппетов.
+    4) Фильтры, карта, overlay, пагинация.
 
-    ����� �� ���� ��������:
-    - mainPhoto: ������� ���� �������� � �������� ���� �������.
-    - photos: �������������� ���� (������������� ������ URL � �������).
-    - ��� �������� ������������� ����� �������������� ������ ����� �������.
-    - ������� overlay �������� �� mainPhoto + photos.
+    Важно по фото объектов:
+    - mainPhoto: главное фото карточки и основное фото объекта.
+    - photos: дополнительные фото (рекомендуется массив URL в конфиге).
+    - Для обратной совместимости также поддерживается строка через запятую.
+    - Галерея overlay строится из mainPhoto + photos.
     */
 
         const ANALYTICS_STORAGE_KEY = 'venera_analytics_events_v1';
@@ -36,7 +36,7 @@
             wa: 'WhatsApp',
             vb: 'Viber',
             gg: 'Google',
-            ot: '������ ���������'
+            ot: 'Другие источники'
         };
 
         function getAnalyticsStore() {
@@ -49,7 +49,7 @@
                 if (!parsed || !Array.isArray(parsed.events)) {
                     return { events: [] };
                 }
-                // Deduplicate campaign_click events by vid � keep only the first occurrence
+                // Deduplicate campaign_click events by vid — keep only the first occurrence
                 const seenVids = new Set();
                 const deduped = parsed.events.filter(ev => {
                     if (ev.type === 'campaign_click') {
@@ -115,10 +115,10 @@
                 var left = String(a || '').trim();
                 var right = String(b || '').trim();
                 var normalize = function(city) {
-                    return city.toLowerCase().replace(/�/g, '�');
+                    return city.toLowerCase().replace(/ё/g, 'е');
                 };
-                var leftIsChisinau = normalize(left) === '�������';
-                var rightIsChisinau = normalize(right) === '�������';
+                var leftIsChisinau = normalize(left) === 'кишинев';
+                var rightIsChisinau = normalize(right) === 'кишинев';
                 if (leftIsChisinau && !rightIsChisinau) return -1;
                 if (!leftIsChisinau && rightIsChisinau) return 1;
                 return left.localeCompare(right, 'ru');
@@ -129,12 +129,12 @@
             const utmLabel = normalizeSourceLabel(utmSource);
             if (utmLabel) return utmLabel;
 
-            if (!referrer) return '������ �������';
+            if (!referrer) return 'Прямой переход';
 
             const value = String(referrer).toLowerCase();
 
-            // Self-referral (navigating within the same site) > direct
-            if (value.includes('venera-rielt.vercel.app') || value.includes('venera-rielt.ru')) return '������ �������';
+            // Self-referral (navigating within the same site) → direct
+            if (value.includes('venera-rielt.vercel.app') || value.includes('venera-rielt.ru')) return 'Прямой переход';
 
             if (value.includes('facebook.com') || value.includes('fb.com')) return 'Facebook';
             if (value.includes('instagram.com')) return 'Instagram';
@@ -144,7 +144,7 @@
             if (value.includes('wa.me') || value.includes('whatsapp')) return 'WhatsApp';
             if (value.includes('viber.com')) return 'Viber';
             if (value.includes('google.')) return 'Google';
-            return '������ ���������';
+            return 'Другие источники';
         }
 
         function getCampaignSourceCode(sourceRaw) {
@@ -187,7 +187,7 @@
             const isAdminPage = /admin\.html$/i.test(window.location.pathname || '');
             if (isAdminPage) return;
 
-            // Always clean tracking params from URL FIRST � before any dedup check �
+            // Always clean tracking params from URL FIRST — before any dedup check —
             // so that trackCampaignClick() running immediately after won't see stale params.
             const params = new URLSearchParams(window.location.search);
             const parsedCampaign = parseCampaignTrackingFromUrl(params);
@@ -241,8 +241,8 @@
 
         function recordSearchAnalytics(criteria) {
             pushAnalyticsEvent('search', {
-                district: String(criteria.district || '').trim() || '��� ������',
-                city: String(criteria.city || '').trim() || '��� ������',
+                district: String(criteria.district || '').trim() || 'Все районы',
+                city: String(criteria.city || '').trim() || 'Все города',
                 listingMode: String(criteria.listingMode || '').trim() || 'all'
             });
         }
@@ -251,7 +251,7 @@
             pushAnalyticsEvent('property_view', {
                 propertyId: String(payload.propertyId || '').trim(),
                 rieltorId: String(payload.rieltorId || '').trim(),
-                agentName: String(payload.agentName || '').trim() || '�� ������',
+                agentName: String(payload.agentName || '').trim() || 'Не указан',
                 propertyTitle: String(payload.propertyTitle || '').trim()
             });
         }
@@ -260,7 +260,7 @@
             pushAnalyticsEvent('property_added', {
                 propertyId: String(payload.propertyId || '').trim(),
                 rieltorId: String(payload.rieltorId || '').trim(),
-                agentName: String(payload.agentName || '').trim() || '�� ������'
+                agentName: String(payload.agentName || '').trim() || 'Не указан'
             });
         }
 
@@ -354,15 +354,15 @@
                 }
 
                 if (type === 'visit') {
-                    const source = String(payload.source || '������ ���������');
+                    const source = String(payload.source || 'Другие источники');
                     sourceCounts[source] = (sourceCounts[source] || 0) + 1;
                     dailyMap[dayKey].visits += 1;
                     if (hourlyMap[hourKey]) hourlyMap[hourKey].visits += 1;
                 }
 
                 if (type === 'search') {
-                    const district = String(payload.district || '��� ������');
-                    const city = String(payload.city || '��� ������');
+                    const district = String(payload.district || 'Все районы');
+                    const city = String(payload.city || 'Все города');
                     districtCounts[district] = (districtCounts[district] || 0) + 1;
 
                     if (!districtByCity[city]) {
@@ -375,7 +375,7 @@
                 }
 
                 if (type === 'property_view') {
-                    const agentName = String(payload.agentName || payload.rieltorId || '�� ������');
+                    const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
                     const agentId = String(payload.rieltorId || '').trim();
                     const key = `${agentId}::${agentName}`;
                     agentViewCounts[key] = (agentViewCounts[key] || 0) + 1;
@@ -384,16 +384,16 @@
                 }
 
                 if (type === 'property_added') {
-                    const agentName = String(payload.agentName || payload.rieltorId || '�� ������');
+                    const agentName = String(payload.agentName || payload.rieltorId || 'Не указан');
                     const agentId = String(payload.rieltorId || '').trim();
                     const key = `${agentId}::${agentName}`;
                     agentAddedCounts[key] = (agentAddedCounts[key] || 0) + 1;
                 }
 
                 if (type === 'campaign_click') {
-                    const campaignLabel = String(payload.campaignName || payload.vid || '��� ��������');
+                    const campaignLabel = String(payload.campaignName || payload.vid || 'Без названия');
                     campaignClickCounts[campaignLabel] = (campaignClickCounts[campaignLabel] || 0) + 1;
-                    const srcLabel = normalizeSourceLabel(String(payload.source || '')) || '������';
+                    const srcLabel = normalizeSourceLabel(String(payload.source || '')) || 'Другие';
                     if (!campaignBySource) campaignBySource = {};
                     campaignBySource[srcLabel] = (campaignBySource[srcLabel] || 0) + 1;
                 }
@@ -425,7 +425,7 @@
                     const meta = agentMeta[String(rieltorId || '').trim()] || {};
                     return {
                         rieltorId,
-                        label: meta.name || fallbackName || '�� ������',
+                        label: meta.name || fallbackName || 'Не указан',
                         photo: meta.photo || '',
                         value
                     };
@@ -457,15 +457,15 @@
                 : 0;
 
             // Distribution: <30s, 30s-1m, 1-2m, 2-5m, 5-10m, 10+m
-            const timeBuckets = { '�� 30�': 0, '30�1���': 0, '1�2 ���': 0, '2�5 ���': 0, '5�10 ���': 0, '10+ ���': 0 };
+            const timeBuckets = { 'до 30с': 0, '30с–1мин': 0, '1–2 мин': 0, '2–5 мин': 0, '5–10 мин': 0, '10+ мин': 0 };
             timeOnSiteEvents.forEach(e => {
                 const d = Number((e.payload || {}).duration || 0);
-                if (d < 30) timeBuckets['�� 30�']++;
-                else if (d < 60) timeBuckets['30�1���']++;
-                else if (d < 120) timeBuckets['1�2 ���']++;
-                else if (d < 300) timeBuckets['2�5 ���']++;
-                else if (d < 600) timeBuckets['5�10 ���']++;
-                else timeBuckets['10+ ���']++;
+                if (d < 30) timeBuckets['до 30с']++;
+                else if (d < 60) timeBuckets['30с–1мин']++;
+                else if (d < 120) timeBuckets['1–2 мин']++;
+                else if (d < 300) timeBuckets['2–5 мин']++;
+                else if (d < 600) timeBuckets['5–10 мин']++;
+                else timeBuckets['10+ мин']++;
             });
 
             const daily = Object.entries(dailyMap)
@@ -501,7 +501,7 @@
 
         function getSourceColor(label) {
             const key = String(label || '').toLowerCase();
-            if (key === '������ �������') return '#FFD700';
+            if (key === 'прямой переход') return '#FFD700';
             if (key === 'facebook') return '#1B4F9C';
             if (key === 'instagram') return '#FF4FA1';
             if (key === 'tiktok') return '#FFFFFF';
@@ -526,10 +526,10 @@
             const fmtNum = (num) => Number(num || 0).toLocaleString('ru-RU');
             const fmtTime = (secs) => {
                 const s = Number(secs) || 0;
-                if (!s) return '�';
+                if (!s) return '—';
                 const m = Math.floor(s / 60);
                 const r = s % 60;
-                return m > 0 ? `${m} ��� ${r} �` : `${s} �`;
+                return m > 0 ? `${m} мин ${r} с` : `${s} с`;
             };
 
             const visitsEl = document.getElementById('analytics-total-visits');
@@ -556,7 +556,7 @@
                 chartState[chartKey] = new Chart(canvas, config);
             }
 
-            const sourceLabels = summary.sources.length ? summary.sources.map(item => item.label) : ['��� ������'];
+            const sourceLabels = summary.sources.length ? summary.sources.map(item => item.label) : ['Нет данных'];
             const sourceValues = summary.sources.length ? summary.sources.map(item => item.value) : [0];
             const sourceColors = summary.sources.length ? summary.sources.map(item => getSourceColor(item.label)) : ['#64748B'];
 
@@ -577,7 +577,7 @@
             });
 
             const districtTop = summary.districts.slice(0, 8);
-            const districtLabels = districtTop.length ? districtTop.map(item => item.label) : ['��� ������'];
+            const districtLabels = districtTop.length ? districtTop.map(item => item.label) : ['Нет данных'];
             const districtValues = districtTop.length ? districtTop.map(item => item.value) : [0];
 
             setChart('districts', 'analytics-districts-chart', {
@@ -585,7 +585,7 @@
                 data: {
                     labels: districtLabels,
                     datasets: [{
-                        label: '�������',
+                        label: 'Поисков',
                         data: districtValues,
                         backgroundColor: '#FFD700'
                     }]
@@ -602,7 +602,7 @@
             });
 
             const agentTop = summary.agents.slice(0, 8);
-            const agentLabels = agentTop.length ? agentTop.map(item => item.label) : ['��� ������'];
+            const agentLabels = agentTop.length ? agentTop.map(item => item.label) : ['Нет данных'];
             const agentValues = agentTop.length ? agentTop.map(item => item.value) : [0];
 
             setChart('agents', 'analytics-agents-chart', {
@@ -610,7 +610,7 @@
                 data: {
                     labels: agentLabels,
                     datasets: [{
-                        label: '���������� ��������',
+                        label: 'Просмотров объектов',
                         data: agentValues,
                         backgroundColor: '#F59E0B'
                     }]
@@ -627,7 +627,7 @@
             });
 
             const agentAddedTop = summary.agentAdded.slice(0, 8);
-            const agentAddedLabels = agentAddedTop.length ? agentAddedTop.map(item => item.label) : ['��� ������'];
+            const agentAddedLabels = agentAddedTop.length ? agentAddedTop.map(item => item.label) : ['Нет данных'];
             const agentAddedValues = agentAddedTop.length ? agentAddedTop.map(item => item.value) : [0];
 
             setChart('agentAdditions', 'analytics-agent-additions-chart', {
@@ -635,7 +635,7 @@
                 data: {
                     labels: agentAddedLabels,
                     datasets: [{
-                        label: '����������� ��������',
+                        label: 'Добавленных объектов',
                         data: agentAddedValues,
                         backgroundColor: '#22C55E'
                     }]
@@ -658,7 +658,7 @@
             })[String(s||'').toLowerCase()] || 'fas fa-link';
 
             const campaignBySrc = (summary.campaignBySource || []).filter(x => x.value > 0);
-            const bySourceLabels = campaignBySrc.length ? campaignBySrc.map(x => x.label) : ['��� ������'];
+            const bySourceLabels = campaignBySrc.length ? campaignBySrc.map(x => x.label) : ['Нет данных'];
             const bySourceValues = campaignBySrc.length ? campaignBySrc.map(x => x.value) : [0];
             const bySourceColors = bySourceLabels.map(l => getSourceColor(l));
 
@@ -667,7 +667,7 @@
                 data: {
                     labels: bySourceLabels,
                     datasets: [{
-                        label: '������',
+                        label: 'Кликов',
                         data: bySourceValues,
                         backgroundColor: bySourceColors,
                         borderRadius: 6
@@ -700,7 +700,7 @@
                     ? campaignBySrc.map(x => `<div style="text-align:center;flex:1;min-width:0;">
                         <i class="${_srcIconCls(x.label)}" style="font-size:1.2rem;color:${getSourceColor(x.label)};display:block;"></i>
                       </div>`).join('')
-                    : '<div style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;width:100%">��� ������</div>';
+                    : '<div style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;width:100%">Нет данных</div>';
             }
 
             // Time on site distribution chart
@@ -710,14 +710,14 @@
             const totalTimeSessions = timeValues.reduce((s, v) => s + v, 0);
             const timeChartData = totalTimeSessions > 0
                 ? { labels: timeLabels, values: timeValues }
-                : { labels: ['��� ������'], values: [0] };
+                : { labels: ['Нет данных'], values: [0] };
 
             setChart('timeOnSite', 'analytics-time-chart', {
                 type: 'bar',
                 data: {
                     labels: timeChartData.labels,
                     datasets: [{
-                        label: '������',
+                        label: 'Сессий',
                         data: timeChartData.values,
                         backgroundColor: 'rgba(255,215,0,0.75)',
                         borderRadius: 6
@@ -734,7 +734,7 @@
                         legend: { labels: { color: '#e5e7eb' } },
                         tooltip: {
                             callbacks: {
-                                afterTitle: () => totalTimeSessions ? `��. �����: ${fmtTime(summary.avgTime)}` : ''
+                                afterTitle: () => totalTimeSessions ? `Ср. время: ${fmtTime(summary.avgTime)}` : ''
                             }
                         }
                     }
@@ -743,7 +743,7 @@
 
             const citySelect = document.getElementById('analytics-city-select');
             const cityNames = sortCitiesWithChisinauFirst(Object.keys(summary.districtByCity || {}));
-            const normalizedCityOptions = cityNames.length ? cityNames : ['��� ������'];
+            const normalizedCityOptions = cityNames.length ? cityNames : ['Все города'];
 
             if (citySelect) {
                 const PREFERRED_CITY = '\u041a\u0438\u0448\u0438\u043d\u0435\u0432';
@@ -751,7 +751,7 @@
                 citySelect.innerHTML = normalizedCityOptions
                     .map(city => `<option value="${city}">${city}</option>`)
                     .join('');
-                // Prefer previously selected, then �������/�������, then first option
+                // Prefer previously selected, then Кишинев/Кишинёв, then first option
                 let defaultCity = prevValue && normalizedCityOptions.includes(prevValue) ? prevValue : null;
                 if (!defaultCity) {
                     defaultCity = normalizedCityOptions.find(c =>
@@ -775,7 +775,7 @@
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 12);
 
-            const cityDistrictLabels = cityDistrictTop.length ? cityDistrictTop.map(item => item.label) : ['��� ������'];
+            const cityDistrictLabels = cityDistrictTop.length ? cityDistrictTop.map(item => item.label) : ['Нет данных'];
             const cityDistrictValues = cityDistrictTop.length ? cityDistrictTop.map(item => item.value) : [0];
 
             setChart('districtsByCity', 'analytics-city-districts-chart', {
@@ -783,7 +783,7 @@
                 data: {
                     labels: cityDistrictLabels,
                     datasets: [{
-                        label: `������� (${selectedCity})`,
+                        label: `Поисков (${selectedCity})`,
                         data: cityDistrictValues,
                         backgroundColor: '#38BDF8'
                     }]
@@ -812,7 +812,7 @@
                     labels: activityLabels,
                     datasets: [
                         {
-                            label: '������',
+                            label: 'Визиты',
                             data: activityRows.map(item => item.visits),
                             borderColor: '#22C55E',
                             backgroundColor: 'rgba(34,197,94,0.2)',
@@ -820,7 +820,7 @@
                             tension: 0.3
                         },
                         {
-                            label: '������',
+                            label: 'Поиски',
                             data: activityRows.map(item => item.searches),
                             borderColor: '#38BDF8',
                             backgroundColor: 'rgba(56,189,248,0.18)',
@@ -828,7 +828,7 @@
                             tension: 0.3
                         },
                         {
-                            label: '���������',
+                            label: 'Просмотры',
                             data: activityRows.map(item => item.views),
                             borderColor: '#F59E0B',
                             backgroundColor: 'rgba(245,158,11,0.18)',
@@ -850,13 +850,13 @@
 
         }
 
-        // --- Campaign / tracking links ----------------------------------------------
+        // ─── Campaign / tracking links ──────────────────────────────────────────────
         const CAMPAIGN_STORAGE_KEY = 'venera_campaign_links_v1';
         const CAMPAIGN_LANDING_URL = 'https://venera-rielt.vercel.app/';
         const PROPERTY_STATUS_KEY = 'venera_property_status_v1';
         const AGENT_STATUS_KEY = 'venera_agent_status_v1';
 
-        // --- Toast notification -----------------------------------------------------
+        // ─── Toast notification ─────────────────────────────────────────────────────
         function showToast(message, type) {
             type = type || 'success';
             var existing = document.getElementById('venera-toast');
@@ -888,7 +888,7 @@
             }, 3000);
         }
 
-        // --- Confirm Dialog ----------------------------------------------------------
+        // ─── Confirm Dialog ──────────────────────────────────────────────────────────
         function showConfirm(message, onConfirm) {
             var existing = document.getElementById('venera-confirm-overlay');
             if (existing) existing.remove();
@@ -903,8 +903,8 @@
                 '</div>' +
                 '<p style="color:#e5e7eb;font-size:0.95rem;line-height:1.5;margin-bottom:24px;">' + message + '</p>' +
                 '<div style="display:flex;gap:10px;justify-content:center;">' +
-                    '<button id="venera-confirm-cancel" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#9ca3af;font-size:0.875rem;font-weight:500;cursor:pointer;">������</button>' +
-                    '<button id="venera-confirm-ok" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.15);color:#f87171;font-size:0.875rem;font-weight:600;cursor:pointer;">�������</button>' +
+                    '<button id="venera-confirm-cancel" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#9ca3af;font-size:0.875rem;font-weight:500;cursor:pointer;">Отмена</button>' +
+                    '<button id="venera-confirm-ok" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.15);color:#f87171;font-size:0.875rem;font-weight:600;cursor:pointer;">Удалить</button>' +
                 '</div>';
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -922,7 +922,7 @@
         // Company fallback contact info (used when agent is hidden)
         const COMPANY_CONTACT = {
             name: 'Venera Rielt',
-            position: '��������� ������������',
+            position: 'Агентство недвижимости',
             phone: '+373 22 123 456',
             whatsapp: '+37322123456',
             telegram: '+37322123456',
@@ -939,38 +939,38 @@
         const ACTIONS_LOG_KEY = 'venera_actions_log_v1';
         const ACTIONS_BADGE_STATE_KEY = 'venera_actions_badge_state_v1';
         const ACTIONS_SYNC_CHANNEL_KEY = 'venera_actions_sync_v1';
-        const ACTIONS_SECTION_CLIENTS = '���� ��������';
-        const ACTIONS_SECTION_CALENDAR = '��������� ������ � �������';
+        const ACTIONS_SECTION_CLIENTS = 'База клиентов';
+        const ACTIONS_SECTION_CALENDAR = 'Календарь встреч и показов';
         const DEFAULT_SITE_CONTENT = {
             about: {
-                title: '� ��������',
+                title: 'О компании',
                 company: 'Venera Rielt',
-                text1: '�� � ����� �� ����� ������� ������������ ������� � 2010 ����. ���� �������� ���������������� �� ����������� �������� ����� � ������������ ������������.',
-                text2: '��� ������ �������� � ���� �������� ������ �������� �����, ������������� ��������� ������ � �������������� ������ � ������� �������.',
-                text3: '�� ���� ������ �� ������� ����� 500 �������� ����� ���� ��������� ��� ��� ������� ������������� � ������������.',
+                text1: 'Мы — лидер на рынке элитной недвижимости Молдовы с 2010 года. Наша компания специализируется на премиальном сегменте жилой и коммерческой недвижимости.',
+                text2: 'Наш подход сочетает в себе глубокое знание местного рынка, международные стандарты работы и индивидуальный подход к каждому клиенту.',
+                text3: 'За годы работы мы помогли более 500 клиентам найти свой идеальный дом или выгодно инвестировать в недвижимость.',
                 stat1Value: '12+',
-                stat1Label: '��� �����',
+                stat1Label: 'Лет опыта',
                 stat2Value: '500+',
-                stat2Label: '��������� ��������',
+                stat2Label: 'Довольных клиентов',
                 stat3Value: '100+',
-                stat3Label: '��������',
+                stat3Label: 'Объектов',
                 stat4Value: '100%',
-                stat4Label: '���������',
+                stat4Label: 'Надёжность',
                 photo1: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
                 photo2: 'https://images.unsplash.com/photo-1605146769289-440113cc3d00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
                 photo3: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
                 photos: []
             },
             contact: {
-                title: '��������� � ����',
-                lead: '�������� ���� ��������, � ��� ���������� �������� � ���� � ��������� �����',
-                infoTitle: '���������� ����������',
-                address: '�������, �������, ��. ������� 42, ���� 15',
+                title: 'Связаться с нами',
+                lead: 'Оставьте свои контакты, и наш специалист свяжется с вами в ближайшее время',
+                infoTitle: 'Контактная информация',
+                address: 'Молдова, Кишинёв, ул. Пушкина 42, офис 15',
                 phoneMain: '+373 22 123 456',
                 phoneExtra: '+373 60 123 456 (Viber, WhatsApp)',
                 email: 'info@venera-rielt.md',
-                hours1: '��-��: 9:00 - 18:00',
-                hours2: '��: 10:00 - 15:00'
+                hours1: 'Пн-Пт: 9:00 - 18:00',
+                hours2: 'Сб: 10:00 - 15:00'
             },
             social: {
                 facebook: 'https://www.facebook.com/share/18SPXKDGBC/',
@@ -1021,28 +1021,28 @@
 
         // ---- City/District catalog stored in localStorage ----
         const DEFAULT_CITY_DISTRICTS = {
-            '�������': ['��� ������', '�����', '��������', '����������', '������', '���������', '�������', '��������', '�������', '��������', '�����', '������ �������', '��������', '�������'],
-            '������': ['��� ������', '�����', '��������', '�����', '��������', '���������'],
-            '���������': ['��� ������', '�����', '����������', '���������', '�����������'],
-            '�������': ['��� ������', '�����', '���������', '�����������'],
-            '�������': ['��� ������', '�����', '��������', '�����'],
-            '�����': ['��� ������', '�����', '��������', '�����'],
-            '������': ['��� ������', '�����', '��������', '�����'],
-            '������': ['��� ������', '�����', '��������', '�����'],
-            '������': ['��� ������', '�����', '��������', '�����'],
-            '������': ['��� ������', '�����', '��������', '�����'],
-            '�����-�����': ['��� ������', '�����', '��������', '�����'],
-            '��������': ['��� ������', '�����'],
-            '������': ['��� ������', '�����'],
-            '������': ['��� ������', '�����'],
-            '��������': ['��� ������', '�����'],
-            '������': ['��� ������', '�����'],
-            '�������': ['��� ������', '�����'],
-            '��������': ['��� ������', '�����'],
-            '�����': ['��� ������', '�����'],
-            '���������': ['��� ������', '�����'],
-            '������': ['��� ������', '�����'],
-            '�����-���-����': ['��� ������', '�����']
+            'Кишинёв': ['Все районы', 'Центр', 'Ботаника', 'Рышкановка', 'Чеканы', 'Телецентр', 'Буюканы', 'Скулянка', 'Бубуечь', 'Дурлешты', 'Ватра', 'Друмул Таберей', 'Ставчены', 'Трушены'],
+            'Бельцы': ['Все районы', 'Центр', 'Северный', 'Южный', 'Западный', 'Восточный'],
+            'Тирасполь': ['Все районы', 'Центр', 'Микрорайон', 'Кировский', 'Октябрьский'],
+            'Бендеры': ['Все районы', 'Центр', 'Ленинский', 'Фрунзенский'],
+            'Рыбница': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Кагул': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Унгень': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Сороки': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Оргеев': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Комрат': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Чадыр-Лунга': ['Все районы', 'Центр', 'Северный', 'Южный'],
+            'Страшены': ['Все районы', 'Центр'],
+            'Дрокия': ['Все районы', 'Центр'],
+            'Единцы': ['Все районы', 'Центр'],
+            'Флорешты': ['Все районы', 'Центр'],
+            'Резина': ['Все районы', 'Центр'],
+            'Глодяны': ['Все районы', 'Центр'],
+            'Кантемир': ['Все районы', 'Центр'],
+            'Леова': ['Все районы', 'Центр'],
+            'Ниспорены': ['Все районы', 'Центр'],
+            'Окница': ['Все районы', 'Центр'],
+            'Вадул-луй-Водэ': ['Все районы', 'Центр']
         };
 
         function getCityDistrictsData() {
@@ -1080,18 +1080,18 @@
                     try { return JSON.parse(localStorage.getItem(ACTIONS_LOG_KEY) || '[]'); } catch(_) { return []; }
                 })();
                 
-                var userName = '������������';
+                var userName = 'Пользователь';
                 var actorType = 'unknown';
                 var actorId = '';
                 try {
                     if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
-                        userName = '�������������';
+                        userName = 'Администратор';
                         actorType = 'admin';
                         actorId = 'admin';
                     } else {
                         var realtorSession = getRealtorSession();
                         if (realtorSession && realtorSession.rieltor_id) {
-                            userName = '������� ' + (realtorSession.name || realtorSession.rieltor_id);
+                            userName = 'Риелтор ' + (realtorSession.name || realtorSession.rieltor_id);
                             actorType = 'realtor';
                             actorId = String(realtorSession.rieltor_id);
                         }
@@ -1174,7 +1174,7 @@
             if (!entry || !viewer || viewer.role === 'guest') return false;
             var actorType = String(entry.actorType || '').trim();
             if (!actorType) {
-                actorType = String(entry.user || '').indexOf('�������������') >= 0 ? 'admin' : 'realtor';
+                actorType = String(entry.user || '').indexOf('Администратор') >= 0 ? 'admin' : 'realtor';
             }
 
             if (viewer.role === 'admin') {
@@ -1290,45 +1290,45 @@
         }
 
         function _formatHistoryDetailValue(value) {
-            if (value == null) return '�';
+            if (value == null) return '—';
             if (typeof value === 'object') {
                 try { return _escapeHtml(JSON.stringify(value, null, 2)); } catch (_) { return _escapeHtml(String(value)); }
             }
             var str = String(value).trim();
-            return str ? _escapeHtml(str) : '�';
+            return str ? _escapeHtml(str) : '—';
         }
 
         function _historyFieldLabel(key) {
             var map = {
-                mode: '��� ��������',
-                targetId: '����',
-                clientId: 'ID �������',
-                clientName: '������',
-                phone: '�������',
-                title: '���������',
-                date: '����',
-                time: '�����',
-                type: '���',
-                noteId: 'ID �������',
-                target: '���� ���������',
-                previousData: '������ �� ���������',
-                newData: '����� ������',
-                deletedData: '��������� ������',
+                mode: 'Тип операции',
+                targetId: 'Цель',
+                clientId: 'ID клиента',
+                clientName: 'Клиент',
+                phone: 'Телефон',
+                title: 'Заголовок',
+                date: 'Дата',
+                time: 'Время',
+                type: 'Тип',
+                noteId: 'ID события',
+                target: 'Кому назначено',
+                previousData: 'Данные до изменения',
+                newData: 'Новые данные',
+                deletedData: 'Удаленные данные',
                 id: 'ID',
-                fullName: '���',
+                fullName: 'ФИО',
                 email: 'Email',
-                rieltor_id: 'ID ��������',
-                rooms: '�������',
-                city: '�����',
-                district: '�����',
-                condition: '���������',
-                priceFrom: '���� ��',
-                priceTo: '���� ��',
-                status: '������',
-                note: '�������',
-                realtorId: 'ID ������������',
-                realtorName: '���������',
-                createdAt: '�������'
+                rieltor_id: 'ID риелтора',
+                rooms: 'Комнаты',
+                city: 'Город',
+                district: 'Район',
+                condition: 'Состояние',
+                priceFrom: 'Цена от',
+                priceTo: 'Цена до',
+                status: 'Статус',
+                note: 'Заметка',
+                realtorId: 'ID назначенного',
+                realtorName: 'Назначено',
+                createdAt: 'Создано'
             };
             return map[key] || key;
         }
@@ -1358,7 +1358,7 @@
         }
 
         function _getHistoryUserPalette(entry) {
-            var isAdmin = String(entry && entry.actorType || '') === 'admin' || String(entry && entry.user || '') === '�������������';
+            var isAdmin = String(entry && entry.actorType || '') === 'admin' || String(entry && entry.user || '') === 'Администратор';
             if (isAdmin) {
                 return {
                     text: '#ff9800',
@@ -1393,7 +1393,7 @@
             var logs = _getActionLogs();
             var entry = logs.find(function(item) { return String(item.id || '') === String(entryId); });
             if (!entry) {
-                body.innerHTML = '<div style="color:rgba(255,255,255,0.6);">������ ������ �� �������.</div>';
+                body.innerHTML = '<div style="color:rgba(255,255,255,0.6);">Детали записи не найдены.</div>';
                 modal.classList.remove('hidden');
                 return;
             }
@@ -1402,7 +1402,7 @@
             var details = entry.details || {};
             var detailKeys = Object.keys(details);
             if (!detailKeys.length) {
-                detailsRows = '<div style="color:rgba(255,255,255,0.6);">�������������� ������ ���.</div>';
+                detailsRows = '<div style="color:rgba(255,255,255,0.6);">Дополнительных данных нет.</div>';
             } else {
                 var _makeRow = function(labelHtml, valueHtml, separatorStyle) {
                     var sep = separatorStyle || '1px solid rgba(255,255,255,0.08)';
@@ -1435,19 +1435,19 @@
 
             body.innerHTML = '' +
                 '<div style="display:grid;grid-template-columns:120px 1fr;gap:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.12);margin-bottom:10px;">' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">������</div>' +
-                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.section || '�') + '</div>' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">��������</div>' +
-                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.action || '�') + '</div>' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">������������</div>' +
-                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.user || '�') + '</div>' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">�����</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Раздел</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.section || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Действие</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.action || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Пользователь</div>' +
+                '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(entry.user || '—') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">Время</div>' +
                 '<div style="color:#fff;font-size:0.9rem;">' + _escapeHtml(_formatTimestamp(entry.timestamp)) + '</div>' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">ID ������</div>' +
-                '<div style="color:#fff;font-size:0.9rem;word-break:break-all;">' + _escapeHtml(entry.id || '�') + '</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.78rem;text-transform:uppercase;">ID записи</div>' +
+                '<div style="color:#fff;font-size:0.9rem;word-break:break-all;">' + _escapeHtml(entry.id || '—') + '</div>' +
                 '</div>' +
                 '<div style="margin-top:8px;">' +
-                '<div style="color:rgba(255,215,0,0.9);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">��������� ������</div>' +
+                '<div style="color:rgba(255,215,0,0.9);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Подробные данные</div>' +
                 detailsRows +
                 '</div>';
 
@@ -1471,7 +1471,7 @@
             if (!listEl) return;
             
             if (!logs || logs.length === 0) {
-                listEl.innerHTML = '<div class="text-gray-500 text-xs">�������� ��� �� �������������</div>';
+                listEl.innerHTML = '<div class="text-gray-500 text-xs">Действия еще не зафиксированы</div>';
                 return;
             }
             
@@ -1517,7 +1517,7 @@
                     var clientsHidden = clientsPanel.classList.contains('hidden');
                     if (clientsHidden) {
                         clientsPanel.classList.remove('hidden');
-                        _renderHistoryLogs('���� ��������');
+                        _renderHistoryLogs('База клиентов');
                     } else {
                         clientsPanel.classList.add('hidden');
                     }
@@ -1532,7 +1532,7 @@
                     var calendarHidden = calendarPanel.classList.contains('hidden');
                     if (calendarHidden) {
                         calendarPanel.classList.remove('hidden');
-                        _renderHistoryLogs('��������� ������ � �������');
+                        _renderHistoryLogs('Календарь встреч и показов');
                     } else {
                         calendarPanel.classList.add('hidden');
                     }
@@ -1644,24 +1644,24 @@
                 item.innerHTML =
                     '<div class="promo-admin-media-wrap">' +
                         previewMedia +
-                        '<span class="promo-admin-overlay-type">' + (photo.type === 'video' ? '�����' : '����') + '</span>' +
+                        '<span class="promo-admin-overlay-type">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                         (photo.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-info" style="min-width:0;">' +
-                        '<span class="promo-admin-type">' + (photo.type === 'video' ? '�����' : '����') + '</span>' +
-                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> �����</div>' : '') +
+                        '<span class="promo-admin-type">' + (photo.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                        (photo.hidden ? '<div class="text-xs text-orange-400 mt-1 promo-admin-hidden-label"><i class="fas fa-eye-slash"></i> Скрыт</div>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
-                        '<button class="site-about-photo-toggle admin-btn-eye" data-i="' + idx + '" title="' + (photo.hidden ? '�������� �����' : '������ �����') + '"><i class="fas ' + (photo.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
-                        '<button class="site-about-photo-up admin-btn-eye" data-i="' + idx + '" title="�����"><i class="fas fa-arrow-up"></i></button>' +
-                        '<button class="site-about-photo-down admin-btn-eye" data-i="' + idx + '" title="����"><i class="fas fa-arrow-down"></i></button>' +
-                        '<button class="site-about-photo-delete admin-btn-del" data-i="' + idx + '" title="�������"><i class="fas fa-trash"></i></button>' +
+                        '<button class="site-about-photo-toggle admin-btn-eye" data-i="' + idx + '" title="' + (photo.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (photo.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
+                        '<button class="site-about-photo-up admin-btn-eye" data-i="' + idx + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
+                        '<button class="site-about-photo-down admin-btn-eye" data-i="' + idx + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
+                        '<button class="site-about-photo-delete admin-btn-del" data-i="' + idx + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
                 if (photo.hidden) item.classList.add('promo-admin-item--hidden');
                 list.appendChild(item);
             });
             if (!photos.length) {
-                list.innerHTML = '<div class="text-gray-500 text-sm">���� ��� �������. �������� ������ ����.</div>';
+                list.innerHTML = '<div class="text-gray-500 text-sm">Пока нет слайдов. Добавьте первый выше.</div>';
             }
         }
 
@@ -1858,7 +1858,7 @@
             var stat3Input = document.getElementById('site-about-stat-3-value');
             if (stat3Input) {
                 stat3Input.readOnly = true;
-                stat3Input.title = '������������� �������������� �� �������������� ��������';
+                stat3Input.title = 'Автоматически рассчитывается по опубликованным объектам';
             }
 
             renderAboutPhotosAdmin(s);
@@ -1934,22 +1934,22 @@
                     }
                     const label = overlay.querySelector('.property-status-label');
                     if (label) {
-                        if (status === 'sold') label.textContent = '������';
-                        else if (status === 'reserved') label.textContent = '�������������';
+                        if (status === 'sold') label.textContent = 'ПРОДАН';
+                        else if (status === 'reserved') label.textContent = 'ЗАБРОНИРОВАНО';
                         else label.textContent = '';
                     }
                     if (status) {
-                        console.log('[STATUS] card', id, '> status:', status, ', overlay found:', !!overlay);
+                        console.log('[STATUS] card', id, '→ status:', status, ', overlay found:', !!overlay);
                     }
                 } else if (status) {
-                    console.log('[STATUS] card', id, '> status:', status, ', overlay NOT FOUND!');
+                    console.log('[STATUS] card', id, '→ status:', status, ', overlay NOT FOUND!');
                 }
             });
             // Also apply markers
             applyPropertyMarkers();
         }
 
-        // --- Property markers (hotprice / discount / exclusive) --------------------
+        // ─── Property markers (hotprice / discount / exclusive) ────────────────────
         function applyPropertyMarkers() {
             const store = getPropertyStatusStore();
             document.querySelectorAll('.property-card').forEach(card => {
@@ -1968,19 +1968,19 @@
                 if (entry.hotprice) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge hotprice-badge';
-                    b.innerHTML = '<i class="fas fa-fire"></i> ������� ����';
+                    b.innerHTML = '<i class="fas fa-fire"></i> ГОРЯЧАЯ ЦЕНА';
                     badgesContainer.appendChild(b);
                 }
                 if (entry.exclusive) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge exclusive-badge';
-                    b.innerHTML = '<i class="fas fa-gem"></i> ���������';
+                    b.innerHTML = '<i class="fas fa-gem"></i> ЭКСКЛЮЗИВ';
                     badgesContainer.appendChild(b);
                 }
                 if (entry.discount && entry.discountPrice) {
                     const b = document.createElement('div');
                     b.className = 'prop-marker-badge discount-badge';
-                    b.innerHTML = '<i class="fas fa-tag"></i> ������';
+                    b.innerHTML = '<i class="fas fa-tag"></i> СКИДКА';
                     badgesContainer.appendChild(b);
 
                     // Show discount price below original price
@@ -2161,7 +2161,7 @@
             });
 
             if (!links.length) {
-                container.innerHTML = '<div class="text-gray-500 text-sm py-2">������ ���� ���. �������� ������ ����.</div>';
+                container.innerHTML = '<div class="text-gray-500 text-sm py-2">Ссылок пока нет. Создайте первую выше.</div>';
                 return;
             }
 
@@ -2179,17 +2179,17 @@
                 <div class="campaign-link-row" data-campaign-id="${link.id}">
                     <div class="campaign-link-info">
                         <div class="campaign-link-name">${safeName}</div>
-                        <div class="campaign-link-meta"><i class="${srcIcon}" style="margin-right:5px;color:rgba(255,215,0,0.75);"></i>${safeSource} / ${safeMedium} &nbsp;�&nbsp; ������� ${created}</div>
+                        <div class="campaign-link-meta"><i class="${srcIcon}" style="margin-right:5px;color:rgba(255,215,0,0.75);"></i>${safeSource} / ${safeMedium} &nbsp;·&nbsp; создана ${created}</div>
                         <div class="campaign-link-url-wrap">
                             <input class="campaign-link-url" readonly value="${safeUrl}">
-                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="����������"><i class="fas fa-clone"></i></button>
+                            <button type="button" class="campaign-copy-btn" data-copy="${safeUrl}" title="Копировать"><i class="fas fa-clone"></i></button>
                         </div>
                     </div>
                     <div class="campaign-link-stats">
                         <div class="campaign-click-count">${clicks}</div>
-                        <div class="text-xs text-gray-400">������</div>
+                        <div class="text-xs text-gray-400">кликов</div>
                     </div>
-                    <button type="button" class="campaign-delete-btn" data-delete-id="${link.id}" title="�������"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="campaign-delete-btn" data-delete-id="${link.id}" title="Удалить"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('');
 
@@ -2217,7 +2217,7 @@
             container.querySelectorAll('.campaign-delete-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.dataset.deleteId;
-                    showConfirm('������� ����������� ������?', function() {
+                    showConfirm('Удалить трекинговую ссылку?', function() {
                         deleteCampaignLink(id);
                         renderCampaignLinksAdmin();
                         const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
@@ -2252,7 +2252,7 @@
                         if (srcHidden) srcHidden.value = val;
                         srcDisplay.innerHTML = val
                             ? `<i class="${icon}" style="margin-right:6px;color:rgba(255,215,0,0.8);"></i>${this.textContent.trim()}`
-                            : '<span style="color:rgba(255,255,255,0.35)">�������� ��������</span>';
+                            : '<span style="color:rgba(255,255,255,0.35)">Выберите источник</span>';
                         srcDrop.querySelectorAll('.csd-opt').forEach(o => o.classList.toggle('active', o === this));
                         srcDrop.style.display = 'none';
                     });
@@ -2271,10 +2271,10 @@
                 if (srcBtn) srcBtn.style.borderColor = source ? '' : 'rgba(239,68,68,0.7)';
                 if (!name || !source || !medium) {
                     const missing = [];
-                    if (!name) missing.push('��������');
-                    if (!source) missing.push('��������');
-                    if (!medium) missing.push('��� �������');
-                    alert('���������: ' + missing.join(', ') + '.');
+                    if (!name) missing.push('название');
+                    if (!source) missing.push('источник');
+                    if (!medium) missing.push('тип трафика');
+                    alert('Заполните: ' + missing.join(', ') + '.');
                     return;
                 }
                 nameEl.style.borderColor = '';
@@ -2283,7 +2283,7 @@
                 createCampaignLink(name, source, medium);
                 form.reset();
                 // Reset custom dropdown display
-                if (srcDisplay) srcDisplay.innerHTML = '<span style="color:rgba(255,255,255,0.35)">�������� ��������</span>';
+                if (srcDisplay) srcDisplay.innerHTML = '<span style="color:rgba(255,255,255,0.35)">Выберите источник</span>';
                 if (srcDrop) srcDrop.querySelectorAll('.csd-opt').forEach(o => o.classList.remove('active'));
                 renderCampaignLinksAdmin();
                 const currentPeriod = window.__veneraCurrentAnalyticsPeriod || 7;
@@ -2303,38 +2303,38 @@
             trackCampaignClick
         };
 
-        // ���������� ����� ������������ ��� ������� � data-��������� ��������.
+        // Справочник типов недвижимости для бейджей и data-атрибутов карточки.
         function getPropertyTypeMeta(typeValue) {
             const normalized = String(typeValue || '').trim().toLowerCase();
             const map = {
-                premium: { label: '�������', tagClass: 'premium-tag', dataType: 'premium' },
-                '�������': { label: '�������', tagClass: 'premium-tag', dataType: 'premium' },
-                '��������': { label: '��������', tagClass: 'secondary-tag', dataType: '��������' },
-                secondary: { label: '��������', tagClass: 'secondary-tag', dataType: '��������' },
-                newbuilding: { label: '���������', tagClass: 'newbuilding-tag', dataType: 'newbuilding' },
-                '���������': { label: '���������', tagClass: 'newbuilding-tag', dataType: 'newbuilding' },
-                commercial: { label: '������������', tagClass: 'commercial-tag', dataType: 'commercial' },
-                '������������': { label: '������������', tagClass: 'commercial-tag', dataType: 'commercial' },
-                rental: { label: '������', tagClass: 'rental-tag', dataType: 'rental' },
-                '������': { label: '������', tagClass: 'rental-tag', dataType: 'rental' },
-                garage: { label: '�����', tagClass: 'garage-tag', dataType: '�����' },
-                '�����': { label: '�����', tagClass: 'garage-tag', dataType: '�����' },
-                parking: { label: '��������', tagClass: 'parking-tag', dataType: '��������' },
-                '��������': { label: '��������', tagClass: 'parking-tag', dataType: '��������' },
-                storage: { label: '��������', tagClass: 'storage-tag', dataType: '��������' },
-                '��������': { label: '��������', tagClass: 'storage-tag', dataType: '��������' },
-                house: { label: '���', tagClass: 'house-tag', dataType: '���' },
-                '���': { label: '���', tagClass: 'house-tag', dataType: '���' },
-                land: { label: '�������', tagClass: 'land-tag', dataType: '�������' },
-                '�������': { label: '�������', tagClass: 'land-tag', dataType: '�������' }
+                premium: { label: 'ПРЕМИУМ', tagClass: 'premium-tag', dataType: 'premium' },
+                'премиум': { label: 'ПРЕМИУМ', tagClass: 'premium-tag', dataType: 'premium' },
+                'вторичка': { label: 'ВТОРИЧКА', tagClass: 'secondary-tag', dataType: 'Вторичка' },
+                secondary: { label: 'ВТОРИЧКА', tagClass: 'secondary-tag', dataType: 'Вторичка' },
+                newbuilding: { label: 'НОВОСТРОЙ', tagClass: 'newbuilding-tag', dataType: 'newbuilding' },
+                'новострой': { label: 'НОВОСТРОЙ', tagClass: 'newbuilding-tag', dataType: 'newbuilding' },
+                commercial: { label: 'КОММЕРЧЕСКАЯ', tagClass: 'commercial-tag', dataType: 'commercial' },
+                'коммерческая': { label: 'КОММЕРЧЕСКАЯ', tagClass: 'commercial-tag', dataType: 'commercial' },
+                rental: { label: 'АРЕНДА', tagClass: 'rental-tag', dataType: 'rental' },
+                'аренда': { label: 'АРЕНДА', tagClass: 'rental-tag', dataType: 'rental' },
+                garage: { label: 'ГАРАЖ', tagClass: 'garage-tag', dataType: 'гараж' },
+                'гараж': { label: 'ГАРАЖ', tagClass: 'garage-tag', dataType: 'гараж' },
+                parking: { label: 'ПАРКОВКА', tagClass: 'parking-tag', dataType: 'парковка' },
+                'парковка': { label: 'ПАРКОВКА', tagClass: 'parking-tag', dataType: 'парковка' },
+                storage: { label: 'КЛАДОВКА', tagClass: 'storage-tag', dataType: 'кладовка' },
+                'кладовка': { label: 'КЛАДОВКА', tagClass: 'storage-tag', dataType: 'кладовка' },
+                house: { label: 'ДОМ', tagClass: 'house-tag', dataType: 'дом' },
+                'дом': { label: 'ДОМ', tagClass: 'house-tag', dataType: 'дом' },
+                land: { label: 'УЧАСТОК', tagClass: 'land-tag', dataType: 'участок' },
+                'участок': { label: 'УЧАСТОК', tagClass: 'land-tag', dataType: 'участок' }
             };
 
-            return map[normalized] || { label: '�������', tagClass: 'premium-tag', dataType: 'premium' };
+            return map[normalized] || { label: 'ПРЕМИУМ', tagClass: 'premium-tag', dataType: 'premium' };
         }
 
         function formatPriceValue(value) {
             const price = Number(value) || 0;
-            return `�${price.toLocaleString('en-US')}`;
+            return `€${price.toLocaleString('en-US')}`;
         }
 
         function toPositiveNumber(value, fallback = 0) {
@@ -2417,7 +2417,7 @@
 
         function composePropertyFullAddress(city, district, addressLine) {
             const normalizedDistrict = String(district || '').trim();
-            const districtForAddress = /^(���\s+������|���\s+�����|all\s+districts|--\s*��������\s+�����\s*--|all)$/i.test(normalizedDistrict)
+            const districtForAddress = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(normalizedDistrict)
                 ? ''
                 : normalizedDistrict;
 
@@ -2439,7 +2439,7 @@
 
             const normalizedCity = String(city || '').trim().toLowerCase();
             const normalizedDistrictRaw = String(district || '').trim();
-            const normalizedDistrict = /^(���\s+������|���\s+�����|all\s+districts|--\s*��������\s+�����\s*--|all)$/i.test(normalizedDistrictRaw)
+            const normalizedDistrict = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(normalizedDistrictRaw)
                 ? ''
                 : normalizedDistrictRaw.toLowerCase();
 
@@ -2465,7 +2465,7 @@
             }
 
             const secondToken = tokens[index] ? tokens[index].toLowerCase() : '';
-            const isGenericDistrictToken = /^(���\s+������|���\s+�����|all\s+districts|--\s*��������\s+�����\s*--|all)$/i.test(secondToken);
+            const isGenericDistrictToken = /^(все\s+районы|все\s+район|all\s+districts|--\s*выберите\s+район\s*--|all)$/i.test(secondToken);
             const isDistrictToken = !!secondToken && (
                 isGenericDistrictToken ||
                 (normalizedDistrict && secondToken === normalizedDistrict) ||
@@ -2514,7 +2514,7 @@
                 return _geocodeCache.get(cacheKey);
             }
 
-            const queryAddress = /moldova|�������/i.test(normalizedAddress)
+            const queryAddress = /moldova|молдова/i.test(normalizedAddress)
                 ? normalizedAddress
                 : `${normalizedAddress}, ${GEOCODE_COUNTRY_HINT}`;
 
@@ -2667,10 +2667,10 @@
             return normalizePhotosValue(photos).join(', ');
         }
 
-        // �������� � ������� ������ ������� ����� ����������� �� ��������.
+        // Проверка и очистка данных объекта перед добавлением на страницу.
         function validateAndNormalizeConfiguredProperty(property, index) {
             if (!property || typeof property !== 'object') {
-                console.warn(`������ ������� #${index + 1} ��������: �������� ������.`);
+                console.warn(`Конфиг объекта #${index + 1} пропущен: ожидался объект.`);
                 return null;
             }
 
@@ -2679,17 +2679,17 @@
             const district = String(property.district || '').trim();
 
             if (!title) {
-                console.warn(`������ ������� #${index + 1} ��������: ���� title �����������.`);
+                console.warn(`Конфиг объекта #${index + 1} пропущен: поле title обязательно.`);
                 return null;
             }
 
             if (!city) {
-                console.warn(`������ ������� "${title}" ��������: ���� city �����������.`);
+                console.warn(`Конфиг объекта "${title}" пропущен: поле city обязательно.`);
                 return null;
             }
 
             if (!district) {
-                console.warn(`������ ������� "${title}" ��������: ���� district �����������.`);
+                console.warn(`Конфиг объекта "${title}" пропущен: поле district обязательно.`);
                 return null;
             }
 
@@ -2699,7 +2699,7 @@
                 title,
                 city,
                 district,
-                type: String(property.type || '�������').trim(),
+                type: String(property.type || 'Премиум').trim(),
                 listingMode: normalizeListingMode(property.listingMode, property.type),
                 coords: normalizeCoords(property.coords) || extractCoordsFromText(property.fullAddress),
                 rieltorId: property.rieltorId ? String(property.rieltorId).trim() : '',
@@ -2721,7 +2721,7 @@
             };
 
             if (!normalized.coords) {
-                console.warn(`������ "${title}": ���� coords ������ ��� ������������. �������� ��������� ��� ������ ����� �� �����.`);
+                console.warn(`Объект "${title}": поле coords пустое или некорректное. Карточка добавлена без точной метки на карте.`);
             }
 
             return normalized;
@@ -2739,7 +2739,7 @@
             return maxId;
         }
 
-        // ������ HTML �������� ������� �� ������ �������.
+        // Сборка HTML карточки объекта из записи конфига.
         function buildPropertyFeatureItems(property) {
             const items = [];
             const area = Number(property.area);
@@ -2752,15 +2752,15 @@
             const bathroom = String(property.bathroom || '').trim();
             const balcony = String(property.balcony || '').trim();
 
-            if (Number.isFinite(area) && area > 0) items.push({ label: '�������', value: `${area} �?` });
-            if (Number.isFinite(rooms) && rooms > 0) items.push({ label: '������', value: String(rooms) });
-            if (floors) items.push({ label: '����', value: floors });
-            if (Number.isFinite(land) && land > 0) items.push({ label: '�������', value: `${land} ���.` });
-            if (Number.isFinite(parking) && parking > 0) items.push({ label: '��������', value: String(parking) });
-            if (Number.isFinite(year) && year > 0) items.push({ label: '���', value: String(year) });
-            if (condition) items.push({ label: '���������', value: condition });
-            if (bathroom) items.push({ label: '�������', value: bathroom });
-            if (balcony) items.push({ label: '������', value: balcony });
+            if (Number.isFinite(area) && area > 0) items.push({ label: 'Площадь', value: `${area} м²` });
+            if (Number.isFinite(rooms) && rooms > 0) items.push({ label: 'Комнат', value: String(rooms) });
+            if (floors) items.push({ label: 'Этаж', value: floors });
+            if (Number.isFinite(land) && land > 0) items.push({ label: 'Участок', value: `${land} сот.` });
+            if (Number.isFinite(parking) && parking > 0) items.push({ label: 'Парковка', value: String(parking) });
+            if (Number.isFinite(year) && year > 0) items.push({ label: 'Год', value: String(year) });
+            if (condition) items.push({ label: 'Состояние', value: condition });
+            if (bathroom) items.push({ label: 'Санузел', value: bathroom });
+            if (balcony) items.push({ label: 'Балкон', value: balcony });
 
             return items;
         }
@@ -2772,7 +2772,7 @@
             const shortAddress = property.address || '';
             const fullAddress = property.fullAddress || `${city}, ${district}, ${shortAddress}`.replace(/(^,\s*)|(,\s*,)/g, '').replace(/,\s*$/, '');
             const image = property.mainPhoto || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1470&q=80';
-            const title = property.title || `������ ${propertyId}`;
+            const title = property.title || `Объект ${propertyId}`;
             const listingMode = normalizeListingMode(property.listingMode, property.type);
             const priceValue = Number(property.price) || 0;
             const area = property.area || 0;
@@ -2787,14 +2787,14 @@
                      data-id="${propertyId}" data-city="${city}" data-district="${district}" data-type="${typeMeta.dataType}" data-listing-mode="${listingMode}" data-coords="${property.coords || ''}" data-rieltor-id="${rieltorId}"
                      data-price="${priceValue}" data-area="${area}" data-rooms="${rooms}" data-floors="${floors}"
                      data-year="${property.year || ''}" data-land="${property.land || ''}" data-parking="${property.parking || ''}" data-address="${shortAddress}"
-                     data-full-address="${fullAddress}" data-description="${property.description || ''}" data-condition="${property.condition || '����������'}"
-                     data-bathroom="${property.bathroom || '����������'}" data-balcony="${property.balcony || '1 ������'}" data-main-photo="${image}" data-photos="${photosSerialized}">
+                     data-full-address="${fullAddress}" data-description="${property.description || ''}" data-condition="${property.condition || 'Евроремонт'}"
+                     data-bathroom="${property.bathroom || 'Раздельный'}" data-balcony="${property.balcony || '1 балкон'}" data-main-photo="${image}" data-photos="${photosSerialized}">
                     <div class="relative" style="position:relative">
                         <img src="${image}" alt="${title}" class="w-full h-64 object-cover">
                         <div class="property-status-overlay" data-status=""><span class="property-status-label"></span></div>
                         <div class="property-badges">
                             <div class="type-tag ${typeMeta.tagClass}">${typeMeta.label}</div>
-                            <div class="${listingBadgeClass}">������</div>
+                            <div class="${listingBadgeClass}">Аренда</div>
                         </div>
                         <div class="price-tag gold-bg text-black font-bold px-4 py-2 rounded-full">
                             ${formatPriceValue(priceValue)}
@@ -2811,20 +2811,20 @@
                         </div>
                         <div class="grid grid-cols-3 gap-2 mb-4">
                             <div class="text-center">
-                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-ruler-combined property-spec-icon" aria-hidden="true"></i><span>�������</span></div>
-                                <div class="font-semibold">${area > 0 ? `${area} �?` : '-'}</div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-ruler-combined property-spec-icon" aria-hidden="true"></i><span>Площадь</span></div>
+                                <div class="font-semibold">${area > 0 ? `${area} м²` : '-'}</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-bed property-spec-icon" aria-hidden="true"></i><span>������</span></div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-bed property-spec-icon" aria-hidden="true"></i><span>Комнат</span></div>
                                 <div class="font-semibold">${rooms > 0 ? rooms : '-'}</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-layer-group property-spec-icon" aria-hidden="true"></i><span>����</span></div>
+                                <div class="text-sm text-gray-400 property-spec-label"><i class="fas fa-layer-group property-spec-icon" aria-hidden="true"></i><span>Этаж</span></div>
                                 <div class="font-semibold">${floors || '-'}</div>
                             </div>
                         </div>
                         <button class="view-details-btn w-full gold-bg text-black font-bold py-2 px-4 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300" data-price="${priceValue}">
-                            ���������
+                            Подробнее
                         </button>
                     </div>
                 </div>
@@ -2856,7 +2856,7 @@
             return { added: true, card, propertyId, maxId };
         }
 
-        // �������� �������� �� properties.config.js � ������� �����.
+        // Загрузка объектов из properties.config.js в каталог сайта.
         function appendConfiguredProperties() {
             const extraProperties = Array.isArray(window.VENERA_PROPERTIES_CONFIG)
                 ? window.VENERA_PROPERTIES_CONFIG
@@ -2892,7 +2892,7 @@
             });
 
             if (addedCount > 0 || skippedCount > 0) {
-                console.info(`������ ��������: ��������� ${addedCount}, ��������� ${skippedCount}.`);
+                console.info(`Конфиг объектов: добавлено ${addedCount}, пропущено ${skippedCount}.`);
             }
         }
 
@@ -2909,7 +2909,7 @@
             }
         });
 
-        // ��������� ������� "�������� � �������" �� ��������� ����� ��������.
+        // Обновляем счётчик "Объектов в продаже" по реальному числу карточек.
         function updatePropertiesForSaleCount() {
             const count = document.querySelectorAll('.property-card').length;
             const ids = ['properties-for-sale-count', 'about-stat-3-value'];
@@ -2966,7 +2966,7 @@
             return hasMatches;
         }
 
-        // === ������ ������� � �����-������ (����� ��������) ===
+        // === Пароль доступа в админ-панель (можно изменить) ===
         const ADMIN_PASSWORD = 'venera2026';
 
         function clearRealtorSession() {
@@ -3010,7 +3010,7 @@
             // Resolve period to fromTs / toTs
             var periodDays = 30;
             var fromTs, toTs;
-            var periodLabel = '30�';
+            var periodLabel = '30д';
             var viewsDaysWindow = 14;
 
             if (period && typeof period === 'object' && period.mode === 'custom') {
@@ -3022,15 +3022,15 @@
                     var d = new Date(iso + 'T00:00:00');
                     return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
                 };
-                periodLabel = fmt(period.startDate) + '�' + fmt(period.endDate);
+                periodLabel = fmt(period.startDate) + '–' + fmt(period.endDate);
                 viewsDaysWindow = Math.min(periodDays, 60);
             } else {
                 periodDays = Number(period) || 30;
                 fromTs = now - periodDays * dayMs;
                 toTs = now;
-                if (periodDays === 1) { periodLabel = '1�'; }
-                else if (periodDays === 365) { periodLabel = '1 ���'; }
-                else { periodLabel = periodDays + '�'; }
+                if (periodDays === 1) { periodLabel = '1д'; }
+                else if (periodDays === 365) { periodLabel = '1 год'; }
+                else { periodLabel = periodDays + 'д'; }
                 viewsDaysWindow = Math.min(periodDays, 60);
             }
 
@@ -3072,7 +3072,7 @@
 
             var typeCounts = {};
             recentNotes.forEach(function(n) {
-                var t = String(n.type || '������');
+                var t = String(n.type || 'Другое');
                 typeCounts[t] = (typeCounts[t] || 0) + 1;
             });
 
@@ -3082,7 +3082,7 @@
             if (pLblEl) pLblEl.textContent = periodLabel;
             if (pLblEl2) pLblEl2.textContent = periodLabel;
             var chartTitleEl = document.getElementById('realtor-views-daily-chart-title');
-            if (chartTitleEl) chartTitleEl.textContent = '�������� ���������� (' + (viewsDaysWindow <= 1 ? '1 ����' : viewsDaysWindow + ' ��') + ')';
+            if (chartTitleEl) chartTitleEl.textContent = 'Динамика просмотров (' + (viewsDaysWindow <= 1 ? '1 день' : viewsDaysWindow + ' дн') + ')';
 
             function setEl(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
             setEl('realtor-stat-clients', myClients.length);
@@ -3115,7 +3115,7 @@
                     data: {
                         labels: viewsLabels.map(function(k) { return k.slice(5); }),
                         datasets: [{
-                            label: '���������',
+                            label: 'Просмотры',
                             data: viewsValues,
                             borderColor: '#FFD700',
                             backgroundColor: 'rgba(255,215,0,0.2)',
@@ -3138,7 +3138,7 @@
                 setChart('realtorClientFunnel', 'realtor-client-funnel-chart', {
                     type: 'bar',
                     data: {
-                        labels: ['� ��������', '������', '�����'],
+                        labels: ['В ожидании', 'Сделка', 'Отказ'],
                         datasets: [{
                             data: [pending, success, reject],
                             backgroundColor: ['#f59e0b', '#22c55e', '#ef4444']
@@ -3158,7 +3158,7 @@
                 var typeLabels = Object.keys(typeCounts);
                 var typeValues = typeLabels.map(function(k) { return typeCounts[k]; });
                 if (!typeLabels.length) {
-                    typeLabels = ['��� ������'];
+                    typeLabels = ['Нет данных'];
                     typeValues = [1];
                 }
                 setChart('realtorCalendarTypes', 'realtor-calendar-type-chart', {
@@ -3184,9 +3184,9 @@
                 setChart('realtorEngagement', 'realtor-engagement-chart', {
                     type: 'radar',
                     data: {
-                        labels: ['���������', '������������', '���������', '����� �������'],
+                        labels: ['Просмотры', 'Планирование', 'Конверсия', 'Новые объекты'],
                         datasets: [{
-                            label: '��� ������',
+                            label: 'Ваш индекс',
                             data: [engagementViews, engagementEvents, engagementConv, engagementNew],
                             borderColor: '#FFD700',
                             backgroundColor: 'rgba(255,215,0,0.18)'
@@ -3215,7 +3215,7 @@
             if (!panel) return;
             panel.removeAttribute('data-realtor-mode');
             var header = document.getElementById('admin-panel-title');
-            if (header) header.textContent = 'Venera �����-������';
+            if (header) header.textContent = 'Venera Админ-панель';
             var ri = document.getElementById('realtor-panel-info');
             if (ri) ri.classList.add('hidden');
             panel.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = ''; });
@@ -3237,7 +3237,7 @@
             if (!panel) return;
             panel.setAttribute('data-realtor-mode', '1');
             var header = document.getElementById('admin-panel-title');
-            if (header) header.textContent = '������ ��������';
+            if (header) header.textContent = 'Панель риелтора';
             var ri = document.getElementById('realtor-panel-info');
             if (ri) {
                 var nameEl = ri.querySelector('.realtor-panel-name');
@@ -3269,7 +3269,7 @@
                 document.body.style.overflow = '';
                 document.body.style.touchAction = '';
             } else {
-                // Fixed overlay panel � block body scroll, but keep touchAction so panel scrolls on mobile
+                // Fixed overlay panel — block body scroll, but keep touchAction so panel scrolls on mobile
                 document.body.style.overflow = 'hidden';
                 document.body.style.touchAction = '';
             }
@@ -3327,16 +3327,16 @@
             if (!cleanCity) return;
 
             if (!cityDistricts[cleanCity]) {
-                cityDistricts[cleanCity] = ['��� ������'];
+                cityDistricts[cleanCity] = ['Все районы'];
             }
 
-            if (cleanDistrict && cleanDistrict !== '��� ������' && !cityDistricts[cleanCity].includes(cleanDistrict)) {
+            if (cleanDistrict && cleanDistrict !== 'Все районы' && !cityDistricts[cleanCity].includes(cleanDistrict)) {
                 cityDistricts[cleanCity].push(cleanDistrict);
             }
 
             cityDistricts[cleanCity] = Array.from(new Set(cityDistricts[cleanCity])).sort((a, b) => {
-                if (a === '��� ������') return -1;
-                if (b === '��� ������') return 1;
+                if (a === 'Все районы') return -1;
+                if (b === 'Все районы') return 1;
                 return a.localeCompare(b, 'ru');
             });
         }
@@ -3345,19 +3345,19 @@
             return String(value || '')
                 .trim()
                 .toLowerCase()
-                .replace(/�/g, '�');
+                .replace(/ё/g, 'е');
         }
 
         function getDistrictsForCity(city) {
             const cleanCity = String(city || '').trim();
-            if (!cleanCity) return ['��� ������'];
+            if (!cleanCity) return ['Все районы'];
 
             const normalizedCity = _normalizeCityName(cleanCity);
             const districtSet = new Set();
 
             function addDistrict(value) {
                 const district = String(value || '').trim();
-                if (!district || district === '��� ������') return;
+                if (!district || district === 'Все районы') return;
                 districtSet.add(district);
             }
 
@@ -3376,12 +3376,12 @@
             });
 
             const specificDistricts = Array.from(districtSet).sort((a, b) => a.localeCompare(b, 'ru'));
-            return ['��� ������'].concat(specificDistricts);
+            return ['Все районы'].concat(specificDistricts);
         }
 
         function syncCityDistrictCatalog() {
             const { cities, districtsByCity } = getUniqueCitiesAndDistricts();
-            cities.forEach(city => registerCityDistrict(city, '��� ������'));
+            cities.forEach(city => registerCityDistrict(city, 'Все районы'));
             Object.keys(districtsByCity).forEach(city => {
                 districtsByCity[city].forEach(district => registerCityDistrict(city, district));
             });
@@ -3406,12 +3406,12 @@
                 citiesToShow = citiesToShow.filter(c => activeCities.has(c));
             }
 
-            const currentValue = searchCity.value || '���';
+            const currentValue = searchCity.value || 'Все';
             searchCity.innerHTML = '';
 
             const allOption = document.createElement('option');
-            allOption.value = '���';
-            allOption.textContent = '��� ������';
+            allOption.value = 'Все';
+            allOption.textContent = 'Все города';
             searchCity.appendChild(allOption);
 
             citiesToShow.forEach(city => {
@@ -3422,7 +3422,7 @@
             });
 
             const canRestore = Array.from(searchCity.options).some(option => option.value === currentValue);
-            searchCity.value = canRestore ? currentValue : '���';
+            searchCity.value = canRestore ? currentValue : 'Все';
         }
 
         function populateCitySelect() {
@@ -3432,7 +3432,7 @@
             syncCityDistrictCatalog();
             const cities = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
             const currentValue = citySelect.value || '';
-            citySelect.innerHTML = '<option value="">-- �������� ����� --</option>';
+            citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
             
             cities.forEach(city => {
                 const option = document.createElement('option');
@@ -3458,7 +3458,7 @@
             const currentDistrict = districtSelect.value || '';
             const districts = getDistrictsForCity(selectedCity);
 
-            districtSelect.innerHTML = '<option value="">-- �������� ����� --</option>';
+            districtSelect.innerHTML = '<option value="">-- Выберите район --</option>';
             
             districts.forEach(district => {
                 const option = document.createElement('option');
@@ -3494,22 +3494,22 @@
 
             const cities = sortCitiesWithChisinauFirst(Object.keys(cityDistricts));
             cities.forEach(city => {
-                const districts = cityDistricts[city] || ['��� ������'];
+                const districts = cityDistricts[city] || ['Все районы'];
                 const card = document.createElement('div');
                 card.className = 'rounded-xl p-3';
                 card.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.12);';
                 card.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <span class="font-semibold text-sm" style="color:#ffd700;">${_escHtml(city)}</span>
-                        <button type="button" class="city-manager-delete-city cal-btn-cancel" data-city="${_escHtml(city)}" style="padding:2px 10px;font-size:0.78rem;" title="������� �����">
+                        <button type="button" class="city-manager-delete-city cal-btn-cancel" data-city="${_escHtml(city)}" style="padding:2px 10px;font-size:0.78rem;" title="Удалить город">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                     <div class="flex flex-wrap gap-1 mb-2" id="city-districts-${_escAttr(city)}">
-                        ${districts.map(d => d === '��� ������' ? '' : `<span class="inline-flex items-center gap-1 px-2 py-0 rounded-full text-xs" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#e5c84e;">${_escHtml(d)}<button type="button" class="city-manager-delete-district ml-1" data-city="${_escAttr(city)}" data-district="${_escAttr(d)}" title="������� �����" style="background:none;border:none;cursor:pointer;color:#e57e7e;line-height:1;">&times;</button></span>`).join('')}
+                        ${districts.map(d => d === 'Все районы' ? '' : `<span class="inline-flex items-center gap-1 px-2 py-0 rounded-full text-xs" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#e5c84e;">${_escHtml(d)}<button type="button" class="city-manager-delete-district ml-1" data-city="${_escAttr(city)}" data-district="${_escAttr(d)}" title="Удалить район" style="background:none;border:none;cursor:pointer;color:#e57e7e;line-height:1;">&times;</button></span>`).join('')}
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" class="cal-input flex-1" placeholder="����� �����..." style="font-size:0.82rem;padding:4px 8px;" data-add-district-for="${_escAttr(city)}">
+                        <input type="text" class="cal-input flex-1" placeholder="Новый район..." style="font-size:0.82rem;padding:4px 8px;" data-add-district-for="${_escAttr(city)}">
                         <button type="button" class="city-manager-add-district cal-btn-primary" data-city="${_escAttr(city)}" style="padding:4px 12px;font-size:0.78rem;white-space:nowrap;"><i class="fas fa-plus"></i></button>
                     </div>
                 `;
@@ -3540,7 +3540,7 @@
                     renderCityManager();
                     populateSearchCitySelect();
                     if (typeof updateDistricts === 'function') updateDistricts();
-                    showToast('����� �������: ���������� ���', 'success');
+                    showToast('Режим городов: показывать все', 'success');
                     if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
                 });
             }
@@ -3550,7 +3550,7 @@
                     renderCityManager();
                     populateSearchCitySelect();
                     if (typeof updateDistricts === 'function') updateDistricts();
-                    showToast('����� �������: ������ � ���������', 'success');
+                    showToast('Режим городов: только с объектами', 'success');
                     if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
                 });
             }
@@ -3562,11 +3562,11 @@
                 addCityBtn.addEventListener('click', function() {
                     const name = newCityInput.value.trim();
                     if (!name) return;
-                    if (cityDistricts[name]) { showToast('����� ����� ��� ����', 'warning'); return; }
-                    cityDistricts[name] = ['��� ������'];
+                    if (cityDistricts[name]) { showToast('Такой город уже есть', 'warning'); return; }
+                    cityDistricts[name] = ['Все районы'];
                     newCityInput.value = '';
                     _cityManagerSaveAndRefresh();
-                    showToast('����� ��������: ' + name, 'success');
+                    showToast('Город добавлен: ' + name, 'success');
                 });
                 newCityInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') addCityBtn.click(); });
             }
@@ -3575,10 +3575,10 @@
             const resetBtn = document.getElementById('city-manager-reset-btn');
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
-                    showConfirm('�������� ������ ������� � ������� � ����������� ���������?', function() {
+                    showConfirm('Сбросить список городов и районов к стандартным значениям?', function() {
                         cityDistricts = JSON.parse(JSON.stringify(DEFAULT_CITY_DISTRICTS));
                         _cityManagerSaveAndRefresh();
-                        showToast('������ �������� � �����������', 'success');
+                        showToast('Города сброшены к стандартным', 'success');
                     });
                 });
             }
@@ -3589,10 +3589,10 @@
                 const delCity = e.target.closest('.city-manager-delete-city');
                 if (delCity) {
                     const city = delCity.dataset.city;
-                    showConfirm('������� ����� �' + city + '� � ��� ��� ������?', function() {
+                    showConfirm('Удалить город «' + city + '» и все его районы?', function() {
                         delete cityDistricts[city];
                         _cityManagerSaveAndRefresh();
-                        showToast('����� �����: ' + city, 'success');
+                        showToast('Город удалён: ' + city, 'success');
                     });
                     return;
                 }
@@ -3601,12 +3601,12 @@
                 if (delDist) {
                     const city = delDist.dataset.city;
                     const district = delDist.dataset.district;
-                    showConfirm('������� ����� �' + district + '� �� ������ �' + city + '�?', function() {
+                    showConfirm('Удалить район «' + district + '» из города «' + city + '»?', function() {
                         if (cityDistricts[city]) {
                             cityDistricts[city] = cityDistricts[city].filter(d => d !== district);
-                            if (!cityDistricts[city].includes('��� ������')) cityDistricts[city].unshift('��� ������');
+                            if (!cityDistricts[city].includes('Все районы')) cityDistricts[city].unshift('Все районы');
                             _cityManagerSaveAndRefresh();
-                            showToast('����� �����', 'success');
+                            showToast('Район удалён', 'success');
                         }
                     });
                     return;
@@ -3618,14 +3618,14 @@
                     const input = container.querySelector(`input[data-add-district-for="${CSS.escape(city)}"]`);
                     if (!input) return;
                     const name = input.value.trim();
-                    if (!name || name === '��� ������') return;
-                    if (!cityDistricts[city]) cityDistricts[city] = ['��� ������'];
-                    if (cityDistricts[city].includes(name)) { showToast('����� ����� ��� ����', 'warning'); return; }
+                    if (!name || name === 'Все районы') return;
+                    if (!cityDistricts[city]) cityDistricts[city] = ['Все районы'];
+                    if (cityDistricts[city].includes(name)) { showToast('Такой район уже есть', 'warning'); return; }
                     cityDistricts[city].push(name);
-                    cityDistricts[city] = Array.from(new Set(cityDistricts[city])).sort((a, b) => a === '��� ������' ? -1 : b === '��� ������' ? 1 : a.localeCompare(b, 'ru'));
+                    cityDistricts[city] = Array.from(new Set(cityDistricts[city])).sort((a, b) => a === 'Все районы' ? -1 : b === 'Все районы' ? 1 : a.localeCompare(b, 'ru'));
                     input.value = '';
                     _cityManagerSaveAndRefresh();
-                    showToast('����� ��������: ' + name, 'success');
+                    showToast('Район добавлен: ' + name, 'success');
                 }
             });
 
@@ -3707,7 +3707,7 @@
             const closeAdminPanel = document.getElementById('close-admin-panel');
             const openAdminPanelLinks = document.querySelectorAll('#admin-panel-link, #admin-panel-link-desktop');
 
-            // Open admin panel - ����� �����������
+            // Open admin panel - через авторизацию
             openAdminPanelLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -3715,7 +3715,7 @@
                 });
             });
 
-            // Close admin panel (logout � clears session)
+            // Close admin panel (logout — clears session)
             closeAdminPanel.addEventListener('click', function() {
                 clearRealtorSession();
                 sessionStorage.removeItem(ADMIN_SESSION_KEY);
@@ -3730,7 +3730,7 @@
                 document.body.style.position = '';
             });
 
-            // Logo click � go to main page WITHOUT clearing session (minimize only)
+            // Logo click — go to main page WITHOUT clearing session (minimize only)
             const adminLogoHome = document.getElementById('admin-logo-home');
             if (adminLogoHome) {
                 adminLogoHome.addEventListener('click', function(e) {
@@ -3878,11 +3878,11 @@
                             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${card.dataset.fullAddress || card.dataset.address || ''}</span>
                         </div>
                         <div class="flex gap-2 mt-3">
-                            <button class="edit-property admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">��������</button>
-                            <button class="toggle-hide-property admin-btn-eye py-2 text-xs" data-index="${index}" data-id="${cardId}" title="${isHidden ? '��������' : '������'}">
+                            <button class="edit-property admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
+                            <button class="toggle-hide-property admin-btn-eye py-2 text-xs" data-index="${index}" data-id="${cardId}" title="${isHidden ? 'Показать' : 'Скрыть'}">
                                 <i class="fas ${eyeIcon}" style="opacity:${eyeOpacity};"></i>
                             </button>
-                            <button class="delete-property admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">�������</button>
+                            <button class="delete-property admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
                         </div>
                     </div>
                 `;
@@ -3909,7 +3909,7 @@
                 const agentStore = getAgentStatusStore();
                 const isHidden = !!(agentStore[agentId] && agentStore[agentId].hidden);
                 const hiddenClass = isHidden ? 'active-hidden' : '';
-                const hiddenLabel = isHidden ? '��������' : '������';
+                const hiddenLabel = isHidden ? 'Показать' : 'Скрыть';
 
                 const socials = [
                     agent.whatsapp ? `<a href="https://wa.me/${agent.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#ffd700;opacity:0.8;" title="WhatsApp"><i class="fab fa-whatsapp" style="font-size:1.1rem;"></i></a>` : '',
@@ -3936,24 +3936,24 @@
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
                             <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:8px 10px;">
-                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;"><i class="fas fa-phone" style="margin-right:4px;"></i>�������</div>
-                                <div style="font-size:0.75rem;color:#fff;word-break:break-all;">${agent.phone || '�'}</div>
+                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;"><i class="fas fa-phone" style="margin-right:4px;"></i>Телефон</div>
+                                <div style="font-size:0.75rem;color:#fff;word-break:break-all;">${agent.phone || '—'}</div>
                             </div>
                             <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:8px 10px;text-align:center;">
-                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">��������</div>
+                                <div style="font-size:0.65rem;color:rgba(255,215,0,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Объектов</div>
                                 <div style="font-size:1.3rem;font-weight:700;color:#ffd700;line-height:1;">${exactCount}</div>
                             </div>
                         </div>
                         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:7px 10px;margin-bottom:auto;">
                             <i class="fas fa-envelope" style="color:rgba(255,215,0,0.5);margin-right:6px;font-size:0.7rem;"></i>
-                            <span style="font-size:0.75rem;color:rgba(255,255,255,0.6);">${agent.email || 'Email �� ������'}</span>
+                            <span style="font-size:0.75rem;color:rgba(255,255,255,0.6);">${agent.email || 'Email не указан'}</span>
                         </div>
                         <div class="flex gap-2 mt-3">
-                            <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">��������</button>
+                            <button class="edit-agent admin-btn-edit flex-1 py-2 text-xs font-medium" data-index="${index}">Изменить</button>
                             <button class="hide-agent prop-status-btn flex-1 py-2 text-xs font-medium ${hiddenClass}" data-rieltor-id="${agentId}" style="flex:none;width:auto;padding:6px 12px;">
                                 <i class="fas fa-eye-slash" style="margin-right:4px;"></i>${hiddenLabel}
                             </button>
-                            <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">�������</button>
+                            <button class="delete-agent admin-btn-del flex-1 py-2 text-xs font-medium" data-index="${index}">Удалить</button>
                         </div>
                     </div>
                 `;
@@ -3979,7 +3979,7 @@
             if (typeof _refreshClientCatalogSelects === 'function') _refreshClientCatalogSelects();
             if (typeof populateRealtorDropdown === 'function') populateRealtorDropdown();
             if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
-            if (typeof showToast === 'function') showToast('������� ��������� ��������');
+            if (typeof showToast === 'function') showToast('Порядок риелторов обновлен');
         }
 
         function initAgentReorderDnD() {
@@ -4090,7 +4090,7 @@
             
             if (index !== null) {
                 // Edit existing property
-                title.textContent = '�������� ������';
+                title.textContent = 'Изменить объект';
                 const card = document.querySelectorAll('.property-card')[index];
                 const data = card.dataset;
                 
@@ -4111,9 +4111,9 @@
                 document.getElementById('property-floors').value = data.floors || '';
                 document.getElementById('property-land').value = data.land || '';
                 document.getElementById('property-parking').value = data.parking || '';
-                document.getElementById('property-condition').value = data.condition || '����������';
-                document.getElementById('property-bathroom').value = data.bathroom || '����������';
-                document.getElementById('property-balcony').value = data.balcony || '1 ������';
+                document.getElementById('property-condition').value = data.condition || 'Евроремонт';
+                document.getElementById('property-bathroom').value = data.bathroom || 'Раздельный';
+                document.getElementById('property-balcony').value = data.balcony || '1 балкон';
                 document.getElementById('property-full-address').value = data.fullAddress || '';
                 document.getElementById('property-description').value = data.description || '';
                 document.getElementById('property-coords').value = data.coords || '';
@@ -4139,7 +4139,7 @@
                 _applyPropertyMarkerButtons(_curEntry);
             } else {
                 // Add new property
-                title.textContent = '�������� ������';
+                title.textContent = 'Добавить объект';
                 document.getElementById('property-edit-form').reset();
                 // Show the next auto-assigned ID immediately
                 document.getElementById('property-id').value = getCurrentMaxPropertyIdNumber() + 1;
@@ -4177,10 +4177,10 @@
                 realtorSelect.remove(0);
             }
 
-            // First option � company
+            // First option — company
             const companyOption = document.createElement('option');
             companyOption.value = '';
-            companyOption.textContent = '��������';
+            companyOption.textContent = 'Компания';
             realtorSelect.appendChild(companyOption);
             
             // Add agents as options (deduplicate by rieltor_id)
@@ -4213,34 +4213,34 @@
         function getPropertyTypeForConfig(rawType) {
             const normalized = String(rawType || '').trim().toLowerCase();
             const map = {
-                premium: '�������',
-                secondary: '��������',
-                newbuilding: '���������',
-                rental: '�������',
-                commercial: '������������',
-                garage: '�����',
-                parking: '��������',
-                storage: '��������',
-                house: '���',
-                land: '�������'
+                premium: 'Премиум',
+                secondary: 'Вторичка',
+                newbuilding: 'Новострой',
+                rental: 'Премиум',
+                commercial: 'Коммерческая',
+                garage: 'Гараж',
+                parking: 'Парковка',
+                storage: 'Кладовка',
+                house: 'Дом',
+                land: 'Участок'
             };
 
-            return map[normalized] || rawType || '�������';
+            return map[normalized] || rawType || 'Премиум';
         }
 
         function getPropertyTypeForSelect(rawType) {
             const normalized = String(rawType || '').trim().toLowerCase();
             const map = {
-                '�������': 'premium',
-                '��������': 'secondary',
-                '���������': 'newbuilding',
-                '������': 'premium',
-                '������������': 'commercial',
-                '�����': 'garage',
-                '��������': 'parking',
-                '��������': 'storage',
-                '���': 'house',
-                '�������': 'land'
+                'премиум': 'premium',
+                'вторичка': 'secondary',
+                'новострой': 'newbuilding',
+                'аренда': 'premium',
+                'коммерческая': 'commercial',
+                'гараж': 'garage',
+                'парковка': 'parking',
+                'кладовка': 'storage',
+                'дом': 'house',
+                'участок': 'land'
             };
 
             return map[normalized] || 'premium';
@@ -4250,7 +4250,7 @@
             const normalizedType = String(rawType || '').trim().toLowerCase();
             const normalizedLand = Number(landValue);
 
-            if (normalizedType === 'house' || normalizedType === '���') {
+            if (normalizedType === 'house' || normalizedType === 'дом') {
                 return 'house';
             }
 
@@ -4321,7 +4321,7 @@
             const requiredFields = ['title', 'city', 'district'];
             const missing = requiredFields.filter(field => !property[field]);
             if (missing.length > 0) {
-                alert(`��������� ������������ ���� ����� ${modeLabel}: ${missing.join(', ')}`);
+                alert(`Заполните обязательные поля перед ${modeLabel}: ${missing.join(', ')}`);
                 return false;
             }
             return true;
@@ -4330,7 +4330,7 @@
         function buildPropertyConfigSnippetFromForm() {
             const collected = collectPropertyFormData();
             const property = collected;
-            if (!validatePropertyFormData(property, '����������')) {
+            if (!validatePropertyFormData(property, 'генерацией')) {
                 return '';
             }
 
@@ -4352,7 +4352,7 @@
         function previewPropertyFromForm() {
             const collected = collectPropertyFormData();
             const property = collected;
-            if (!validatePropertyFormData(property, '����������� � �������')) {
+            if (!validatePropertyFormData(property, 'добавлением в каталог')) {
                 return;
             }
 
@@ -4363,7 +4363,7 @@
 
             const propertiesGrid = document.getElementById('properties-grid');
             if (!propertiesGrid) {
-                alert('��������� �������� �� ������.');
+                alert('Контейнер объектов не найден.');
                 return;
             }
 
@@ -4376,7 +4376,7 @@
             );
 
             if (!appendResult.added || !appendResult.card) {
-                showToast('�� ������� �������� ������ � �������', 'error');
+                showToast('Не удалось добавить объект в каталог', 'error');
                 return;
             }
 
@@ -4418,19 +4418,19 @@
             }
 
             appendResult.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            showToast('������ ' + appendResult.propertyId + ' �������� � ������� (������������)');
+            showToast('Объект ' + appendResult.propertyId + ' добавлен в каталог (предпросмотр)');
         }
 
         function savePropertyDraft() {
             const draft = collectPropertyFormData();
             localStorage.setItem(PROPERTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-            showToast('�������� �������� �������� � ��������');
+            showToast('Черновик сохранён локально в браузере');
         }
 
         function loadPropertyDraft() {
             const raw = localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
             if (!raw) {
-                alert('�������� �� ������.');
+                alert('Черновик не найден.');
                 return;
             }
 
@@ -4455,7 +4455,7 @@
                 document.getElementById('property-floors').value = draft.floors || '';
                 document.getElementById('property-land').value = draft.land || '';
                 document.getElementById('property-parking').value = draft.parking || '';
-                document.getElementById('property-condition').value = draft.condition || '����������';
+                document.getElementById('property-condition').value = draft.condition || 'Евроремонт';
                 document.getElementById('property-bathroom').value = draft.bathroom || '';
                 document.getElementById('property-balcony').value = draft.balcony || '';
                 document.getElementById('property-full-address').value = draft.fullAddress || '';
@@ -4467,32 +4467,32 @@
                     realtorSelect.value = draft.rieltorId;
                 }
 
-                alert('�������� ��������.');
+                alert('Черновик загружен.');
             } catch (error) {
-                console.error('������ ������ ���������:', error);
-                alert('�� ������� ��������� ��������.');
+                console.error('Ошибка чтения черновика:', error);
+                alert('Не удалось загрузить черновик.');
             }
         }
 
         function clearPropertyDraft() {
             localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
-            alert('�������� ������.');
+            alert('Черновик удален.');
         }
 
         async function copyPropertyConfigSnippet() {
             const snippetField = document.getElementById('property-config-snippet');
             if (!snippetField || !snippetField.value.trim()) {
-                alert('������� ������������ ���� ������������.');
+                alert('Сначала сгенерируйте блок конфигурации.');
                 return;
             }
 
             try {
                 await navigator.clipboard.writeText(snippetField.value);
-                alert('���� ���������� � ����� ������.');
+                alert('Блок скопирован в буфер обмена.');
             } catch (error) {
                 snippetField.select();
                 document.execCommand('copy');
-                alert('���� ���������� � ����� ������.');
+                alert('Блок скопирован в буфер обмена.');
             }
         }
 
@@ -4531,7 +4531,7 @@
             const requiredFields = ['rieltor_id', 'name', 'position'];
             const missing = requiredFields.filter(field => !agent[field]);
             if (missing.length > 0) {
-                alert(`��������� ������������ ���� ����� ${modeLabel}: ${missing.join(', ')}`);
+                alert(`Заполните обязательные поля перед ${modeLabel}: ${missing.join(', ')}`);
                 return false;
             }
             return true;
@@ -4539,7 +4539,7 @@
 
         function buildAgentConfigSnippetFromForm() {
             const agent = collectAgentFormData();
-            if (!validateAgentFormData(agent, '����������')) {
+            if (!validateAgentFormData(agent, 'генерацией')) {
                 return '';
             }
 
@@ -4555,17 +4555,17 @@
         async function copyAgentConfigSnippet() {
             const snippetField = document.getElementById('agent-config-snippet');
             if (!snippetField || !snippetField.value.trim()) {
-                alert('������� ������������ ���� ������������ ��������.');
+                alert('Сначала сгенерируйте блок конфигурации риелтора.');
                 return;
             }
 
             try {
                 await navigator.clipboard.writeText(snippetField.value);
-                alert('���� �������� ���������� � ����� ������.');
+                alert('Блок риелтора скопирован в буфер обмена.');
             } catch (error) {
                 snippetField.select();
                 document.execCommand('copy');
-                alert('���� �������� ���������� � ����� ������.');
+                alert('Блок риелтора скопирован в буфер обмена.');
             }
         }
         
@@ -4597,7 +4597,7 @@
             
             if (index !== null) {
                 // Edit existing agent
-                title.textContent = '�������� ��������';
+                title.textContent = 'Изменить риелтора';
                 const agent = agents[index];
                 
                 document.getElementById('agent-id').value = agent.id || '';
@@ -4613,7 +4613,7 @@
                 if (passwordField) passwordField.value = String(agent.password || '').trim() || getConfiguredAgentPassword(agent.rieltor_id);
             } else {
                 // Add new agent
-                title.textContent = '�������� ��������';
+                title.textContent = 'Добавить риелтора';
                 document.getElementById('agent-edit-form').reset();
                 document.getElementById('agent-id').value = '';
                 // Auto-generate next rieltor_id
@@ -4639,7 +4639,7 @@
             document.getElementById('agent-edit-modal').classList.add('hidden');
         }
         
-        // Save property - ������� ��������� �������� � �������� ��� ��������� �����
+        // Save property - реально обновляет карточку в каталоге или добавляет новую
         function saveProperty(e) {
             e.preventDefault();
             const cardId = document.getElementById('property-id').value.trim();
@@ -4647,13 +4647,13 @@
 
             const collected = collectPropertyFormData();
             const formProperty = collected;
-            if (!validatePropertyFormData(formProperty, isNew ? '�����������' : '�����������')) {
+            if (!validatePropertyFormData(formProperty, isNew ? 'добавлением' : 'сохранением')) {
                 return false;
             }
 
             const normalized = validateAndNormalizeConfiguredProperty(formProperty, 0);
             if (!normalized) {
-                alert('�� ������� ���������� ������ �������. ��������� ����.');
+                alert('Не удалось обработать данные объекта. Проверьте поля.');
                 return false;
             }
 
@@ -4765,7 +4765,7 @@
             }
 
             closePropertyEditModal();
-            showToast(isNew ? '������ �������� � �������' : '������ �������');
+            showToast(isNew ? 'Объект добавлен в каталог' : 'Объект обновлён');
             return false;
         }
         
@@ -4797,20 +4797,20 @@
             if (isNew) {
                 // Add new agent (in a real app, this would update the database)
                 console.log('Adding new agent:', agentData);
-                showToast('����� ������� ��������!');
+                showToast('Новый риелтор добавлен!');
             } else {
                 // Update existing agent (in a real app, this would update the database)
                 console.log('Updating agent at index:', index, agentData);
-                showToast('������ �������� ���������!');
+                showToast('Данные риелтора обновлены!');
             }
             
             closeAgentEditModal();
             return false;
         }
         
-        // Delete property - ������� ������� �������� �� ��������
+        // Delete property - реально удаляет карточку из каталога
         function deleteProperty(index) {
-            showConfirm('������� ���� ������ �� ��������?', function() {
+            showConfirm('Удалить этот объект из каталога?', function() {
                 const card = document.querySelectorAll('.property-card')[index];
                 if (!card) return;
                 card.remove();
@@ -4829,9 +4829,9 @@
             });
         }
 
-        // Delete agent - ������� ������� �������� �� ������
+        // Delete agent - реально удаляет риелтора из списка
         function deleteAgent(index) {
-            showConfirm('������� ����� ��������?', function() {
+            showConfirm('Удалить этого риелтора?', function() {
                 var removed = agents[index] || null;
                 var removedRid = removed ? String(removed.rieltor_id || '').trim() : '';
                 agents.splice(index, 1);
@@ -4851,7 +4851,7 @@
 
         function normalizeAgentConfig(agent, index) {
             if (!agent || typeof agent !== 'object') {
-                console.warn(`������ �������� #${index + 1} ��������: �������� ������.`);
+                console.warn(`Конфиг риелтора #${index + 1} пропущен: ожидался объект.`);
                 return null;
             }
 
@@ -4860,7 +4860,7 @@
             const position = String(agent.position || '').trim();
 
             if (!rieltorId || !name || !position) {
-                console.warn(`������ �������� #${index + 1} ��������: ����������� rieltor_id, name, position.`);
+                console.warn(`Конфиг риелтора #${index + 1} пропущен: обязательны rieltor_id, name, position.`);
                 return null;
             }
 
@@ -4900,7 +4900,7 @@
         let agentCounter = getCurrentMaxAgentIdNumber(agents);
         let propertyCounter = getCurrentMaxPropertyIdNumber(); // Auto-detect current max property id
 
-        // City districts data � loaded from localStorage (or defaults)
+        // City districts data — loaded from localStorage (or defaults)
         let cityDistricts = getCityDistrictsData();
 
         // Map initialization
@@ -4919,7 +4919,7 @@
                 inertia: true
             }).setView([47.0245, 28.8323], 13);
             
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(mainMap);
@@ -5128,31 +5128,31 @@
 
                 let icon;
                 switch(type.toLowerCase()) {
-                    case '�������':
+                    case 'премиум':
                         icon = iconPremium;
                         break;
-                    case '��������':
+                    case 'вторичка':
                         icon = iconSecondary;
                         break;
-                    case '���������':
+                    case 'новострой':
                         icon = iconNewbuilding;
                         break;
-                    case '������������':
+                    case 'коммерческая':
                         icon = iconCommercial;
                         break;
-                    case '�����':
+                    case 'гараж':
                         icon = iconGarage;
                         break;
-                    case '��������':
+                    case 'парковка':
                         icon = iconParking;
                         break;
-                    case '��������':
+                    case 'кладовка':
                         icon = iconStorage;
                         break;
-                    case '���':
+                    case 'дом':
                         icon = iconHouse;
                         break;
-                    case '�������':
+                    case 'участок':
                         icon = iconLand;
                         break;
                     default:
@@ -5200,7 +5200,7 @@
                         const propertyType = propertyCard.querySelector('.type-tag').textContent;
                         const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
                         const rentBadgeHtml = propertyListingMode === 'rent'
-                            ? '<div class="map-popup-rent-badge">������</div>'
+                            ? '<div class="map-popup-rent-badge">Аренда</div>'
                             : '';
                         const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                             label: feature.querySelector('.text-sm').textContent,
@@ -5212,7 +5212,7 @@
                             <div class="relative">
                                 <img src="${propertyImage}" alt="${propertyTitle}" class="w-full h-32 object-cover rounded-t-lg">
                                 <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
-                                    <div class="map-popup-type-chip ${propertyType === '�������' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
+                                    <div class="map-popup-type-chip ${propertyType === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
                                     ${rentBadgeHtml}
                                 </div>
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
@@ -5235,7 +5235,7 @@
                                 </div>
                                 <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
                                         onclick="openPropertyOverlay(${prop.index})">
-                                    ���������
+                                    Подробнее
                                 </button>
                             </div>
                         </div>`;
@@ -5258,7 +5258,7 @@
                     const propertyType = propertyCard.querySelector('.type-tag').textContent;
                     const propertyListingMode = normalizeListingMode(propertyCard.dataset.listingMode, propertyCard.dataset.type);
                     const rentBadgeHtml = propertyListingMode === 'rent'
-                        ? '<div class="map-popup-rent-badge">������</div>'
+                        ? '<div class="map-popup-rent-badge">Аренда</div>'
                         : '';
                     const propertyFeatures = Array.from(propertyCard.querySelectorAll('.grid-cols-3 > div')).map(feature => ({
                         label: feature.querySelector('.text-sm').textContent,
@@ -5270,7 +5270,7 @@
                             <div class="relative">
                                 <img src="${propertyImage}" alt="${propertyTitle}" class="w-full h-32 object-cover rounded-t-lg">
                                 <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
-                                    <div class="map-popup-type-chip ${propertyType === '�������' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
+                                    <div class="map-popup-type-chip ${propertyType === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${propertyType}</div>
                                     ${rentBadgeHtml}
                                 </div>
                                 <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
@@ -5293,7 +5293,7 @@
                                 </div>
                                 <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
                                         onclick="openPropertyOverlay(${firstProperty.index})">
-                                    ���������
+                                    Подробнее
                                 </button>
                             </div>
                         </div>
@@ -5345,23 +5345,23 @@
             const normalized = String(typeValue || '').trim().toLowerCase();
             const map = {
                 premium: { className: 'custom-icon premium-icon', html: '<i class="fas fa-crown"></i>' },
-                '�������': { className: 'custom-icon premium-icon', html: '<i class="fas fa-crown"></i>' },
+                'премиум': { className: 'custom-icon premium-icon', html: '<i class="fas fa-crown"></i>' },
                 secondary: { className: 'custom-icon secondary-icon', html: '<i class="fas fa-home"></i>' },
-                '��������': { className: 'custom-icon secondary-icon', html: '<i class="fas fa-home"></i>' },
+                'вторичка': { className: 'custom-icon secondary-icon', html: '<i class="fas fa-home"></i>' },
                 newbuilding: { className: 'custom-icon newbuilding-icon', html: '<i class="fas fa-building"></i>' },
-                '���������': { className: 'custom-icon newbuilding-icon', html: '<i class="fas fa-building"></i>' },
+                'новострой': { className: 'custom-icon newbuilding-icon', html: '<i class="fas fa-building"></i>' },
                 commercial: { className: 'custom-icon commercial-icon', html: '<i class="fas fa-briefcase"></i>' },
-                '������������': { className: 'custom-icon commercial-icon', html: '<i class="fas fa-briefcase"></i>' },
+                'коммерческая': { className: 'custom-icon commercial-icon', html: '<i class="fas fa-briefcase"></i>' },
                 garage: { className: 'custom-icon garage-icon', html: '<i class="fas fa-warehouse"></i>' },
-                '�����': { className: 'custom-icon garage-icon', html: '<i class="fas fa-warehouse"></i>' },
+                'гараж': { className: 'custom-icon garage-icon', html: '<i class="fas fa-warehouse"></i>' },
                 parking: { className: 'custom-icon parking-icon', html: '<i class="fas fa-parking"></i>' },
-                '��������': { className: 'custom-icon parking-icon', html: '<i class="fas fa-parking"></i>' },
+                'парковка': { className: 'custom-icon parking-icon', html: '<i class="fas fa-parking"></i>' },
                 storage: { className: 'custom-icon storage-icon', html: '<i class="fas fa-box-open"></i>' },
-                '��������': { className: 'custom-icon storage-icon', html: '<i class="fas fa-box-open"></i>' },
+                'кладовка': { className: 'custom-icon storage-icon', html: '<i class="fas fa-box-open"></i>' },
                 house: { className: 'custom-icon house-icon', html: '<i class="fas fa-home"></i>' },
-                '���': { className: 'custom-icon house-icon', html: '<i class="fas fa-home"></i>' },
+                'дом': { className: 'custom-icon house-icon', html: '<i class="fas fa-home"></i>' },
                 land: { className: 'custom-icon land-icon', html: '<i class="fas fa-tree"></i>' },
-                '�������': { className: 'custom-icon land-icon', html: '<i class="fas fa-tree"></i>' }
+                'участок': { className: 'custom-icon land-icon', html: '<i class="fas fa-tree"></i>' }
             };
             return map[normalized] || map.premium;
         }
@@ -5389,7 +5389,7 @@
                 attributionControl: false
             }).setView([lat, lng], 15);
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(propertyMap);
@@ -5427,7 +5427,7 @@
                 zoomControl: true
             }).setView([lat, lng], 16);
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(window.overlayMap);
@@ -5504,7 +5504,7 @@
             }
 
             window.overlayMap = L.map('map-overlay-container', { zoomControl: true }).setView(center, resolvedCoords ? 16 : 12);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '',
                 detectRetina: true
             }).addTo(window.overlayMap);
@@ -5546,7 +5546,7 @@
                     }
                 }
 
-                const chosenAddressLine = reverse.addressLine || `����� �� ����� (${selectedCoords})`;
+                const chosenAddressLine = reverse.addressLine || `Точка на карте (${selectedCoords})`;
                 syncPropertyFullAddressField({ forceAddressLine: chosenAddressLine });
 
                 const confirmBtn = document.getElementById('map-overlay-confirm-location');
@@ -5556,7 +5556,7 @@
                 }
 
                 if (typeof showToast === 'function') {
-                    showToast('����� ������� � ������� �������������');
+                    showToast('Точка выбрана — нажмите «Подтвердить»');
                 }
             });
 
@@ -5569,7 +5569,7 @@
                     confirmBtn.removeEventListener('click', _onConfirm);
                     closeMapOverlayWindow();
                     if (typeof showToast === 'function') {
-                        showToast('����� �� ����� ������������ ?', 'success');
+                        showToast('Точка на карте подтверждена ✓', 'success');
                     }
                 };
                 confirmBtn.addEventListener('click', _onConfirm);
@@ -5591,9 +5591,9 @@
             // Clear current options
             districtSelect.innerHTML = '';
             
-            const districts = selectedCity && selectedCity !== '���'
+            const districts = selectedCity && selectedCity !== 'Все'
                 ? getDistrictsForCity(selectedCity)
-                : ['��� ������'];
+                : ['Все районы'];
 
             districts.forEach(district => {
                 const option = document.createElement('option');
@@ -5605,7 +5605,7 @@
 
         function isRentalType(typeValue) {
             const normalized = String(typeValue || '').toLowerCase().trim();
-            return normalized === 'rental' || normalized === '������';
+            return normalized === 'rental' || normalized === 'аренда';
         }
 
         function updateListingModeBadgesVisibility() {
@@ -5619,7 +5619,7 @@
                     if (!mediaWrap) return;
                     badge = document.createElement('div');
                     badge.className = 'listing-mode-badge hidden';
-                    badge.textContent = '������';
+                    badge.textContent = 'Аренда';
                     mediaWrap.appendChild(badge);
                 }
 
@@ -5629,26 +5629,26 @@
 
         function normalizeListingMode(modeValue, fallbackType) {
             const normalizedMode = String(modeValue || '').toLowerCase().trim();
-            if (normalizedMode === 'rent' || normalizedMode === '������') {
+            if (normalizedMode === 'rent' || normalizedMode === 'аренда') {
                 return 'rent';
             }
-            if (normalizedMode === 'sale' || normalizedMode === '�������') {
+            if (normalizedMode === 'sale' || normalizedMode === 'продажа') {
                 return 'sale';
             }
             return isRentalType(fallbackType) ? 'rent' : 'sale';
         }
 
         function buildMarkerPopupContent(props) {
-            if (props.length === 0) return '<div style="padding:8px;font-size:12px;color:#666;">��� ��������</div>';
+            if (props.length === 0) return '<div style="padding:8px;font-size:12px;color:#666;">Нет объектов</div>';
             if (props.length === 1) {
                 const p = props[0];
-                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">������</div>' : '';
+                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">Аренда</div>' : '';
                 return `
                     <div class="map-popup-mini" style="width: 250px;">
                         <div class="relative">
                             <img src="${p.image}" alt="${p.title}" class="w-full h-32 object-cover rounded-t-lg">
                             <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
-                                <div class="map-popup-type-chip ${p.type === '�������' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
+                                <div class="map-popup-type-chip ${p.type === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
                                 ${rentBadge}
                             </div>
                             <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
@@ -5671,7 +5671,7 @@
                             </div>
                             <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
                                     onclick="openPropertyOverlay(${p.index})">
-                                ���������
+                                Подробнее
                             </button>
                         </div>
                     </div>
@@ -5679,13 +5679,13 @@
             }
             let html = `<div class="map-popup-list" style="max-height: 400px; overflow-y: auto; padding: 5px;">`;
             props.forEach(p => {
-                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">������</div>' : '';
+                const rentBadge = p.listingMode === 'rent' ? '<div class="map-popup-rent-badge">Аренда</div>' : '';
                 html += `
                 <div class="map-popup-mini" style="width: 250px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <div class="relative">
                         <img src="${p.image}" alt="${p.title}" class="w-full h-32 object-cover rounded-t-lg">
                         <div style="position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:3px;z-index:3;">
-                            <div class="map-popup-type-chip ${p.type === '�������' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
+                            <div class="map-popup-type-chip ${p.type === 'ПРЕМИУМ' ? 'popup-chip-premium' : 'popup-chip-default'}">${p.type}</div>
                             ${rentBadge}
                         </div>
                         <div class="absolute top-2 right-2 bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded-full">
@@ -5708,7 +5708,7 @@
                         </div>
                         <button class="w-full bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded hover:bg-yellow-600 transition"
                                 onclick="openPropertyOverlay(${p.index})">
-                            ���������
+                            Подробнее
                         </button>
                     </div>
                 </div>`;
@@ -5817,7 +5817,7 @@
         }
 
         function buildAdvancedSearchToggleContent(expanded) {
-            const label = expanded ? '������� ����������� �����' : '����������� �����';
+            const label = expanded ? 'Закрыть расширенный поиск' : 'Расширенный поиск';
             const icon = expanded ? 'fa-chevron-up' : 'fa-sliders-h';
             return `<i class="fas ${icon} mr-2"></i>${label}`;
         }
@@ -5913,16 +5913,16 @@
                 const cardType = card.dataset.type || '';
                 const cardListingCategory = normalizeListingMode(card.dataset.listingMode, cardType);
 
-                const cityMatch = city === '��� ������' || city === '���' || !city ||
+                const cityMatch = city === 'Все города' || city === 'Все' || !city ||
                     city.toLowerCase() === cardCity.toLowerCase();
-                const districtMatch = district === '��� ������' || district === '���' || !district ||
+                const districtMatch = district === 'Все районы' || district === 'Все' || !district ||
                     district.toLowerCase() === cardDistrict.toLowerCase();
-                const typeMatch = propertyType === '��� ����' || propertyType === '���' || !propertyType ||
+                const typeMatch = propertyType === 'Все типы' || propertyType === 'Все' || !propertyType ||
                     propertyType.toLowerCase() === cardType.toLowerCase() ||
-                    (propertyType === '�������' && cardType.toLowerCase() === 'premium') ||
-                    (propertyType === '��������' && cardType.toLowerCase() === '��������') ||
-                    (propertyType === '���������' && cardType.toLowerCase() === 'newbuilding') ||
-                    (propertyType === '������������' && cardType.toLowerCase() === 'commercial');
+                    (propertyType === 'Премиум' && cardType.toLowerCase() === 'premium') ||
+                    (propertyType === 'Вторичка' && cardType.toLowerCase() === 'вторичка') ||
+                    (propertyType === 'Новострой' && cardType.toLowerCase() === 'newbuilding') ||
+                    (propertyType === 'Коммерческая' && cardType.toLowerCase() === 'commercial');
                 const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
                 const areaMatch = cardArea >= minArea && cardArea <= maxArea;
                 const roomsMatch = cardRooms >= minRooms && cardRooms <= maxRooms;
@@ -5980,7 +5980,7 @@
             filterMapMarkers();
 
             if (!hasMatches && showNoMatchesAlert) {
-                alert('�� ������ ������� ������ �� �������. ���������� �������� ��������� ������.');
+                alert('По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска.');
             } else if (hasMatches && scrollToResults) {
                 document.getElementById('properties').scrollIntoView({ behavior: 'smooth' });
             }
@@ -6039,7 +6039,7 @@
                     <h3 class="text-xl font-semibold mb-2">${agent.name}</h3>
                     <p class="text-gray-400 mb-4">${agent.position}</p>
                     <div class="gold-bg text-black font-bold px-3 py-1 rounded-full text-sm inline-block mb-4">
-                        ${agent.properties_count} ��������
+                        ${agent.properties_count} объектов
                     </div>
                     <div class="flex justify-center space-x-4 mb-4">
                         <a href="https://wa.me/${agent.phone.replace(/\D/g, '')}" class="social-icon text-gray-400 hover:text-green-500"><i class="fab fa-whatsapp text-xl"></i></a>
@@ -6049,7 +6049,7 @@
                     </div>
                     <button class="w-full gold-bg text-black font-bold py-2 px-4 rounded-lg btn-gold hover:bg-yellow-600 transition duration-300" 
                             onclick="filterByAgent(${agent.rieltor_id})">
-                        ���������� �������
+                        Посмотреть объекты
                     </button>
                 </div>
                 `;
@@ -6144,7 +6144,7 @@
                 
                 document.getElementById('properties').scrollIntoView({ behavior: 'smooth' });
             } else {
-                alert('� ����� �������� ���� ��� �������� � ����.');
+                alert('У этого риелтора пока нет объектов в базе.');
             }
         }
 
@@ -6170,23 +6170,23 @@
                     img.alt = agent.name;
                     img.title = agent.name;
                 } else if (agent && isAgentHidden(rieltorId)) {
-                    // Agent exists but hidden � show company logo
+                    // Agent exists but hidden — show company logo
                     if (badge) badge.style.display = '';
                     img.src = COMPANY_LOGO_URL;
-                    img.alt = '��������';
+                    img.alt = 'Компания';
                     img.title = 'Venera Rielt';
                 } else if (!rieltorId || rieltorId === 'company') {
                     // Property assigned to company directly
                     if (badge) badge.style.display = '';
                     img.src = COMPANY_LOGO_URL;
-                    img.alt = '��������';
+                    img.alt = 'Компания';
                     img.title = 'Venera Rielt';
                 }
-                // If rieltorId set but agent not found at all � leave hidden (default)
+                // If rieltorId set but agent not found at all — leave hidden (default)
             });
         }
 
-        // --- Promo Carousel ----------------------------------------------------------
+        // ─── Promo Carousel ──────────────────────────────────────────────────────────
         const PROMO_STORAGE_KEY = 'venera_promo_slides_v7';
         const PROMO_HIDDEN_KEY = 'venera_promo_hidden_v1';
         const PROMO_MEDIA_CACHE_NAME = 'venera-promo-media-v1';
@@ -6237,10 +6237,10 @@
             } catch (_) {}
             // Demo slides
             var demo = [
-                { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: '������� ������������', link: '' },
-                { type: 'video', url: 'image/add/promo-realestate.mp4', alt: '������������', link: '' },
+                { type: 'image', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', alt: 'Премиум недвижимость', link: '' },
+                { type: 'video', url: 'image/add/promo-realestate.mp4', alt: 'Недвижимость', link: '' },
                 { type: 'video', url: 'image/add/promo-venera.mp4', alt: 'Venera Rielt', link: '' },
-                { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: '������� ���', link: '' }
+                { type: 'image', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', alt: 'Элитный дом', link: '' }
             ];
             savePromoSlides(demo);
             return demo;
@@ -6280,9 +6280,9 @@
                 if (slide.type === 'video') {
                     el.innerHTML = '<video autoplay muted playsinline preload="auto" class="promo-media"><source src="' + slide.url + '" type="video/mp4"></video>' +
                         '<div class="promo-video-controls">' +
-                        '<button class="promo-vc-btn promo-vc-play" title="�����"><i class="fas fa-pause"></i></button>' +
+                        '<button class="promo-vc-btn promo-vc-play" title="Пауза"><i class="fas fa-pause"></i></button>' +
                         '<input type="range" class="promo-vc-seek" min="0" max="100" value="0" step="0.1">' +
-                        '<button class="promo-vc-btn promo-vc-mute" title="����"><i class="fas fa-volume-mute"></i></button>' +
+                        '<button class="promo-vc-btn promo-vc-mute" title="Звук"><i class="fas fa-volume-mute"></i></button>' +
                         '</div>';
                     var vid = el.querySelector('video');
                     var playBtn = el.querySelector('.promo-vc-play');
@@ -6308,7 +6308,7 @@
                     });
                     seekBar.addEventListener('click', function(ev) { ev.stopPropagation(); });
                 } else {
-                    el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || '�������') + '" class="promo-media">';
+                    el.innerHTML = '<img src="' + slide.url + '" alt="' + (slide.alt || 'Реклама') + '" class="promo-media">';
                 }
                 if (slide.link) {
                     el.style.cursor = 'pointer';
@@ -6329,7 +6329,7 @@
             var firstVideo = container.querySelector('.promo-slide.active video');
             if (firstVideo) {
                 firstVideo.play().catch(function() {});
-                // Don't start timer � wait for ended event
+                // Don't start timer — wait for ended event
             } else {
                 startPromoAutoplay();
             }
@@ -6433,7 +6433,7 @@
             modal.className = 'hidden';
             modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:350;display:flex;align-items:center;justify-content:center;padding:24px;';
             modal.innerHTML =
-                '<button id="admin-media-preview-close" type="button" aria-label="�������" style="position:absolute;top:16px;right:18px;color:#fff;font-size:32px;line-height:1;background:transparent;border:none;cursor:pointer;">&times;</button>' +
+                '<button id="admin-media-preview-close" type="button" aria-label="Закрыть" style="position:absolute;top:16px;right:18px;color:#fff;font-size:32px;line-height:1;background:transparent;border:none;cursor:pointer;">&times;</button>' +
                 '<div id="admin-media-preview-content" style="max-width:min(1200px,95vw);max-height:90vh;width:auto;height:auto;"></div>';
             document.body.appendChild(modal);
             return modal;
@@ -6457,14 +6457,14 @@
             if (type === 'video') {
                 content.innerHTML = '<video src="' + src + '" controls autoplay style="max-width:95vw;max-height:90vh;border-radius:12px;display:block;"></video>';
             } else {
-                content.innerHTML = '<img src="' + src + '" alt="������" style="max-width:95vw;max-height:90vh;border-radius:12px;display:block;object-fit:contain;">';
+                content.innerHTML = '<img src="' + src + '" alt="Превью" style="max-width:95vw;max-height:90vh;border-radius:12px;display:block;object-fit:contain;">';
             }
 
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
         }
 
-        // --- Promo Admin ------------------------------------------------------------
+        // ─── Promo Admin ────────────────────────────────────────────────────────────
         function renderPromoAdmin() {
             var list = document.getElementById('promo-admin-list');
             if (!list) return;
@@ -6477,7 +6477,7 @@
                 toggleBtn.style.borderColor = isHidden ? '#ffd700' : '';
                 toggleBtn.style.color = isHidden ? '#ffd700' : '';
             }
-            if (toggleLabel) toggleLabel.textContent = isHidden ? '�������� ������' : '������ ������';
+            if (toggleLabel) toggleLabel.textContent = isHidden ? 'Показать раздел' : 'Скрыть раздел';
             if (toggleIcon) { toggleIcon.className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash'; }
             var slides = getPromoSlides();
             list.innerHTML = '';
@@ -6490,20 +6490,20 @@
                 var mediaWrap = document.createElement('div');
                 mediaWrap.className = 'promo-admin-media-wrap';
                 mediaWrap.innerHTML = preview +
-                    '<span class="promo-admin-overlay-type">' + (slide.type === 'video' ? '�����' : '����') + '</span>' +
+                    '<span class="promo-admin-overlay-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
                     (slide.hidden ? '<span class="promo-admin-overlay-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>' : '');
                 div.innerHTML =
                     mediaWrap.outerHTML +
                     '<div class="promo-admin-info">' +
-                        '<span class="promo-admin-type">' + (slide.type === 'video' ? '�����' : '����') + '</span>' +
-                        (slide.hidden ? '<span class="promo-admin-hidden-label" style="color:#f97316;font-size:0.75rem;margin-left:6px;"><i class="fas fa-eye-slash"></i> �����</span>' : '') +
+                        '<span class="promo-admin-type">' + (slide.type === 'video' ? 'Видео' : 'Фото') + '</span>' +
+                        (slide.hidden ? '<span class="promo-admin-hidden-label" style="color:#f97316;font-size:0.75rem;margin-left:6px;"><i class="fas fa-eye-slash"></i> Скрыт</span>' : '') +
                         (slide.link ? '<span class="promo-admin-link" title="' + slide.link + '"><i class="fas fa-link"></i></span>' : '') +
                     '</div>' +
                     '<div class="promo-admin-actions">' +
-                        '<button class="promo-slide-toggle admin-btn-eye" data-i="' + i + '" title="' + (slide.hidden ? '�������� �����' : '������ �����') + '"><i class="fas ' + (slide.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
-                        '<button class="promo-move-up admin-btn-eye" data-i="' + i + '" title="�����"><i class="fas fa-arrow-up"></i></button>' +
-                        '<button class="promo-move-down admin-btn-eye" data-i="' + i + '" title="����"><i class="fas fa-arrow-down"></i></button>' +
-                        '<button class="promo-delete admin-btn-del" data-i="' + i + '" title="�������"><i class="fas fa-trash"></i></button>' +
+                        '<button class="promo-slide-toggle admin-btn-eye" data-i="' + i + '" title="' + (slide.hidden ? 'Показать слайд' : 'Скрыть слайд') + '"><i class="fas ' + (slide.hidden ? 'fa-eye' : 'fa-eye-slash') + '"></i></button>' +
+                        '<button class="promo-move-up admin-btn-eye" data-i="' + i + '" title="Вверх"><i class="fas fa-arrow-up"></i></button>' +
+                        '<button class="promo-move-down admin-btn-eye" data-i="' + i + '" title="Вниз"><i class="fas fa-arrow-down"></i></button>' +
+                        '<button class="promo-delete admin-btn-del" data-i="' + i + '" title="Удалить"><i class="fas fa-trash"></i></button>' +
                     '</div>';
                 if (slide.hidden) div.classList.add('promo-admin-item--hidden');
                 list.appendChild(div);
@@ -6589,7 +6589,7 @@
             const expandBtn = document.createElement('button');
             expandBtn.className = 'map-expand-btn';
             expandBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            expandBtn.title = '���������� �����';
+            expandBtn.title = 'Развернуть карту';
             document.querySelector('.map-container').appendChild(expandBtn);
             
             // Expand map functionality
@@ -6606,7 +6606,7 @@
                     zoomControl: true
                 }).setView(mainMap.getCenter(), mainMap.getZoom());
                 
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                     attribution: '',
                     detectRetina: true
                 }).addTo(window.overlayMap);
@@ -6700,8 +6700,8 @@
             e.preventDefault();
             if (window.VENERA_ANALYTICS && typeof window.VENERA_ANALYTICS.recordSearchAnalytics === 'function') {
                 window.VENERA_ANALYTICS.recordSearchAnalytics({
-                    city: document.getElementById('city') ? document.getElementById('city').value : '��� ������',
-                    district: document.getElementById('district') ? document.getElementById('district').value : '��� ������',
+                    city: document.getElementById('city') ? document.getElementById('city').value : 'Все города',
+                    district: document.getElementById('district') ? document.getElementById('district').value : 'Все районы',
                     listingMode: document.getElementById('listing-category') ? document.getElementById('listing-category').value : 'all'
                 });
             }
@@ -6837,13 +6837,13 @@
             if (e.target.id === 'site-about-photo-add-btn' || e.target.closest('#site-about-photo-add-btn')) {
                 var aboutFileInp = document.getElementById('site-about-photo-add-file');
                 if (!aboutFileInp || !aboutFileInp.files || !aboutFileInp.files[0]) {
-                    showToast('�������� ���� ��� ��������', 'error'); return;
+                    showToast('Выберите файл для загрузки', 'error'); return;
                 }
                 var aboutFile = aboutFileInp.files[0];
                 var aboutType = aboutFile.type.startsWith('video/') ? 'video' : 'image';
                 var aboutMaxMB = aboutType === 'video' ? 50 : 5;
                 if (aboutFile.size > aboutMaxMB * 1024 * 1024) {
-                    showToast('���� ������� ������� (����. ' + aboutMaxMB + ' ��)', 'error'); return;
+                    showToast('Файл слишком большой (макс. ' + aboutMaxMB + ' МБ)', 'error'); return;
                 }
                 _saveAboutMediaToCache(aboutFile).then(function(savedUrl) {
                     var stFile = getSiteContentSettings();
@@ -6853,12 +6853,12 @@
                     saveSiteContentSettings(stFile);
                     aboutFileInp.value = '';
                     var aboutNameSpan = document.getElementById('site-about-file-name');
-                    if (aboutNameSpan) aboutNameSpan.textContent = '������� ����...';
+                    if (aboutNameSpan) aboutNameSpan.textContent = 'Выбрать файл...';
                     renderAboutPhotosAdmin(stFile);
                     applySiteContentSettings();
-                    showToast('����� ��������', 'success');
+                    showToast('Слайд добавлен', 'success');
                 }).catch(function() {
-                    showToast('�� ������� ��������� ����. ���������� �����.', 'error');
+                    showToast('Не удалось сохранить файл. Попробуйте снова.', 'error');
                 });
                 return;
             }
@@ -6866,7 +6866,7 @@
             if (e.target.id === 'site-about-photo-add-url-btn' || e.target.closest('#site-about-photo-add-url-btn')) {
                 var addUrlInp = document.getElementById('site-about-photo-add-url');
                 var url = addUrlInp ? addUrlInp.value.trim() : '';
-                if (!url) { showToast('������� URL', 'error'); return; }
+                if (!url) { showToast('Введите URL', 'error'); return; }
                 var normalizedUrl = _normalizeAboutMediaUrl(url);
                 var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(normalizedUrl) ? 'video' : 'image';
                 var st = getSiteContentSettings();
@@ -6877,7 +6877,7 @@
                 if (addUrlInp) addUrlInp.value = '';
                 renderAboutPhotosAdmin(st);
                 applySiteContentSettings();
-                showToast('����� ��������', 'success');
+                showToast('Слайд добавлен', 'success');
                 return;
             }
 
@@ -6919,7 +6919,7 @@
 
             if (e.target.closest('.site-about-photo-delete')) {
                 var iDel = Number(e.target.closest('.site-about-photo-delete').dataset.i);
-                showConfirm('������� ��� ���� �� ����� �� ��������?', function() {
+                showConfirm('Удалить это фото из блока «О компании»?', function() {
                     var stDel = getSiteContentSettings();
                     var phDel = _getAboutPhotoEntries(stDel);
                     phDel.splice(iDel, 1);
@@ -6971,7 +6971,7 @@
 
                 saveSiteContentSettings(s);
                 applySiteContentSettings();
-                showToast('������� ����� �������', 'success');
+                showToast('Контент сайта обновлён', 'success');
                 if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
 
@@ -7026,7 +7026,7 @@
             }
             if (e.target.closest('.promo-delete')) {
                 var idx = Number(e.target.closest('.promo-delete').dataset.i);
-                showConfirm('������� ���� ����� �� ��������?', function() {
+                showConfirm('Удалить этот слайд из карусели?', function() {
                     var sl = getPromoSlides(); sl.splice(idx, 1); savePromoSlides(sl);
                     renderPromoAdmin(); renderPromoCarousel();
                     if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
@@ -7044,30 +7044,30 @@
                 var fileInp = document.getElementById('promo-add-file');
                 var linkInp = document.getElementById('promo-add-link');
                 if (!fileInp || !fileInp.files || !fileInp.files[0]) {
-                    showToast('�������� ���� ��� ��������', 'error'); return;
+                    showToast('Выберите файл для загрузки', 'error'); return;
                 }
                 var file = fileInp.files[0];
                 var fileType = file.type.startsWith('video/') ? 'video' : 'image';
                 var maxMB = fileType === 'video' ? 50 : 5;
                 if (file.size > maxMB * 1024 * 1024) {
-                    showToast('���� ������� ������� (����. ' + maxMB + ' ��)', 'error'); return;
+                    showToast('Файл слишком большой (макс. ' + maxMB + ' МБ)', 'error'); return;
                 }
                 _savePromoMediaToCache(file).then(function(savedUrl) {
                     var sl = getPromoSlides();
                     sl.push({ url: savedUrl, type: fileType, link: linkInp ? linkInp.value.trim() : '', alt: file.name });
                     if (!savePromoSlides(sl)) {
-                        showToast('�� ������� ��������� �����. �������� ��������� �������� � ���������� �����.', 'error');
+                        showToast('Не удалось сохранить слайд. Очистите хранилище браузера и попробуйте снова.', 'error');
                         return;
                     }
                     fileInp.value = '';
                     var nameSpan = document.getElementById('promo-file-name');
-                    if (nameSpan) nameSpan.textContent = '������� ����...';
+                    if (nameSpan) nameSpan.textContent = 'Выбрать файл...';
                     if (linkInp) linkInp.value = '';
                     renderPromoAdmin(); renderPromoCarousel();
-                    showToast('����� ��������', 'success');
+                    showToast('Слайд добавлен', 'success');
                     if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
                 }).catch(function() {
-                    showToast('�� ������� ��������� ����. ���������� �����.', 'error');
+                    showToast('Не удалось сохранить файл. Попробуйте снова.', 'error');
                 });
             }
             if (e.target.id === 'promo-toggle-visibility-btn' || e.target.closest('#promo-toggle-visibility-btn')) {
@@ -7078,18 +7078,18 @@
             if (e.target.id === 'promo-add-url-btn' || e.target.closest('#promo-add-url-btn')) {
                 var urlInp = document.getElementById('promo-add-url');
                 var linkInp2 = document.getElementById('promo-add-link-url');
-                if (!urlInp || !urlInp.value.trim()) { showToast('������� URL', 'error'); return; }
+                if (!urlInp || !urlInp.value.trim()) { showToast('Введите URL', 'error'); return; }
                 var rawUrl = _normalizePromoMediaUrl(urlInp.value.trim());
                 var detectedType = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(rawUrl) ? 'video' : 'image';
                 var sl = getPromoSlides();
                 sl.push({ url: rawUrl, type: detectedType, link: linkInp2 ? linkInp2.value.trim() : '', alt: '' });
                 if (!savePromoSlides(sl)) {
-                    showToast('�� ������� ��������� �����. �������� ��������� �������� � ���������� �����.', 'error');
+                    showToast('Не удалось сохранить слайд. Очистите хранилище браузера и попробуйте снова.', 'error');
                     return;
                 }
                 urlInp.value = ''; if (linkInp2) linkInp2.value = '';
                 renderPromoAdmin(); renderPromoCarousel();
-                showToast('����� ��������', 'success');
+                showToast('Слайд добавлен', 'success');
                 if (typeof pushSharedSnapshot === 'function') pushSharedSnapshot();
             }
             
@@ -7107,12 +7107,12 @@
         document.addEventListener('change', function(e) {
             if (e.target.id === 'promo-add-file') {
                 var promoNameSpan = document.getElementById('promo-file-name');
-                if (promoNameSpan) promoNameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : '������� ����...';
+                if (promoNameSpan) promoNameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
             }
 
             if (e.target.id === 'site-about-photo-add-file') {
                 var nameSpan = document.getElementById('site-about-file-name');
-                if (nameSpan) nameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : '������� ����...';
+                if (nameSpan) nameSpan.textContent = e.target.files && e.target.files[0] ? e.target.files[0].name : 'Выбрать файл...';
             }
         });
 
@@ -7120,7 +7120,7 @@
             if (e.key === 'Escape') closeAdminMediaPreview();
         });
         
-        // Form submissions - ���������, ������������ ����� �� admin.js
+        // Form submissions - отключены, используются новые из admin.js
         // document.getElementById('property-edit-form').addEventListener('submit', saveProperty);
         // document.getElementById('agent-edit-form').addEventListener('submit', saveAgent);
 
@@ -7257,8 +7257,8 @@
                     thumb.type = 'button';
                     thumb.className = `property-thumb${index === 0 ? ' active' : ''}`;
                     thumb.dataset.slideIndex = String(index);
-                    thumb.setAttribute('aria-label', `������� ���� ${index + 1}`);
-                    thumb.innerHTML = `<img src="${image}" alt="${title} ��������� ${index + 1}">`;
+                    thumb.setAttribute('aria-label', `Открыть фото ${index + 1}`);
+                    thumb.innerHTML = `<img src="${image}" alt="${title} миниатюра ${index + 1}">`;
                     thumbsContainer.appendChild(thumb);
                 }
             });
@@ -7392,7 +7392,7 @@
             
             // Update overlay with property data
             document.querySelector('#property-overlay .p-8 h3').textContent = propertyCard.querySelector('h3').textContent;
-            const price = button.dataset.price ? `�${parseInt(button.dataset.price).toLocaleString()}` : `�${parseInt(propertyData.price || '0').toLocaleString()}`;
+            const price = button.dataset.price ? `€${parseInt(button.dataset.price).toLocaleString()}` : `€${parseInt(propertyData.price || '0').toLocaleString()}`;
             var overlayPriceEl = document.querySelector('#property-overlay .p-8 .gold-bg');
             overlayPriceEl.textContent = price;
             // Remove old discount price from overlay
@@ -7433,15 +7433,15 @@
                 const yearNum = Number(propertyData.year);
 
                 const overlayFeatureItems = [];
-                if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: '�������', value: `${areaNum} �?`, icon: 'fa-ruler-combined' });
-                if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: '������', value: String(roomsNum), icon: 'fa-bed' });
-                if (floorsValue) overlayFeatureItems.push({ label: '����', value: floorsValue, icon: 'fa-layer-group' });
-                if (conditionValue) overlayFeatureItems.push({ label: '���������', value: conditionValue, icon: 'fa-tools' });
-                if (bathroomValue) overlayFeatureItems.push({ label: '�������', value: bathroomValue, icon: 'fa-bath' });
-                if (balconyValue) overlayFeatureItems.push({ label: '������', value: balconyValue, icon: 'fa-door-open' });
-                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: '�������', value: `${landNum} ���.`, icon: 'fa-tree' });
-                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: '��������', value: String(parkingNum), icon: 'fa-parking' });
-                if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: '���', value: String(yearNum), icon: 'fa-calendar-alt' });
+                if (Number.isFinite(areaNum) && areaNum > 0) overlayFeatureItems.push({ label: 'Площадь', value: `${areaNum} м²`, icon: 'fa-ruler-combined' });
+                if (Number.isFinite(roomsNum) && roomsNum > 0) overlayFeatureItems.push({ label: 'Комнат', value: String(roomsNum), icon: 'fa-bed' });
+                if (floorsValue) overlayFeatureItems.push({ label: 'Этаж', value: floorsValue, icon: 'fa-layer-group' });
+                if (conditionValue) overlayFeatureItems.push({ label: 'Состояние', value: conditionValue, icon: 'fa-tools' });
+                if (bathroomValue) overlayFeatureItems.push({ label: 'Санузел', value: bathroomValue, icon: 'fa-bath' });
+                if (balconyValue) overlayFeatureItems.push({ label: 'Балкон', value: balconyValue, icon: 'fa-door-open' });
+                if (Number.isFinite(landNum) && landNum > 0) overlayFeatureItems.push({ label: 'Участок', value: `${landNum} сот.`, icon: 'fa-tree' });
+                if (Number.isFinite(parkingNum) && parkingNum > 0) overlayFeatureItems.push({ label: 'Парковка', value: String(parkingNum), icon: 'fa-parking' });
+                if (Number.isFinite(yearNum) && yearNum > 0) overlayFeatureItems.push({ label: 'Год', value: String(yearNum), icon: 'fa-calendar-alt' });
 
                 overlayFeaturesContainer.classList.toggle('hidden', overlayFeatureItems.length === 0);
                 overlayFeaturesContainer.innerHTML = overlayFeatureItems.length > 0
@@ -7459,7 +7459,7 @@
             
             // Update description
             document.querySelector('#property-overlay .p-8 p.text-gray-400').textContent = 
-                propertyData.description || '�������� ������� ������� ������������.';
+                propertyData.description || 'Описание данного объекта недвижимости.';
             
             // Update agent info if exists
             const rieltorId = propertyCard.dataset.rieltorId;
@@ -7493,7 +7493,7 @@
                 agentInfoContainer.style.display = 'none';
             }
             
-            // �������� �������� ������� �� mainPhoto � photos.
+            // Собираем реальную галерею из mainPhoto и photos.
             renderPropertyCarousel(propertyImages, agentName);
             
             // Resolve map coordinates from explicit coords first; otherwise geocode full address.
@@ -7530,8 +7530,8 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // ���������� ������������� ������� ������ ������� bind � �������
-        // ��� ��������� ������������ ����������� �� ����������� ����������� ��������
+        // Используем делегирование событий вместо прямого bind к кнопкам
+        // Это позволяет обработчикам срабатывать на динамически добавленные карточки
         document.addEventListener('click', function(e) {
             const detailsBtn = e.target.closest('.view-details-btn');
             if (detailsBtn) {
@@ -8074,24 +8074,24 @@
             }
 
             if (!nameVal) {
-                showStatus('������� ���� ���.', 'text-red-400');
+                showStatus('Введите ваше имя.', 'text-red-400');
                 return;
             }
             if (!phoneVal && !emailVal) {
-                showStatus('������� ������� ��� email ��� �����.', 'text-red-400');
+                showStatus('Укажите телефон или email для связи.', 'text-red-400');
                 return;
             }
 
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '������������...'; }
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Отправляется...'; }
             if (statusEl) statusEl.classList.add('hidden');
 
             const formData = { from_name: nameVal, phone: phoneVal, email: emailVal, message: messageVal };
 
             const restore = function() {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '��������� <i class="fas fa-paper-plane ml-2"></i>'; }
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = 'Отправить <i class="fas fa-paper-plane ml-2"></i>'; }
             };
 
-            // ������ ��������� � ������� (�� ������� �������� email)
+            // Всегда сохраняем в админку (до попытки отправки email)
             var savedOk = false;
             try {
                 var msgs = JSON.parse(localStorage.getItem('venera_contact_messages_v1') || '[]');
@@ -8108,27 +8108,27 @@
                 savedOk = true;
                 window._updateMessagesBadge && window._updateMessagesBadge();
             } catch(e) {
-                console.error('Venera: ������ ���������� ������ � localStorage:', e);
+                console.error('Venera: ошибка сохранения заявки в localStorage:', e);
             }
 
-            showStatus('? ��������� ����������! �� �������� � ���� � ��������� �����.', 'text-green-400');
+            showStatus('✓ Сообщение отправлено! Мы свяжемся с вами в ближайшее время.', 'text-green-400');
             form.reset();
             restore();
 
-            // ������������� ������� ��������� �� email (� ����, �� ��������� UX)
+            // Дополнительно пробуем отправить на email (в фоне, не блокирует UX)
             try {
                 emailjs.send('service_2tli96l', 'template_x0ddy0m', formData)
                     .then(function() {
-                        // email ������� ���������
+                        // email успешно отправлен
                     }, function(error) {
-                        console.warn('EmailJS: ������ �� ����������, ������ ��������� � �������.', error);
+                        console.warn('EmailJS: письмо не отправлено, заявка сохранена в админке.', error);
                     });
             } catch(e) {
-                console.warn('EmailJS ����������, ������ ��������� � �������.', e);
+                console.warn('EmailJS недоступен, заявка сохранена в админке.', e);
             }
         });
 
-// ====================== ������ � ����� ======================
+// ====================== ЗАЯВКИ С САЙТА ======================
 var MESSAGES_STORAGE_KEY = 'venera_contact_messages_v1';
 
 function _getMessages() {
@@ -8155,13 +8155,13 @@ window.renderMessagesAdmin = function() {
     if (!list) return;
     var msgs = _getMessages();
 
-    // �������� ��� ��� �����������
+    // Помечаем все как прочитанные
     var changed = false;
     msgs.forEach(function(m) { if (!m.read) { m.read = true; changed = true; } });
     if (changed) { _saveMessages(msgs); window._updateMessagesBadge(); }
 
     if (msgs.length === 0) {
-        list.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:0.9rem;padding:16px 0;">������ ���� ���.</div>';
+        list.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:0.9rem;padding:16px 0;">Заявок пока нет.</div>';
         return;
     }
 
@@ -8177,7 +8177,7 @@ window.renderMessagesAdmin = function() {
             (m.email ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.75);margin-bottom:4px;"><i class="fas fa-envelope mr-2" style="color:#ffd700;"></i>' + _escMsg(m.email) + '</div>' : '') +
             (m.message ? '<div style="font-size:0.875rem;color:rgba(255,255,255,0.5);margin-top:10px;white-space:pre-wrap;line-height:1.6;border-top:1px solid rgba(255,255,255,0.07);padding-top:10px;">' + _escMsg(m.message) + '</div>' : '') +
             '<div style="margin-top:14px;">' +
-            '<button type="button" class="admin-btn-del message-delete-btn" data-message-id="' + m.id + '">�������</button>' +
+            '<button type="button" class="admin-btn-del message-delete-btn" data-message-id="' + m.id + '">Удалить</button>' +
             '</div>' +
             '</div>';
     }).join('');
@@ -8189,7 +8189,7 @@ function _escMsg(str) {
 }
 
 window.deleteMessage = function(id) {
-    showConfirm('������� ��� ������ � �����?', function() {
+    showConfirm('Удалить эту заявку с сайта?', function() {
         var msgs = _getMessages().filter(function(m) { return m.id !== id; });
         _saveMessages(msgs);
         window.renderMessagesAdmin();
@@ -8198,7 +8198,7 @@ window.deleteMessage = function(id) {
 };
 
 window.deleteReadMessages = function() {
-    showConfirm('������� ��� ����������� ������ � �����?', function() {
+    showConfirm('Удалить все прочитанные заявки с сайта?', function() {
         var msgs = _getMessages().filter(function(m) { return !m.read; });
         _saveMessages(msgs);
         window.renderMessagesAdmin();
@@ -8206,18 +8206,18 @@ window.deleteReadMessages = function() {
     });
 };
 
-// ��������� ����� ��� �������� ��������
+// Обновляем бейдж при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     window._updateMessagesBadge && window._updateMessagesBadge();
     window._updateActionBadges && window._updateActionBadges();
 });
 
 
-// �������������� ������ ��� ���������� �� ������ ������� (index.html > admin.html)
+// Автообновление заявок при сохранении из другой вкладки (index.html → admin.html)
 window.addEventListener('storage', function(e) {
     if (e.key === 'venera_contact_messages_v1') {
         window._updateMessagesBadge && window._updateMessagesBadge();
-        // ���� ������ ������� ������� ������� � ��������� ������ �����
+        // Если сейчас открыта вкладка «Заявки» — обновляем список сразу
         var messagesView = document.getElementById('admin-messages-view');
         if (messagesView && !messagesView.classList.contains('hidden')) {
             if (typeof window.renderMessagesAdmin === 'function') window.renderMessagesAdmin();
@@ -8259,7 +8259,7 @@ window.addEventListener('storage', function(e) {
     }
 });
 
-// ====================== ���� �������� ======================
+// ====================== БАЗА КЛИЕНТОВ ======================
 var CLIENTS_STORAGE_KEY = 'venera_clients_db_v1';
 var CLIENT_OWNER_COMPANY_ID = 'company';
 
@@ -8348,7 +8348,7 @@ function _applyClientOwnerControlForMode(prefillOwnerId) {
         return;
     }
 
-    var options = [{ value: CLIENT_OWNER_COMPANY_ID, label: '��������' }].concat(_getClientOwnerOptions());
+    var options = [{ value: CLIENT_OWNER_COMPANY_ID, label: 'Компания' }].concat(_getClientOwnerOptions());
     var prefillId = String(prefillOwnerId || '').trim();
     if (prefillId && prefillId !== CLIENT_OWNER_COMPANY_ID) {
         var hiddenStore = (typeof getAgentStatusStore === 'function') ? getAgentStatusStore() : {};
@@ -8358,7 +8358,7 @@ function _applyClientOwnerControlForMode(prefillOwnerId) {
             var hiddenAgent = _getAgentListForClientOwner().find(function(a) {
                 return String((a && a.rieltor_id) || '').trim() === prefillId;
             });
-            options.push({ value: prefillId, label: (hiddenAgent && hiddenAgent.name ? hiddenAgent.name : prefillId) + ' (�����)' });
+            options.push({ value: prefillId, label: (hiddenAgent && hiddenAgent.name ? hiddenAgent.name : prefillId) + ' (скрыт)' });
         }
     }
     ownerEl.innerHTML = options.map(function(opt) {
@@ -8416,31 +8416,31 @@ function _getCityOptions() {
     if (typeof syncCityDistrictCatalog === 'function') syncCityDistrictCatalog();
     if (typeof cityDistricts === 'undefined' || !cityDistricts) return [];
     return sortCitiesWithChisinauFirst(Object.keys(cityDistricts)
-        .filter(function(city) { return city && city !== '��� ������'; }))
+        .filter(function(city) { return city && city !== 'Все города'; }))
         .map(function(city) { return { value: city, label: city }; });
 }
 
 function _getDistrictOptions(city) {
     if (!city || typeof getDistrictsForCity !== 'function') return [];
     return getDistrictsForCity(city)
-        .filter(function(d) { return d && d !== '��� ������'; })
+        .filter(function(d) { return d && d !== 'Все районы'; })
         .sort(function(a, b) { return a.localeCompare(b, 'ru'); })
         .map(function(d) { return { value: d, label: d }; });
 }
 
 function _refreshClientCatalogSelects() {
-    _populateSelect('client-city', _getCityOptions(), '-- �������� ����� --', true);
-    _populateSelect('clients-filter-city', _getCityOptions(), '������: ����� (���)', true);
-    _populateSelect('client-condition', _getConditionOptions(), '-- �������� ��������� --', true);
-    _populateSelect('clients-filter-condition', _getConditionOptions(), '������: ��������� (���)', true);
-    _populateSelect('client-type', _getTypeOptions(), '-- �������� ��� --', true);
-    _populateSelect('clients-filter-type', _getTypeOptions(), '������: ��� (���)', true);
+    _populateSelect('client-city', _getCityOptions(), '-- Выберите город --', true);
+    _populateSelect('clients-filter-city', _getCityOptions(), 'Фильтр: город (все)', true);
+    _populateSelect('client-condition', _getConditionOptions(), '-- Выберите состояние --', true);
+    _populateSelect('clients-filter-condition', _getConditionOptions(), 'Фильтр: состояние (все)', true);
+    _populateSelect('client-type', _getTypeOptions(), '-- Выберите тип --', true);
+    _populateSelect('clients-filter-type', _getTypeOptions(), 'Фильтр: тип (все)', true);
 
     var cityForModal = (document.getElementById('client-city') || {}).value || '';
-    _populateSelect('client-district', _getDistrictOptions(cityForModal), '-- �������� ����� --', true);
+    _populateSelect('client-district', _getDistrictOptions(cityForModal), '-- Выберите район --', true);
 
     var cityForFilter = (document.getElementById('clients-filter-city') || {}).value || '';
-    _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), '������: ����� (���)', true);
+    _populateSelect('clients-filter-district', _getDistrictOptions(cityForFilter), 'Фильтр: район (все)', true);
 
     _applyClientOwnerControlForMode();
 
@@ -8450,9 +8450,9 @@ function _refreshClientCatalogSelects() {
 }
 
 function _clientStatusMeta(status) {
-    if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: '������/�����' };
-    if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: '�����' };
-    return { icon: 'fa-hourglass-half', color: '#f59e0b', label: '� ��������' };
+    if (status === 'success') return { icon: 'fa-check-circle', color: '#22c55e', label: 'Сделка/готов' };
+    if (status === 'reject') return { icon: 'fa-times-circle', color: '#ef4444', label: 'Отказ' };
+    return { icon: 'fa-hourglass-half', color: '#f59e0b', label: 'В ожидании' };
 }
 
 function _getClientFilterValues() {
@@ -8560,17 +8560,17 @@ window.openClientModal = function(mode, id) {
         var target = _getClients().find(function(item) { return item.id === id; });
         if (!target) return;
         editIdEl.value = id;
-        titleEl.textContent = '�������� ����������';
-        saveBtn.textContent = '��������� ���������';
+        titleEl.textContent = 'Изменить покупателя';
+        saveBtn.textContent = 'Сохранить изменения';
         _setClientFormData(target);
         _applyClientOwnerControlForMode(target.rieltor_id);
-        _populateSelect('client-district', _getDistrictOptions(target.city || ''), '-- �������� ����� --', false);
+        _populateSelect('client-district', _getDistrictOptions(target.city || ''), '-- Выберите район --', false);
         var districtEl = document.getElementById('client-district');
         if (districtEl) districtEl.value = target.district || '';
     } else {
         editIdEl.value = '';
-        titleEl.textContent = '�������� ����������';
-        saveBtn.textContent = '���������';
+        titleEl.textContent = 'Добавить покупателя';
+        saveBtn.textContent = 'Сохранить';
         _setClientFormData(null);
         _applyClientOwnerControlForMode(CLIENT_OWNER_COMPANY_ID);
     }
@@ -8593,7 +8593,7 @@ window.renderClientsAdmin = function() {
     }
     _reassignHiddenOrDeletedClientsToCompany();
     var items = _getClients();
-    // � ������ �������� � ���������� ������ ��� ��������
+    // В режиме риелтора — показываем только его клиентов
     var realtorSess = getRealtorSession();
     if (realtorSess && realtorSess.rieltor_id) {
         var ridFilter = String(realtorSess.rieltor_id);
@@ -8603,7 +8603,7 @@ window.renderClientsAdmin = function() {
     var filteredItems = items.filter(function(item) { return _isClientMatchFilters(item, filters); });
 
     if (filteredItems.length === 0) {
-        list.innerHTML = '<tr><td colspan="7" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">�� ������� �������� �������� ���.</td></tr>';
+        list.innerHTML = '<tr><td colspan="7" style="padding:16px 12px;color:rgba(255,255,255,0.35);text-align:center;">По текущим фильтрам клиентов нет.</td></tr>';
         return;
     }
 
@@ -8619,13 +8619,13 @@ window.renderClientsAdmin = function() {
     list.innerHTML = filteredItems.map(function(item) {
         var meta = _clientStatusMeta(item.status);
         var params = [
-            item.rooms ? ('�������: ' + _escMsg(item.rooms)) : null,
-            item.type ? ('���: ' + _escMsg(item.type)) : null,
-            item.city ? ('�����: ' + _escMsg(item.city)) : null,
-            item.district ? ('�����: ' + _escMsg(item.district)) : null,
-            item.condition ? ('���������: ' + _escMsg(item.condition)) : null,
+            item.rooms ? ('Комнаты: ' + _escMsg(item.rooms)) : null,
+            item.type ? ('Тип: ' + _escMsg(item.type)) : null,
+            item.city ? ('Город: ' + _escMsg(item.city)) : null,
+            item.district ? ('Район: ' + _escMsg(item.district)) : null,
+            item.condition ? ('Состояние: ' + _escMsg(item.condition)) : null,
             (item.priceFrom !== null && item.priceFrom !== undefined) || (item.priceTo !== null && item.priceTo !== undefined)
-                ? ('����: ' + _escMsg(item.priceFrom || '0') + ' - ' + _escMsg(item.priceTo || '0'))
+                ? ('Цена: ' + _escMsg(item.priceFrom || '0') + ' - ' + _escMsg(item.priceTo || '0'))
                 : null
         ].filter(function(v) { return !!v; }).join('<br>');
 
@@ -8635,17 +8635,17 @@ window.renderClientsAdmin = function() {
         var effectiveOwnerAgent = ownerHidden ? null : ownerAgent;
         var ownerCellHtml = effectiveOwnerAgent && effectiveOwnerAgent.photo
             ? '<img src="' + _escMsg(effectiveOwnerAgent.photo) + '" alt="" title="' + _escMsg(effectiveOwnerAgent.name || ownerId) + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">'
-            : '<img src="/image/components/CompanyAva.png" alt="��������" title="' + _escMsg(ownerHidden ? '�������� (������� �������� �����)' : '��������') + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
+            : '<img src="/image/components/CompanyAva.png" alt="Компания" title="' + _escMsg(ownerHidden ? 'Компания (риелтор временно скрыт)' : 'Компания') + '" style="width:42px;height:42px;border-radius:999px;object-fit:cover;border:2px solid rgba(255,215,0,0.28);display:block;flex-shrink:0;">';
 
         return '<tr class="admin-tbl-row" style="border-top:1px solid rgba(255,215,0,0.08);">' +
             '<td style="padding:10px 16px;">' +
-                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:background 0.2s;" title="������� ������">' +
+                '<button onclick="window.cycleClientStatus(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:background 0.2s;" title="Сменить статус">' +
                     '<i class="fas ' + meta.icon + '" style="color:' + meta.color + ';"></i>' +
                     '<span style="color:rgba(255,255,255,0.7);font-size:0.75rem;">' + meta.label + '</span>' +
                 '</button>' +
                 '<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">' +
-                    '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="font-size:0.7rem;padding:4px 8px;">��������</button>' +
-                    '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del" style="font-size:0.7rem;padding:4px 8px;">�������</button>' +
+                    '<button onclick="window.editClient(\'' + item.id + '\')" class="admin-btn-edit" style="font-size:0.7rem;padding:4px 8px;">Изменить</button>' +
+                    '<button onclick="window.deleteClient(\'' + item.id + '\')" class="admin-btn-del" style="font-size:0.7rem;padding:4px 8px;">Удалить</button>' +
                 '</div>' +
             '</td>' +
             '<td style="padding:10px 16px;color:#fff;font-weight:500;">' + _escMsg(item.fullName) + '</td>' +
@@ -8682,14 +8682,14 @@ window.cycleClientStatus = function(id) {
 };
 
 window.deleteClient = function(id) {
-    showConfirm('������� ����� ������� �� ����?', function() {
+    showConfirm('Удалить этого клиента из базы?', function() {
         var client = _getClients().find(function(item) { return item.id === id; });
         var items = _getClients().filter(function(item) { return item.id !== id; });
         _saveClients(items);
-        _logAction('�������� �������', '���� ��������', {
+        _logAction('Удаление клиента', 'База клиентов', {
             mode: 'delete',
             clientId: id,
-            clientName: client ? client.fullName : '����������',
+            clientName: client ? client.fullName : 'Неизвестно',
             targetId: client ? _normalizeClientOwnerId(client.rieltor_id) : '',
             deletedData: client ? {
                 id: client.id,
@@ -8746,14 +8746,14 @@ window.initClientsAdmin = function() {
     var clientCitySelect = document.getElementById('client-city');
     if (clientCitySelect) {
         clientCitySelect.addEventListener('change', function() {
-            _populateSelect('client-district', _getDistrictOptions(clientCitySelect.value || ''), '-- �������� ����� --', false);
+            _populateSelect('client-district', _getDistrictOptions(clientCitySelect.value || ''), '-- Выберите район --', false);
         });
     }
 
     var filterCitySelect = document.getElementById('clients-filter-city');
     if (filterCitySelect) {
         filterCitySelect.addEventListener('change', function() {
-            _populateSelect('clients-filter-district', _getDistrictOptions(filterCitySelect.value || ''), '������: ����� (���)', false);
+            _populateSelect('clients-filter-district', _getDistrictOptions(filterCitySelect.value || ''), 'Фильтр: район (все)', false);
             if (typeof _cselSync === 'function') _cselSync('clients-filter-district');
             window.renderClientsAdmin();
         });
@@ -8794,9 +8794,9 @@ window.initClientsAdmin = function() {
 
         _saveClients(items);
         if (!editId) {
-            _logAction('���������� �������', '���� ��������', {
+            _logAction('Добавление клиента', 'База клиентов', {
                 mode: 'add',
-                clientName: data.fullName || '����������',
+                clientName: data.fullName || 'Неизвестно',
                 phone: data.phone,
                 targetId: _normalizeClientOwnerId(data.rieltor_id),
                 newData: createdClient ? {
@@ -8818,10 +8818,10 @@ window.initClientsAdmin = function() {
                 } : {}
             });
         } else {
-            _logAction('�������������� �������', '���� ��������', {
+            _logAction('Редактирование клиента', 'База клиентов', {
                 mode: 'edit',
                 clientId: editId,
-                clientName: data.fullName || '����������',
+                clientName: data.fullName || 'Неизвестно',
                 targetId: _normalizeClientOwnerId(data.rieltor_id),
                 previousData: oldClient ? {
                     id: oldClient.id,
@@ -8903,7 +8903,7 @@ window.initClientsAdmin = function() {
                     el.value = '';
                 }
             });
-            _populateSelect('clients-filter-district', [], '������: ����� (���)', false);
+            _populateSelect('clients-filter-district', [], 'Фильтр: район (все)', false);
             if (typeof _cselSync === 'function') {
                 ['clients-filter-city', 'clients-filter-district', 'clients-filter-condition', 'clients-filter-type', 'clients-filter-status'].forEach(function(id) { _cselSync(id); });
             }
@@ -8922,14 +8922,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderClientsAdmin && window.renderClientsAdmin();
 });
 
-// ====================== ��������� ������� ======================
+// ====================== КАЛЕНДАРЬ АДМИНКИ ======================
 var CALENDAR_STORAGE_KEY = 'venera_calendar_notes_v1';
 var CALENDAR_TARGET_COMPANY = 'company';
 var CALENDAR_TARGET_ALL_REALTORS = 'all_realtors';
 
 function _calendarTargetLabel(targetId) {
-    if (String(targetId || '') === CALENDAR_TARGET_COMPANY) return '��������';
-    if (String(targetId || '') === CALENDAR_TARGET_ALL_REALTORS) return '��� ��������';
+    if (String(targetId || '') === CALENDAR_TARGET_COMPANY) return 'Компания';
+    if (String(targetId || '') === CALENDAR_TARGET_ALL_REALTORS) return 'Все риелторы';
     return '';
 }
 
@@ -8965,8 +8965,8 @@ function _calendarState() {
 function _getCalendarRealtors() {
     var map = {};
 
-    map[CALENDAR_TARGET_COMPANY] = '��������';
-    map[CALENDAR_TARGET_ALL_REALTORS] = '��� ��������';
+    map[CALENDAR_TARGET_COMPANY] = 'Компания';
+    map[CALENDAR_TARGET_ALL_REALTORS] = 'Все риелторы';
 
     try {
         var runtimeAgents = _getAgentListForClientOwner();
@@ -9016,7 +9016,7 @@ function _renderCalendarRealtorSelects() {
                 })
                 .forEach(function(r) { orderedFilterRealtors.push(r); });
 
-            filter.innerHTML = '<option value="all">��� �������</option>' + orderedFilterRealtors.map(function(r) {
+            filter.innerHTML = '<option value="all">Все события</option>' + orderedFilterRealtors.map(function(r) {
                 return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
             }).join('');
             filter.value = Array.from(filter.options).some(function(o) { return o.value === prev; }) ? prev : 'all';
@@ -9044,7 +9044,7 @@ function _renderCalendarRealtorSelects() {
                 })
                 .forEach(function(r) { orderedModalRealtors.push(r); });
 
-            modalSel.innerHTML = '<option value="">�� ������</option>' + orderedModalRealtors.map(function(r) {
+            modalSel.innerHTML = '<option value="">Не выбран</option>' + orderedModalRealtors.map(function(r) {
                 return '<option value="' + _escMsg(r.id) + '">' + _escMsg(r.name) + '</option>';
             }).join('');
             if (prevModal && Array.from(modalSel.options).some(function(o) { return o.value === prevModal; })) {
@@ -9082,22 +9082,22 @@ function _renderCalendarDayEntries() {
         .sort(function(a, b) { return String(a.time || '').localeCompare(String(b.time || '')); });
 
     var d = new Date(st.selectedDate + 'T00:00:00');
-    title.textContent = '������ �� ' + d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+    title.textContent = 'Записи на ' + d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
 
     if (!notes.length) {
-        list.innerHTML = '<div class="flex items-center gap-3 py-4 px-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);"><i class="fas fa-calendar-times" style="color:rgba(255,215,0,0.3);font-size:1.2rem;"></i><span class="text-gray-500 text-sm">�� ��� ���� ������� ���</span></div>';
+        list.innerHTML = '<div class="flex items-center gap-3 py-4 px-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);"><i class="fas fa-calendar-times" style="color:rgba(255,215,0,0.3);font-size:1.2rem;"></i><span class="text-gray-500 text-sm">На эту дату записей нет</span></div>';
         return;
     }
 
-    var typeIcons = { '�������': 'fa-handshake', '�����': 'fa-home', '������': 'fa-phone', '������': 'fa-bookmark' };
-    var typeColors = { '�������': '#a78bfa', '�����': '#34d399', '������': '#60a5fa', '������': '#fbbf24' };
+    var typeIcons = { 'Встреча': 'fa-handshake', 'Показ': 'fa-home', 'Звонок': 'fa-phone', 'Другое': 'fa-bookmark' };
+    var typeColors = { 'Встреча': '#a78bfa', 'Показ': '#34d399', 'Звонок': '#60a5fa', 'Другое': '#fbbf24' };
 
     list.innerHTML = notes.map(function(n) {
         var time = n.time ? _escMsg(n.time) : '--:--';
         var realtorTargetId = String(n.realtorId || '');
         var realtorLabel = _calendarTargetLabel(realtorTargetId);
-        var realtor = realtorLabel ? _escMsg(realtorLabel) : (n.realtorName ? _escMsg(n.realtorName) : '�� ��������');
-        var type = _escMsg(n.type || '������');
+        var realtor = realtorLabel ? _escMsg(realtorLabel) : (n.realtorName ? _escMsg(n.realtorName) : 'Не назначен');
+        var type = _escMsg(n.type || 'Другое');
         var icon = typeIcons[n.type] || 'fa-bookmark';
         var color = typeColors[n.type] || '#fbbf24';
         var runtimeAgents = _getAgentListForClientOwner();
@@ -9125,7 +9125,7 @@ function _renderCalendarDayEntries() {
                     '<div class="cal-entry-title-desk font-semibold text-white text-sm truncate" style="margin-bottom:4px;">' + _escMsg(n.title || '') + '</div>' +
                     '<div class="cal-entry-meta">' +
                         '<span style="font-size:11px;color:' + color + ';font-weight:600;">' + type + '</span>' +
-                        '<span class="cal-entry-title-desk" style="font-size:10px;color:rgba(255,255,255,0.25);">�</span>' +
+                        '<span class="cal-entry-title-desk" style="font-size:10px;color:rgba(255,255,255,0.25);">•</span>' +
                         '<span style="font-size:11px;color:rgba(255,215,0,0.8);font-weight:600;">' + time + '</span>' +
                     '</div>' +
                 '</div>' +
@@ -9144,10 +9144,10 @@ function _renderCalendarDayEntries() {
                 ? '<div style="display:flex;gap:8px;margin-top:10px;">' +
                     '<button onclick="window.editCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.08);color:#60a5fa;cursor:pointer;transition:background 0.2s;" ' +
                         'onmouseover="this.style.background=\'rgba(96,165,250,0.18)\'" onmouseout="this.style.background=\'rgba(96,165,250,0.08)\'">' +
-                        '<i class="fas fa-pen mr-1" style="font-size:9px;"></i>��������</button>' +
+                        '<i class="fas fa-pen mr-1" style="font-size:9px;"></i>Изменить</button>' +
                     '<button onclick="window.deleteCalendarNote(\'' + n.id + '\')" style="padding:5px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;transition:background 0.2s;" ' +
                         'onmouseover="this.style.background=\'rgba(239,68,68,0.18)\'" onmouseout="this.style.background=\'rgba(239,68,68,0.08)\'">' +
-                        '<i class="fas fa-trash mr-1" style="font-size:9px;"></i>�������</button>' +
+                        '<i class="fas fa-trash mr-1" style="font-size:9px;"></i>Удалить</button>' +
                 '</div>'
                 : '') +
         '</div>';
@@ -9167,7 +9167,7 @@ function _renderCalendarGrid() {
 
     monthLabel.textContent = firstDay.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 
-    var weekNames = ['��', '��', '��', '��', '��', '��', '��'];
+    var weekNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     var notes = _getFilteredCalendarNotes();
     var notesMap = {};
     notes.forEach(function(n) {
@@ -9256,11 +9256,11 @@ window.openCalendarNoteModal = function(dateIso, noteId) {
     dateEl.value = note ? (note.date || '') : (dateIso || _calendarState().selectedDate);
     timeEl.value = note ? (note.time || '') : '';
     realtorEl.value = note ? (note.realtorId || '') : '';
-    typeEl.value = note ? (note.type || '�������') : '�������';
+    typeEl.value = note ? (note.type || 'Встреча') : 'Встреча';
     titleEl.value = note ? (note.title || '') : '';
     textEl.value = note ? (note.note || '') : '';
 
-    // � ������ �������� � ������������� � ��������� ���� ������ ��������
+    // В режиме риелтора — предзаполняем и блокируем поле выбора риелтора
     var realtorSessForCal = getRealtorSession();
     if (realtorSessForCal && realtorSessForCal.rieltor_id) {
         realtorEl.value = String(realtorSessForCal.rieltor_id);
@@ -9282,14 +9282,14 @@ window.editCalendarNote = function(id) {
 };
 
 window.deleteCalendarNote = function(id) {
-    showConfirm('������� ��� ������ �� ���������?', function() {
+    showConfirm('Удалить эту запись из календаря?', function() {
         var note = _getCalendarNotes().find(function(n) { return n.id === id; });
         var items = _getCalendarNotes().filter(function(n) { return n.id !== id; });
         _saveCalendarNotes(items);
-        _logAction('�������� �������', '��������� ������ � �������', {
+        _logAction('Удаление события', 'Календарь встреч и показов', {
             mode: 'delete',
             noteId: id,
-            title: note ? note.title : '����������',
+            title: note ? note.title : 'Неизвестно',
             date: note ? note.date : '',
             targetId: note ? String(note.realtorId || '') : '',
             deletedData: note ? {
@@ -9375,9 +9375,9 @@ window.initCalendarAdmin = function() {
                 realtorName = realtorSel.options[realtorSel.selectedIndex].textContent || '';
                 if (realtorId === '') realtorName = '';
             }
-            if (realtorId === CALENDAR_TARGET_COMPANY) realtorName = '��������';
-            if (realtorId === CALENDAR_TARGET_ALL_REALTORS) realtorName = '��� ��������';
-            var type = (document.getElementById('calendar-note-type') || {}).value || '�������';
+            if (realtorId === CALENDAR_TARGET_COMPANY) realtorName = 'Компания';
+            if (realtorId === CALENDAR_TARGET_ALL_REALTORS) realtorName = 'Все риелторы';
+            var type = (document.getElementById('calendar-note-type') || {}).value || 'Встреча';
             var title = ((document.getElementById('calendar-note-title') || {}).value || '').trim();
             var note = ((document.getElementById('calendar-note-text') || {}).value || '').trim();
 
@@ -9418,7 +9418,7 @@ window.initCalendarAdmin = function() {
 
             _saveCalendarNotes(items);
             if (!id) {
-                _logAction('���������� �������', '��������� ������ � �������', {
+                _logAction('Добавление события', 'Календарь встреч и показов', {
                     mode: 'add',
                     title: title,
                     date: date,
@@ -9438,7 +9438,7 @@ window.initCalendarAdmin = function() {
                     } : {}
                 });
             } else {
-                _logAction('�������������� �������', '��������� ������ � �������', {
+                _logAction('Редактирование события', 'Календарь встреч и показов', {
                     mode: 'edit',
                     noteId: id,
                     title: title,
