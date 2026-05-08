@@ -5451,12 +5451,6 @@
                 window.overlayMap = null;
             }
 
-            const confirmBtn = document.getElementById('map-overlay-confirm-location');
-            if (confirmBtn) {
-                confirmBtn.classList.add('hidden');
-                confirmBtn.style.display = 'none';
-            }
-
             const hintEl = document.getElementById('map-overlay-picker-hint');
             if (hintEl) {
                 hintEl.classList.add('hidden');
@@ -5549,31 +5543,10 @@
                 const chosenAddressLine = reverse.addressLine || `Точка на карте (${selectedCoords})`;
                 syncPropertyFullAddressField({ forceAddressLine: chosenAddressLine });
 
-                const confirmBtn = document.getElementById('map-overlay-confirm-location');
-                if (confirmBtn) {
-                    confirmBtn.classList.remove('hidden');
-                    confirmBtn.style.display = 'flex';
-                }
-
                 if (typeof showToast === 'function') {
-                    showToast('Точка выбрана — нажмите «Подтвердить»');
+                    showToast('Точка выбрана');
                 }
             });
-
-            const confirmBtn = document.getElementById('map-overlay-confirm-location');
-            if (confirmBtn) {
-                confirmBtn.classList.add('hidden');
-                confirmBtn.style.display = 'none';
-
-                const _onConfirm = function() {
-                    confirmBtn.removeEventListener('click', _onConfirm);
-                    closeMapOverlayWindow();
-                    if (typeof showToast === 'function') {
-                        showToast('Точка на карте подтверждена ✓', 'success');
-                    }
-                };
-                confirmBtn.addEventListener('click', _onConfirm);
-            }
 
             const hintEl = document.getElementById('map-overlay-picker-hint');
             if (hintEl) {
