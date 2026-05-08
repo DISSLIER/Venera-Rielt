@@ -5597,7 +5597,7 @@
             });
         }
 
-        const COMPANY_LOGO_URL = 'https://i.ibb.co/35ZQ5g8X/logo.png';
+        const COMPANY_LOGO_URL = '/image/components/CompanyAva.png';
 
         // Function to update agent photos on property cards
         function updateAgentPhotos() {
