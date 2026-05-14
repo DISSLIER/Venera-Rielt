@@ -18,6 +18,8 @@
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
             --safe-top-main: clamp(0px, calc(env(safe-area-inset-top, 0px) - 4px), 64px);
+            --safe-top-main-offset: min(2px, var(--safe-top));
+            --safe-top-main-content: calc(var(--safe-top-main) + var(--safe-top-main-offset));
         }
         
         /* Базовый вид всей страницы */
@@ -26,14 +28,13 @@
             background-color: var(--black);
             color: var(--white);
             overflow-x: hidden;
-            padding-bottom: var(--safe-bottom);
         }
 
         header.fixed {
             top: 0;
             left: 0;
             right: 0;
-            padding-top: var(--safe-top-main);
+            padding-top: var(--safe-top-main-content);
         }
 
         /* Compact branded scrollbars for the whole site */
@@ -99,7 +100,7 @@
 
         .app-splash-logo-wrap {
             position: absolute;
-            top: calc(28px + var(--safe-top-main));
+            top: calc(28px + var(--safe-top-main-content));
             left: 50%;
             transform: translateX(-50%);
             width: min(52vw, 240px);
@@ -1626,7 +1627,7 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .hero-content {
-                padding-top: calc(100px + var(--safe-top-main));
+                padding-top: calc(100px + var(--safe-top-main-content));
             }
             
             .search-box {

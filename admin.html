@@ -55,6 +55,11 @@
     <!-- Локальные стили проекта -->
         <link rel="stylesheet" href="styles.css">
     <style>
+        html,
+        body {
+            background: #000;
+        }
+
         :root {
             --safe-top-admin: env(safe-area-inset-top, 0px);
             --safe-bottom-admin: env(safe-area-inset-bottom, 0px);
@@ -62,6 +67,7 @@
 
         body.admin-standalone {
             background: radial-gradient(circle at 15% 20%, #1b1b1b 0%, #090909 45%, #000000 100%);
+            overscroll-behavior-y: none;
         }
 
         body.admin-standalone > header,
@@ -81,8 +87,8 @@
             min-height: 100dvh;
             overflow: visible !important;
             background: transparent;
-            padding-top: var(--safe-top-admin);
-            padding-bottom: var(--safe-bottom-admin);
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
         /* Ensure the admin panel scrolls on mobile touch devices */
@@ -90,6 +96,8 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             touch-action: auto !important;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .admin-shell {
@@ -99,11 +107,6 @@
             align-items: stretch;
         }
 
-        body.admin-standalone .admin-shell {
-            min-height: calc(100vh - var(--safe-top-admin) - var(--safe-bottom-admin));
-            min-height: calc(100dvh - var(--safe-top-admin) - var(--safe-bottom-admin));
-        }
-
         .admin-sidebar {
             width: 68px;
             flex-shrink: 0;
@@ -111,7 +114,7 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-right: 1px solid rgba(255, 215, 0, 0.25);
-            padding: 0.8rem 0.5rem;
+            padding: calc(0.8rem + var(--safe-top-admin)) 0.5rem calc(0.8rem + var(--safe-bottom-admin));
             display: flex;
             flex-direction: column;
             gap: 0.6rem;
@@ -123,12 +126,6 @@
             overflow: hidden;
             z-index: 100;
             box-shadow: 6px 0 18px rgba(0, 0, 0, 0.2);
-        }
-
-        body.admin-standalone .admin-sidebar {
-            top: var(--safe-top-admin);
-            height: calc(100vh - var(--safe-top-admin) - var(--safe-bottom-admin));
-            height: calc(100dvh - var(--safe-top-admin) - var(--safe-bottom-admin));
         }
 
         .admin-sidebar-logo {
@@ -228,9 +225,16 @@
 
         .admin-content {
             flex: 1;
-            padding: 1.5rem;
+            padding: calc(1.5rem + var(--safe-top-admin)) 1.5rem calc(1.5rem + var(--safe-bottom-admin));
             min-width: 0;
             margin-left: 68px;
+        }
+
+        #admin-auth-modal {
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding-bottom: var(--safe-bottom-admin);
+            overscroll-behavior: none;
         }
 
         .admin-exit-wrap {
