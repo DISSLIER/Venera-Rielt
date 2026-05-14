@@ -1624,6 +1624,18 @@
             width: 100%;
         }
         
+        /* Apply safe-area only when it exists and on iOS/notched devices */
+        @supports (padding: max(0px)) {
+            section[id],
+            #properties,
+            #agents,
+            #about,
+            #contact,
+            footer {
+                margin-top: clamp(0px, var(--safe-top-main-offset), 8px);
+            }
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .hero-content {
