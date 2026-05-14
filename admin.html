@@ -55,6 +55,11 @@
     <!-- Локальные стили проекта -->
         <link rel="stylesheet" href="styles.css">
     <style>
+        :root {
+            --safe-top-admin: env(safe-area-inset-top, 0px);
+            --safe-bottom-admin: env(safe-area-inset-bottom, 0px);
+        }
+
         body.admin-standalone {
             background: radial-gradient(circle at 15% 20%, #1b1b1b 0%, #090909 45%, #000000 100%);
         }
@@ -76,7 +81,8 @@
             min-height: 100dvh;
             overflow: visible !important;
             background: transparent;
-            padding-top: 0;
+            padding-top: var(--safe-top-admin);
+            padding-bottom: var(--safe-bottom-admin);
         }
 
         /* Ensure the admin panel scrolls on mobile touch devices */
@@ -91,6 +97,11 @@
             min-height: 100vh;
             min-height: 100dvh;
             align-items: stretch;
+        }
+
+        body.admin-standalone .admin-shell {
+            min-height: calc(100vh - var(--safe-top-admin) - var(--safe-bottom-admin));
+            min-height: calc(100dvh - var(--safe-top-admin) - var(--safe-bottom-admin));
         }
 
         .admin-sidebar {
@@ -112,6 +123,12 @@
             overflow: hidden;
             z-index: 100;
             box-shadow: 6px 0 18px rgba(0, 0, 0, 0.2);
+        }
+
+        body.admin-standalone .admin-sidebar {
+            top: var(--safe-top-admin);
+            height: calc(100vh - var(--safe-top-admin) - var(--safe-bottom-admin));
+            height: calc(100dvh - var(--safe-top-admin) - var(--safe-bottom-admin));
         }
 
         .admin-sidebar-logo {

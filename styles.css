@@ -17,6 +17,7 @@
             --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top-main: clamp(0px, calc(env(safe-area-inset-top, 0px) - 4px), 64px);
         }
         
         /* Базовый вид всей страницы */
@@ -32,7 +33,7 @@
             top: 0;
             left: 0;
             right: 0;
-            padding-top: var(--safe-top);
+            padding-top: var(--safe-top-main);
         }
 
         /* Compact branded scrollbars for the whole site */
@@ -98,7 +99,7 @@
 
         .app-splash-logo-wrap {
             position: absolute;
-            top: calc(28px + var(--safe-top));
+            top: calc(28px + var(--safe-top-main));
             left: 50%;
             transform: translateX(-50%);
             width: min(52vw, 240px);
@@ -1625,7 +1626,7 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .hero-content {
-                padding-top: calc(100px + var(--safe-top));
+                padding-top: calc(100px + var(--safe-top-main));
             }
             
             .search-box {
