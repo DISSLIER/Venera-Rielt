@@ -20,6 +20,7 @@
             --safe-top-main: clamp(0px, calc(env(safe-area-inset-top, 0px) - 4px), 64px);
             --safe-top-main-offset: min(2px, var(--safe-top));
             --safe-top-main-content: calc(var(--safe-top-main) + var(--safe-top-main-offset));
+            --safe-hero-gap: clamp(0px, calc(var(--safe-top-main-content) - 2px), 42px);
         }
         
         /* Базовый вид всей страницы */
@@ -1624,22 +1625,14 @@
             width: 100%;
         }
         
-        /* Apply safe-area only when it exists and on iOS/notched devices */
-        @supports (padding: max(0px)) {
-            section[id],
-            #properties,
-            #agents,
-            #about,
-            #contact,
-            footer {
-                margin-top: clamp(0px, var(--safe-top-main-offset), 8px);
-            }
-        }
-        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .hero-content {
                 padding-top: calc(100px + var(--safe-top-main-content));
+            }
+
+            .hero-content h1 {
+                margin-top: var(--safe-hero-gap);
             }
             
             .search-box {
