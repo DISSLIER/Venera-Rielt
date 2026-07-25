@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BossAuto Moldova - Vanzare automobile</title>
+    <meta
+      name="description"
+      content="Catalog auto modern pentru Moldova, cu moduri flexibile de vizualizare si pagina detaliata pentru fiecare masina."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-accent bg-accent-one"></div>
+    <div class="bg-accent bg-accent-two"></div>
+
+    <header class="site-header" id="acasa">
+      <div class="header-bar">
+        <button id="menuToggle" class="menu-toggle" aria-label="Deschide meniul" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+
+        <a href="#acasa" class="logo-wrap" aria-label="BossAuto acasa">
+          <img src="logo.svg" alt="BossAuto" class="logo" />
+        </a>
+
+        <a href="#catalog" class="header-cta">CATALOG</a>
+      </div>
+
+      <nav class="top-nav" aria-label="Navigare desktop">
+        <a href="#acasa">Acasa</a>
+        <a href="#catalog">Automobile</a>
+        <a href="#despre">Despre noi</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div id="menuBackdrop" class="menu-backdrop"></div>
+      <nav id="mobileMenu" class="side-menu" aria-label="Navigare mobila">
+        <div class="side-menu-head">
+          <strong>Meniu</strong>
+          <button id="menuClose" class="menu-close" aria-label="Inchide meniul">×</button>
+        </div>
+        <a href="#acasa">Acasa</a>
+        <a href="#catalog">Automobile</a>
+        <a href="#despre">Despre noi</a>
+        <a href="#contact">Contact</a>
+        <div class="menu-note">
+          <p>Piata: Moldova</p>
+          <p>Preturi: MDL + EUR</p>
+        </div>
+      </nav>
+
+      <section class="hero reveal">
+        <p class="hero-kicker">Selectie si vanzare auto in Moldova</p>
+        <h1>Masina potrivita, fara compromisuri</h1>
+        <p class="hero-text">
+          Alege dintr-un catalog verificat, cu istoric transparent si conditii corecte.
+          Pentru fiecare oferta ai pagina detaliata si calculator de leasing lunar.
+        </p>
+        <a href="#catalog" class="hero-button">Vezi ofertele</a>
+      </section>
+    </header>
+
+    <main>
+      <section id="catalog" class="catalog-section reveal">
+        <div class="catalog-head">
+          <div>
+            <p class="section-caption">Catalog</p>
+            <h2>Alege modul de vizualizare</h2>
+          </div>
+          <div class="view-switch" role="group" aria-label="Mod de afisare">
+            <button class="view-btn is-active" data-view="two">2 carduri</button>
+            <button class="view-btn" data-view="one">1 card</button>
+            <button class="view-btn" data-view="row">Lista</button>
+          </div>
+        </div>
+        <div id="catalogGrid" class="catalog-grid view-two"></div>
+      </section>
+
+      <section id="despre" class="about-section reveal">
+        <p class="section-caption">De ce BossAuto</p>
+        <h2>Practic, clar, orientat pe client</h2>
+        <div class="about-grid">
+          <article>
+            <h3>Inspectie completa</h3>
+            <p>Fiecare automobil trece diagnostic tehnic si verificare juridica inainte de vanzare.</p>
+          </article>
+          <article>
+            <h3>Leasing transparent</h3>
+            <p>Pe pagina fiecarui model calculezi instant rata lunara in MDL si echivalent EUR.</p>
+          </article>
+          <article>
+            <h3>Asistenta completa</h3>
+            <p>Te ajutam cu actele, asigurarea si finalizarea tranzactiei pana la predarea cheilor.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer id="contact" class="site-footer">
+      <div>
+        <h3>BossAuto</h3>
+        <p>Partenerul tau de incredere pentru achizitia unui automobil in Moldova.</p>
+      </div>
+      <div>
+        <p>Telefon: +373 60 123 456</p>
+        <p>E-mail: vanzari@bossauto.md</p>
+      </div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
